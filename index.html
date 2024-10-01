@@ -12,55 +12,80 @@
             background-color: #f5f5f7;
             font-family: Arial, sans-serif;
             color: #333;
-            text-transform: uppercase;
         }
 
-        /* 保持原有的 canvas 样式 */
-        #chart {
-            border: 1px solid #ddd;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        /* 卡片式容器 */
+        #inputFormContainer {
             background-color: #fff;
-            margin-top: 20px;
-            touch-action: none; /* 禁用默认手势操作 */
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
-        /* 统一表单和按钮样式 */
-        #inputForm .form-control,
-        #inputForm .btn {
-            width: 100px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            background-color: #fff;
-            height: 40px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            padding: 10px;
+        /* 表单样式 */
+        #inputForm {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        #inputForm .form-group {
+            flex: 1 1 150px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #inputForm label {
+            margin-bottom: 5px;
             font-size: 14px;
-            font-style: normal;
+            color: #555;
+        }
+
+        #inputForm .form-control {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #333;
+            transition: border-color 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #inputForm .form-control:focus {
+            border-color: #007bff;
+            outline: none;
         }
 
         /* 按钮样式 */
+        #inputForm .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 24px;
+            flex: 1 1 100px;
+        }
+
         .btn-primary {
-            background-color: #007bff !important;
-            border-color: #007bff !important;
-            color: #fff !important;
-            transition: background-color 0.3s ease-in-out;
+            background-color: #007bff;
+            color: #fff;
         }
 
         .btn-primary:hover {
-            background-color: #0056b3 !important;
+            background-color: #0056b3;
         }
 
         .btn-secondary {
-            background-color: #6c757d !important;
-            border-color: #6c757d !important;
-            color: #fff !important;
-            transition: background-color 0.3s ease-in-out;
+            background-color: #6c757d;
+            color: #fff;
         }
 
         .btn-secondary:hover {
-            background-color: #5a6268 !important;
+            background-color: #5a6268;
         }
 
         /* 提示框样式 */
@@ -72,7 +97,7 @@
             border-radius: 4px;
             pointer-events: none;
             display: none;
-            z-index: 1000; /* 确保在最前面 */
+            z-index: 1000;
         }
 
         /* 自定义菜单样式 */
@@ -83,7 +108,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             display: none;
-            z-index: 1500; /* 确保在最前面 */
+            z-index: 1500;
         }
 
         #contextMenu ul {
@@ -121,20 +146,18 @@
 
         /* 响应式布局 */
         @media (max-width: 768px) {
-            #inputForm {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
+            #inputForm .form-group {
+                flex: 1 1 100%;
             }
 
-            #inputForm .form-control,
             #inputForm .btn {
-                width: 48%;
+                flex: 1 1 100%;
+                margin-top: 10px;
             }
 
             /* 竖屏模式下的旋转提示 */
             body.portrait #chart,
-            body.portrait #inputForm {
+            body.portrait #inputFormContainer {
                 display: none;
             }
 
@@ -146,24 +169,41 @@
 </head>
 <body>
 
-<div id="inputForm">
-    <input type="text" id="taskName" class="form-control" placeholder="航班号">
-    <input type="time" id="startTime" class="form-control" placeholder="开始时间">
-    <select id="taskType" class="form-control">
-        <option value="flight-arrival">到达</option>
-        <option value="flight-departure">离港</option>
-    </select>
-    <input type="number" id="taskCount" class="form-control" placeholder="任务数量" min="1" value="1">
-    <input type="number" id="taskDuration" class="form-control" placeholder="任务时长（分钟）" min="1" value="50">
-    <button id="addTaskBtn" class="btn btn-primary">添加任务</button>
-    <button id="undoBtn" class="btn btn-secondary" disabled>撤销</button>
-    <button id="exportBtn" class="btn btn-primary">导出数据</button>
-    <button id="importBtn" class="btn btn-primary">导入数据</button>
-    <input type="file" id="importInput" accept=".json, .xlsx, .xls" style="display: none;">
-    <button id="view6h" class="btn btn-secondary">6小时视图</button>
-    <button id="view12h" class="btn btn-secondary">12小时视图</button>
-    <button id="view18h" class="btn btn-secondary">18小时视图</button>
-    <button id="view24h" class="btn btn-secondary">24小时视图</button>
+<div id="inputFormContainer">
+    <form id="inputForm">
+        <div class="form-group">
+            <label for="taskName">航班号</label>
+            <input type="text" id="taskName" class="form-control" placeholder="请输入航班号">
+        </div>
+        <div class="form-group">
+            <label for="startTime">开始时间</label>
+            <input type="time" id="startTime" class="form-control" placeholder="开始时间">
+        </div>
+        <div class="form-group">
+            <label for="taskType">任务类型</label>
+            <select id="taskType" class="form-control">
+                <option value="flight-arrival">到达</option>
+                <option value="flight-departure">离港</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="taskCount">任务数量</label>
+            <input type="number" id="taskCount" class="form-control" placeholder="任务数量" min="1" value="1">
+        </div>
+        <div class="form-group">
+            <label for="taskDuration">任务时长（分钟）</label>
+            <input type="number" id="taskDuration" class="form-control" placeholder="任务时长（分钟）" min="1" value="50">
+        </div>
+        <button type="button" id="addTaskBtn" class="btn btn-primary">添加任务</button>
+        <button type="button" id="undoBtn" class="btn btn-secondary" disabled>撤销</button>
+        <button type="button" id="exportBtn" class="btn btn-primary">导出数据</button>
+        <button type="button" id="importBtn" class="btn btn-primary">导入数据</button>
+        <input type="file" id="importInput" accept=".json, .xlsx, .xls" style="display: none;">
+        <button type="button" id="view6h" class="btn btn-secondary">6小时视图</button>
+        <button type="button" id="view12h" class="btn btn-secondary">12小时视图</button>
+        <button type="button" id="view18h" class="btn btn-secondary">18小时视图</button>
+        <button type="button" id="view24h" class="btn btn-secondary">24小时视图</button>
+    </form>
 </div>
 
 <canvas id="chart" width="800" height="600"></canvas>
