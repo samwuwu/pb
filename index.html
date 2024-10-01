@@ -21,6 +21,7 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
             background-color: #fff;
             margin-top: 20px;
+            touch-action: none; /* 禁用默认手势操作 */
         }
 
         /* 统一表单和按钮样式 */
@@ -74,14 +75,42 @@
             z-index: 1000; /* 确保在最前面 */
         }
 
+        /* 旋转提示 */
+        #rotatePrompt {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            z-index: 2000;
+        }
+
         /* 响应式布局 */
-        @media (max-width: 576px) {
-            #inputForm .form-row {
-                flex-direction: column;
+        @media (max-width: 768px) {
+            #inputForm {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
             }
 
-            .btn {
-                width: 100%;
+            #inputForm .form-control,
+            #inputForm .btn {
+                width: 48%;
+            }
+
+            /* 竖屏模式下的旋转提示 */
+            body.portrait #chart,
+            body.portrait #inputForm {
+                display: none;
+            }
+
+            body.portrait #rotatePrompt {
+                display: block;
             }
         }
     </style>
@@ -111,6 +140,7 @@
 <canvas id="chart" width="800" height="600"></canvas>
 
 <div id="tooltip"></div>
+<div id="rotatePrompt">请旋转您的设备以获得更好的体验。</div>
 
 <!-- 引入主脚本 -->
 <script src="gantt_chart.js"></script>

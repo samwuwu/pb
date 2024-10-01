@@ -10,7 +10,8 @@ class GanttChart {
         this.dragTask = null;
         this.offsetY = 0;
         this.isDraggingView = false;
-        this.lastMouseX = 0;
+        this.lastTouchX = 0;
+        this.lastTouchY = 0;
         this.viewStartHour = 6;
         this.viewEndHour = 18;
         this.leftMargin = 40;
@@ -31,6 +32,10 @@ class GanttChart {
 
         // 初始化工具提示
         this.initTooltip();
+
+        // 检查屏幕方向
+        this.checkOrientation();
+        window.addEventListener('orientationchange', this.checkOrientation.bind(this));
     }
 
     bindEvents() {
@@ -56,11 +61,21 @@ class GanttChart {
         this.canvas.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
         this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
         this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+        this.canvas.addEventListener('touchcancel', this.handleTouchEnd.bind(this));
     }
 
     resizeCanvas() {
         this.canvas.width = window.innerWidth - 40;
         this.updateChart();
+    }
+
+    // 检查屏幕方向
+    checkOrientation() {
+        if (window.matchMedia("(orientation: portrait)").matches) {
+            document.body.classList.add('portrait');
+        } else {
+            document.body.classList.remove('portrait');
+        }
     }
 
     // 添加任务
@@ -493,27 +508,105 @@ class GanttChart {
     // 触摸事件处理
     handleTouchStart(e) {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.handleMouseDown(mouseEvent);
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const { x, y } = this.getEventPos(touch);
+            this.touchStartTime = Date.now();
+            this.lastTouchX = x;
+            this.lastTouchY = y;
+
+            const clickedTask = this.isTaskClicked(x, y);
+            if (clickedTask) {
+                this.isDragging = true;
+                this.dragTask = clickedTask;
+                this.dragTask.isDragging = true;
+                this.offsetY = y - this.dragTask.y;
+            } else {
+                this.isDraggingView = true;
+                this.lastTouchX = x;
+            }
+        }
     }
 
     handleTouchMove(e) {
         e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.handleMouseMove(mouseEvent);
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const { x, y } = this.getEventPos(touch);
+
+            if (this.isDragging && this.dragTask) {
+                this.dragTask.y = y - this.offsetY;
+                this.updateChart();
+            } else if (this.isDraggingView) {
+                const dx = x - this.lastTouchX;
+                const hourWidth = (this.canvas.width - this.leftMargin) / (this.viewEndHour - this.viewStartHour);
+                const hourShift = dx / hourWidth;
+                this.viewStartHour = this.viewStartHour - hourShift;
+                this.viewEndHour = this.viewEndHour - hourShift;
+
+                this.viewStartHour = Math.max(0, Math.round(this.viewStartHour * 100) / 100);
+                this.viewEndHour = Math.min(24, Math.round(this.viewEndHour * 100) / 100);
+
+                if (this.viewStartHour < 0) {
+                    this.viewStartHour = 0;
+                    this.viewEndHour = this.viewStartHour + (this.viewEndHour - this.viewStartHour);
+                }
+                if (this.viewEndHour > 24) {
+                    this.viewEndHour = 24;
+                    this.viewStartHour = this.viewEndHour - (this.viewEndHour - this.viewStartHour);
+                }
+                this.lastTouchX = x;
+                this.updateChart();
+            }
+        }
     }
 
     handleTouchEnd(e) {
         e.preventDefault();
-        this.handleMouseUp();
+        if (this.isDragging && this.dragTask) {
+            this.undoStack.push(this.deepCopy(this.tasks)); // 保存拖动前的状态
+            this.snapToNearestRow(this.dragTask);
+            this.dragTask.isDragging = false;
+            this.updateChart();
+            this.isDragging = false;
+            this.dragTask = null;
+        }
+        this.isDraggingView = false;
+
+        // 处理长按删除功能
+        const touchDuration = Date.now() - this.touchStartTime;
+        if (touchDuration > 500 && this.lastTouchX !== null && this.lastTouchY !== null) {
+            const clickedTask = this.isTaskClicked(this.lastTouchX, this.lastTouchY);
+            if (clickedTask) {
+                this.undoStack.push(this.deepCopy(this.tasks)); // 保存删除前的状态
+                this.tasks = this.tasks.filter(task => task !== clickedTask);
+                this.updateChart();
+            }
+        }
+
+        // 处理双击复制功能
+        if (touchDuration < 300 && this.lastTouchX !== null && this.lastTouchY !== null) {
+            if (this.lastTapTime && Date.now() - this.lastTapTime < 300) {
+                const clickedTask = this.isTaskClicked(this.lastTouchX, this.lastTouchY);
+                if (clickedTask) {
+                    this.undoStack.push(this.deepCopy(this.tasks)); // 保存复制前的状态
+                    const newTask = this.deepCopy(clickedTask);
+
+                    newTask.startDate = new Date(clickedTask.startDate);
+                    newTask.endDate = new Date(clickedTask.endDate);
+
+                    const newRowIndex = this.findAvailableRow(newTask.startDate, newTask.endDate);
+                    newTask.row = newRowIndex;
+                    newTask.y = this.startY + newRowIndex * this.rowHeight + (this.rowHeight - this.taskHeight) / 2;
+
+                    this.tasks.push(newTask);
+                    this.updateChart();
+                }
+            }
+            this.lastTapTime = Date.now();
+        }
+        this.lastTouchX = null;
+        this.lastTouchY = null;
     }
 
     // 获取事件坐标
