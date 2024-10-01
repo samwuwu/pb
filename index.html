@@ -75,6 +75,35 @@
             z-index: 1000; /* 确保在最前面 */
         }
 
+        /* 自定义菜单样式 */
+        #contextMenu {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            display: none;
+            z-index: 1500; /* 确保在最前面 */
+        }
+
+        #contextMenu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #contextMenu li {
+            padding: 10px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        #contextMenu li:hover {
+            background-color: #f0f0f0;
+        }
+
         /* 旋转提示 */
         #rotatePrompt {
             display: none;
@@ -140,6 +169,12 @@
 <canvas id="chart" width="800" height="600"></canvas>
 
 <div id="tooltip"></div>
+<div id="contextMenu">
+    <ul>
+        <li id="copyTask">复制</li>
+        <li id="deleteTask">删除</li>
+    </ul>
+</div>
 <div id="rotatePrompt">请旋转您的设备以获得更好的体验。</div>
 
 <!-- 引入主脚本 -->

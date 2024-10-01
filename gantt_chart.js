@@ -30,8 +30,9 @@ class GanttChart {
         this.resizeCanvas();
         window.addEventListener('resize', this.resizeCanvas.bind(this));
 
-        // 初始化工具提示
+        // 初始化工具提示和上下文菜单
         this.initTooltip();
+        this.initContextMenu();
 
         // 检查屏幕方向
         this.checkOrientation();
@@ -76,6 +77,70 @@ class GanttChart {
         } else {
             document.body.classList.remove('portrait');
         }
+    }
+
+    // 初始化上下文菜单
+    initContextMenu() {
+        this.contextMenu = document.getElementById('contextMenu');
+        this.copyTaskMenuItem = document.getElementById('copyTask');
+        this.deleteTaskMenuItem = document.getElementById('deleteTask');
+
+        this.copyTaskMenuItem.addEventListener('click', () => {
+            if (this.selectedTask) {
+                this.copyTask(this.selectedTask);
+                this.hideContextMenu();
+            }
+        });
+
+        this.deleteTaskMenuItem.addEventListener('click', () => {
+            if (this.selectedTask) {
+                this.deleteTask(this.selectedTask);
+                this.hideContextMenu();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (this.contextMenu.style.display === 'block' && !this.contextMenu.contains(e.target)) {
+                this.hideContextMenu();
+            }
+        });
+    }
+
+    // 显示上下文菜单
+    showContextMenu(x, y, task) {
+        this.selectedTask = task;
+        this.contextMenu.style.left = `${x}px`;
+        this.contextMenu.style.top = `${y}px`;
+        this.contextMenu.style.display = 'block';
+    }
+
+    // 隐藏上下文菜单
+    hideContextMenu() {
+        this.contextMenu.style.display = 'none';
+        this.selectedTask = null;
+    }
+
+    // 复制任务
+    copyTask(task) {
+        this.undoStack.push(this.deepCopy(this.tasks)); // 保存复制前的状态
+        const newTask = this.deepCopy(task);
+
+        newTask.startDate = new Date(task.startDate);
+        newTask.endDate = new Date(task.endDate);
+
+        const newRowIndex = this.findAvailableRow(newTask.startDate, newTask.endDate);
+        newTask.row = newRowIndex;
+        newTask.y = this.startY + newRowIndex * this.rowHeight + (this.rowHeight - this.taskHeight) / 2;
+
+        this.tasks.push(newTask);
+        this.updateChart();
+    }
+
+    // 删除任务
+    deleteTask(task) {
+        this.undoStack.push(this.deepCopy(this.tasks)); // 保存删除前的状态
+        this.tasks = this.tasks.filter(t => t !== task);
+        this.updateChart();
     }
 
     // 添加任务
@@ -479,18 +544,7 @@ class GanttChart {
         const { x, y } = this.getEventPos(e);
         const clickedTask = this.isTaskClicked(x, y);
         if (clickedTask) {
-            this.undoStack.push(this.deepCopy(this.tasks)); // 保存复制前的状态
-            const newTask = this.deepCopy(clickedTask);
-
-            newTask.startDate = new Date(clickedTask.startDate);
-            newTask.endDate = new Date(clickedTask.endDate);
-
-            const newRowIndex = this.findAvailableRow(newTask.startDate, newTask.endDate);
-            newTask.row = newRowIndex;
-            newTask.y = this.startY + newRowIndex * this.rowHeight + (this.rowHeight - this.taskHeight) / 2;
-
-            this.tasks.push(newTask);
-            this.updateChart();
+            this.copyTask(clickedTask);
         }
     }
 
@@ -499,9 +553,9 @@ class GanttChart {
         const { x, y } = this.getEventPos(e);
         const clickedTask = this.isTaskClicked(x, y);
         if (clickedTask) {
-            this.undoStack.push(this.deepCopy(this.tasks)); // 保存删除前的状态
-            this.tasks = this.tasks.filter(task => task !== clickedTask);
-            this.updateChart();
+            this.showContextMenu(e.clientX, e.clientY, clickedTask);
+        } else {
+            this.hideContextMenu();
         }
     }
 
@@ -512,8 +566,12 @@ class GanttChart {
             const touch = e.touches[0];
             const { x, y } = this.getEventPos(touch);
             this.touchStartTime = Date.now();
-            this.lastTouchX = x;
-            this.lastTouchY = y;
+            this.touchTimer = setTimeout(() => {
+                const clickedTask = this.isTaskClicked(x, y);
+                if (clickedTask) {
+                    this.showContextMenu(touch.clientX, touch.clientY, clickedTask);
+                }
+            }, 500);
 
             const clickedTask = this.isTaskClicked(x, y);
             if (clickedTask) {
@@ -530,6 +588,7 @@ class GanttChart {
 
     handleTouchMove(e) {
         e.preventDefault();
+        clearTimeout(this.touchTimer);
         if (e.touches.length === 1) {
             const touch = e.touches[0];
             const { x, y } = this.getEventPos(touch);
@@ -563,6 +622,7 @@ class GanttChart {
 
     handleTouchEnd(e) {
         e.preventDefault();
+        clearTimeout(this.touchTimer);
         if (this.isDragging && this.dragTask) {
             this.undoStack.push(this.deepCopy(this.tasks)); // 保存拖动前的状态
             this.snapToNearestRow(this.dragTask);
@@ -572,41 +632,6 @@ class GanttChart {
             this.dragTask = null;
         }
         this.isDraggingView = false;
-
-        // 处理长按删除功能
-        const touchDuration = Date.now() - this.touchStartTime;
-        if (touchDuration > 500 && this.lastTouchX !== null && this.lastTouchY !== null) {
-            const clickedTask = this.isTaskClicked(this.lastTouchX, this.lastTouchY);
-            if (clickedTask) {
-                this.undoStack.push(this.deepCopy(this.tasks)); // 保存删除前的状态
-                this.tasks = this.tasks.filter(task => task !== clickedTask);
-                this.updateChart();
-            }
-        }
-
-        // 处理双击复制功能
-        if (touchDuration < 300 && this.lastTouchX !== null && this.lastTouchY !== null) {
-            if (this.lastTapTime && Date.now() - this.lastTapTime < 300) {
-                const clickedTask = this.isTaskClicked(this.lastTouchX, this.lastTouchY);
-                if (clickedTask) {
-                    this.undoStack.push(this.deepCopy(this.tasks)); // 保存复制前的状态
-                    const newTask = this.deepCopy(clickedTask);
-
-                    newTask.startDate = new Date(clickedTask.startDate);
-                    newTask.endDate = new Date(clickedTask.endDate);
-
-                    const newRowIndex = this.findAvailableRow(newTask.startDate, newTask.endDate);
-                    newTask.row = newRowIndex;
-                    newTask.y = this.startY + newRowIndex * this.rowHeight + (this.rowHeight - this.taskHeight) / 2;
-
-                    this.tasks.push(newTask);
-                    this.updateChart();
-                }
-            }
-            this.lastTapTime = Date.now();
-        }
-        this.lastTouchX = null;
-        this.lastTouchY = null;
     }
 
     // 获取事件坐标
