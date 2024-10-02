@@ -6,20 +6,31 @@ body {
     text-transform: uppercase;
 }
 
+
+
+
 /* 保持原有的 canvas 样式 */
 #chart {
     border: 1px solid #ddd;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     background-color: #fff;
-    margin-top: 20px;
+    margin-top: 0px;
+    margin: 0 auto; /* 居中甘特图 */
+    border-radius: 15px;
+}
+
+.card {
+    border-radius: 15px; /* 圆角效果 */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* 轻微阴影 */
+    border: 1px solid #ddd; /* 边框 */
 }
 
 /* 统一表单和按钮样式 */
 #inputForm .form-control,
 #inputForm .btn {
-    width: 100px;
+    width: 90px;
     border: 1px solid #ddd;
-    border-radius: 20px;
+    border-radius: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     background-color: #fff;
     height: 40px;
@@ -35,7 +46,7 @@ body {
     background-color: #007bff !important;
     border-color: #007bff !important;
     color: #fff !important;
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.2s ease-in-out;
 }
 
 .btn-primary:hover {
@@ -46,24 +57,11 @@ body {
     background-color: #6c757d !important;
     border-color: #6c757d !important;
     color: #fff !important;
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.2s ease-in-out;
 }
 
 .btn-secondary:hover {
-    background-color: #5a6268 !important;
-}
-
-/* 提示框样式 */
-/* 如果有外部的 CSS 文件，确保包含以下样式 */
-#tooltip {
-    position: absolute;
-    padding: 5px 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    border-radius: 4px;
-    pointer-events: none;
-    display: none;
-    z-index: 1000; /* 确保在最前面 */
+    background-color: #273036 !important;
 }
 
 
