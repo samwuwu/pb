@@ -505,12 +505,7 @@ canvas.addEventListener('mousemove', (e) => {
         updateChart();
     } else {
         // 在 mousemove 事件中
-        const hoveredTask = isTaskClicked(x, y);
-        if (hoveredTask) {
-            showTooltip(hoveredTask, x, y); // 使用相对坐标
-        } else {
-            hideTooltip();
-        }
+        
     }
 });
 
