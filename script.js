@@ -70,14 +70,17 @@ function importData(event) {
 
                 // 将 Excel 数据转换为任务对象
                 tasks = sheetData.slice(1).map(row => {
-                    let [taskName, startTime, taskType] = row;
+                    let [taskName, startTime, taskType, taskCount] = row;
 
-                    // 检查 startTime 是否为时间对象，并转换为字符串
+                    // 处理中文的任务类型：进港 -> flight-arrival，出港 -> flight-departure
+                    taskType = taskType === '进港' ? 'flight-arrival' : 'flight-departure';
+
+                    // 检查 startTime 是否为字符串，并保持 HH:MM 格式
                     if (typeof startTime === 'object') {
                         startTime = startTime.toTimeString().slice(0, 5); // 转换为 HH:MM
                     }
 
-                    // 如果是数字格式的 Excel 时间，进行转换
+                    // 如果是 Excel 的时间格式，进行时间转换
                     if (typeof startTime === 'number') {
                         let date = new Date((startTime - 25569) * 86400 * 1000);  // Excel 日期转换公式
                         let hours = date.getUTCHours();
@@ -85,15 +88,23 @@ function importData(event) {
                         startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
                     }
 
-                    // 调用 createTask，设置 isImported 为 true 确保任务时长为固定的 50 分钟
-                    const task = createTask(taskName, startTime, taskType, 50, true);
-                    
-                    // 查找合适的行（如果有重叠，将任务移动到下一行）
-                    task.row = findAvailableRow(task.startDate, task.endDate);
-                    task.y = startY + task.row * rowHeight + (rowHeight - taskHeight) / 2;
+                    // 如果任务数量为空或无效，默认任务数量为1
+                    taskCount = taskCount && !isNaN(taskCount) ? taskCount : 1;
 
-                    return task;
-                });
+                    // 创建任务数组，处理多个任务
+                    const taskArray = [];
+                    for (let i = 0; i < taskCount; i++) {
+                        const task = createTask(taskName, startTime, taskType, 50, true);
+
+                        // 分配任务到合适的行
+                        task.row = findAvailableRow(task.startDate, task.endDate);
+                        task.y = startY + task.row * rowHeight + (rowHeight - taskHeight) / 2;
+
+                        taskArray.push(task);
+                    }
+
+                    return taskArray;
+                }).flat(); // 展平数组，确保每个任务都是单独的条目
 
                 updateChart();
                 alert('Excel数据导入成功！');
@@ -104,6 +115,8 @@ function importData(event) {
         }
     }
 }
+
+
 
 
 
