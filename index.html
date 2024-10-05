@@ -19,10 +19,10 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
 
     <!-- jQuery（Bootstrap JavaScript 依赖） -->
-    <script src="js/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- Popper.js（Bootstrap JavaScript 依赖） -->
-    <script src="js/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
 
     <!-- 本地引入 Bootstrap JavaScript -->
     <script src="js/bootstrap.min.js"></script>
@@ -38,7 +38,7 @@
     <!-- 表单区域 -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5><img src="img/arro.svg" alt="Icon" width="25" height="25"> 添加航班任务</h5>
+            <h5><img src="img/Arro.svg" alt="Icon" width="25" height="25"> 添加航班任务</h5>
         </div>
         <div class="card-body">
             <div id="inputForm">
@@ -63,7 +63,9 @@
                         <input type="number" id="taskDuration" class="form-control" placeholder="任务时长（分钟）" min="1" value="50">
                     </div>
                     <div class="col-auto">
-                        <button id="addTaskBtn" class="btn btn-primary">添加任务</button>
+                        <button id="addTaskBtn" class="btn btn-primary" title="添加任务" aria-label="添加任务">
+                            添加任务
+                        </button>
                     </div>
                     <div class="col-auto">
                         <button id="undoBtn" class="btn btn-warning">撤销</button>
