@@ -29,7 +29,7 @@ body {
 #inputForm .form-control,
 #inputForm .btn {
     width: 90px;
-    border: 1px solid #ddd;
+    border: 0px solid #ddd;
     border-radius: 15px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     background-color: #fff;
@@ -57,7 +57,10 @@ body {
 .btn-primary:hover {
     background-color: #0056b3 !important;
 }
-
+.btn-primary:active {
+    transform: scale(0.9); /* 点击时缩放，增加互动感 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 减少阴影，模拟按钮按下去的效果 */
+}
 .btn-secondary {
     background-color: #6c757d !important;
     border-color: #6c757d !important;
@@ -65,15 +68,23 @@ body {
     transition: background-color 0.2s ease-in-out;
 }
 
+
 .btn-secondary:hover {
     background-color: #273036 !important;
 }
 
+.btn-secondary:active {
+    transform: scale(0.9); /* 点击时缩放，增加互动感 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 减少阴影，模拟按钮按下去的效果 */
+}
 #addTaskBtn:active {
     transform: scale(0.95);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
+#undoBtn:active {
+    transform: scale(0.95);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
 /* 响应式布局 */
 
