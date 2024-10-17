@@ -1,5 +1,7 @@
 let undoStack = [];
 // 全局变量
+let importedFileName = '';  // 用于存储导入的文件名
+
 let tasks = [];
 let isDragging = false;
 let dragTask = null;
@@ -37,6 +39,8 @@ document.getElementById('exportChartBtn').addEventListener('click', function () 
 function importData(event) {
     const file = event.target.files[0];
     if (file) {
+        importedFileName = file.name.split('.').slice(0, -1).join('.'); // 去掉文件扩展名，保存文件名
+
         const reader = new FileReader();
         const fileExtension = file.name.split('.').pop().toLowerCase();
 
@@ -86,6 +90,7 @@ function importData(event) {
         }
     }
 }
+
 
 // 处理选定的工作表
 function processSheet(workbook, sheetName) {
@@ -170,13 +175,15 @@ function addTask() {
     const startTime = document.getElementById('startTime').value;
     const taskType = document.getElementById('taskType').value;
     const taskCount = parseInt(document.getElementById('taskCount').value, 10) || 1;
-    const taskDuration = parseInt(document.getElementById('taskDuration').value, 10) || 50; // 获取自定义时长
+    const taskDuration = parseInt(document.getElementById('taskDuration').value, 10) || 50; // 自定义时长
+    const isLeader = document.getElementById('isLeader').checked; // 检查是否选择了组长
 
     if (taskName && startTime && taskCount > 0 && taskDuration > 0) {
         undoStack.push(tasks.map(task => ({ ...task }))); // 在添加新任务之前保存当前状态
         for (let i = 0; i < taskCount; i++) {
             const task = createTask(taskName, startTime, taskType, taskDuration);  // 自定义时长
             if (task) {
+                task.isLeader = isLeader;  // 在任务对象中记录是否是组长
                 tasks.push(task);
             }
         }
@@ -186,6 +193,7 @@ function addTask() {
         alert('请输入航班号、时间和任务数量');
     }
 }
+
 
 
 
@@ -451,17 +459,31 @@ function drawTasks() {
         const endTimeText = formatTime(task.endDate);
         const endTimeWidth = ctx.measureText(endTimeText).width;
 
+        // 如果任务是重叠任务，任务时间和名称分别显示
         if (task.isOverlapping) {
             ctx.fillText(startTimeText, startX + 5, task.displayY + 12);
             ctx.fillText(endTimeText, startX + width - endTimeWidth - 5, task.displayY + 12);
         } else {
+            // 绘制任务的开始时间和结束时间
             ctx.fillText(startTimeText, startX + 5, task.displayY + 12);
             ctx.fillText(endTimeText, startX + width - endTimeWidth - 5, task.displayY + 12);
-            const flightNumberX = startX + width / 2 - ctx.measureText(task.taskName).width / 2;
-            ctx.fillText(task.taskName.toUpperCase(), flightNumberX, task.displayY + task.displayHeight - 5);
+            
+            // 绘制航班号和组长图标
+            const taskNameX = startX + width / 2 - ctx.measureText(task.taskName).width / 2;
+
+            if (task.isLeader) {
+                // 如果是组长，先绘制👑图标，再绘制任务名
+                ctx.font = '16px Arial';
+                ctx.fillText('👑', taskNameX - 20, task.displayY + task.displayHeight - 5); // 在任务名称左侧绘制👑图标
+                ctx.font = '11px Arial';  // 恢复字体大小
+            }
+
+            // 绘制任务名称
+            ctx.fillText(task.taskName.toUpperCase(), taskNameX, task.displayY + task.displayHeight - 5);
         }
     });
 }
+
 
 function getTaskXAndWidth(task) {
     const hourWidth = (canvas.width - leftMargin) / (viewEndHour - viewStartHour);
@@ -629,18 +651,21 @@ function snapToNearestRow(task) {
 }
 
 function exportData() {
-    const fileName = prompt('👇🏻起个名吧，不然记不住:', 'tasks');
+    // 弹出对话框，默认显示导入的文件名，如果没有导入文件名则默认显示 'tasks'
+    const fileName = prompt('👇🏻起个名吧，不然记不住:', importedFileName || 'tasks');
     if (fileName) {
         const data = JSON.stringify(tasks);
         const blob = new Blob([data], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${fileName}.json`;
+        a.download = `${fileName}.json`;  // 使用用户输入或默认的文件名导出
         a.click();
         window.URL.revokeObjectURL(url);
     }
 }
+
+
 
 document.getElementById('undoBtn').addEventListener('click', undo);
 

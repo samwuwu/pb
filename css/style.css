@@ -6,9 +6,6 @@ body {
     text-transform: uppercase;
 }
 
-
-
-
 /* 保持原有的 canvas 样式 */
 #chart {
     border: 1px solid #ddd;
@@ -40,12 +37,42 @@ body {
     font-size: 14px;
     font-style: normal;
 }
-/* 为 form-row 添加间距 */
+
+/* 为 form-row 添加间距，并确保所有子元素垂直居中 */
 .form-row {
     display: flex;
-    flex-wrap: wrap; /* 确保换行布局在小屏上 */
-    gap: 10px; /* 为所有子元素添加间距 */
+    align-items: center;  /* 确保所有子元素在垂直方向上居中 */
+    flex-wrap: wrap;      /* 确保换行布局在小屏上 */
+    gap: 10px;            /* 为所有子元素添加间距 */
 }
+
+/* 覆盖 Bootstrap 的 form-check-input 样式 */
+input[type="checkbox"].form-check-input {
+    margin: 0;
+    vertical-align: middle;
+    width: 20px;   /* 提高复选框的高度和宽度，确保与其他控件一致 */
+    height: 20px;
+    display: inline-block; /* 确保复选框是内联块元素 */
+    padding: 0;    /* 清除内边距 */
+    box-sizing: border-box;
+}
+
+/* 调整col-auto以确保表单子项垂直居中 */
+.col-auto {
+    display: flex;
+    align-items: center; /* 保证每个元素在其容器内垂直居中 */
+}
+
+/* 为复选框和标签内容提供合适的间距 */
+label {
+    display: flex;
+    align-items: center;  /* 垂直居中 */
+    gap: 5px;             /* 复选框与文字之间的间距 */
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
 /* 按钮样式 */
 .btn-primary {
     background-color: #007bff !important;
@@ -57,17 +84,18 @@ body {
 .btn-primary:hover {
     background-color: #0056b3 !important;
 }
+
 .btn-primary:active {
     transform: scale(0.9); /* 点击时缩放，增加互动感 */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 减少阴影，模拟按钮按下去的效果 */
 }
+
 .btn-secondary {
     background-color: #6c757d !important;
     border-color: #6c757d !important;
     color: #fff !important;
     transition: background-color 0.2s ease-in-out;
 }
-
 
 .btn-secondary:hover {
     background-color: #273036 !important;
@@ -77,17 +105,89 @@ body {
     transform: scale(0.9); /* 点击时缩放，增加互动感 */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 减少阴影，模拟按钮按下去的效果 */
 }
+
 #addTaskBtn:active {
     transform: scale(0.95);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
+
 #undoBtn:active {
     transform: scale(0.95);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 响应式布局 */
+/* 组长标记样式 */
+.task-bar.leader::after {
+    content: '👑'; /* 使用王冠图标表示组长，可根据需要更换 */
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 16px;
+    pointer-events: none; /* 确保标记不会干扰任务条的其他交互 */
+}
 
+/* 组长开关的容器样式，保持在同一行 */
+.switch-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 开关样式 */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;          /* 调整开关大小 */
+    height: 28px;         /* 调整开关大小 */
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;         /* 滑块高度 */
+    width: 20px;          /* 滑块宽度 */
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3; /* 选中状态背景颜色 */
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px); /* 调整滑块滑动距离 */
+}
+
+.slider.round {
+    border-radius: 28px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* 响应式布局 */
 @media (max-width: 768px) {
     .form-row {
         flex-direction: column;

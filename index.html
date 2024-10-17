@@ -62,6 +62,10 @@
                     <div class="col-auto">
                         <input type="number" id="taskDuration" class="form-control" placeholder="任务时长（分钟）" min="1" value="50">
                     </div>
+                   
+                    
+                    
+
                     <div class="col-auto">
                         <button id="addTaskBtn" class="btn btn-primary" title="添加任务" aria-label="添加任务">
                             添加任务
@@ -74,6 +78,15 @@
                         <button id="undoBtn" class="btn btn-primary" onclick="window.open('snake.html', '_blank')">休息🐍下</button>
 
                     </div>
+                </div>
+
+                 <!-- 在现有的表单区域中添加组长选项 -->
+                 <div class="col-auto switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="isLeader">
+                        <span class="slider round"></span>
+                    </label>
+                    <label for="isLeader">👑组长</label>
                 </div>
 
                 <!-- 第二排: 导出图片，导出数据，导入数据按钮 -->
@@ -117,5 +130,6 @@
 
     <!-- 引入自定义JavaScript -->
     <script src="js/script.js"></script>
+    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a7a1518d83e42549d96d6c490ef4776"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
