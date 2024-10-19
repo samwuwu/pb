@@ -365,7 +365,7 @@
         });
 
         function updateLeaderboardFromServer() {
-            fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+            fetch('https://lb.4321321.xyz/api/leaderboard')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('获取排行榜失败');
@@ -397,7 +397,7 @@
         }
 
         function isInTopThree(score) {
-            return fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+            return fetch('https://lb.4321321.xyz/api/leaderboard')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('获取排行榜失败');
@@ -418,7 +418,7 @@
         }
 
         function submitScore(name, score) {
-            return fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard', {
+            return fetch('https://lb.4321321.xyz/api/leaderboard', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -441,7 +441,7 @@
         }
 
         function displayTopScores() {
-            fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+            fetch('https://lb.4321321.xyz/api/leaderboard')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('获取排行榜失败');
