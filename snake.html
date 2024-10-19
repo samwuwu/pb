@@ -179,6 +179,7 @@
         let rows, columns;
         let snake, food, gameInterval, isGameOver = false;
         let touchStartX = 0, touchStartY = 0;
+const THRESHOLD = 30;
         let currentScore = 0;
 
         function resizeCanvas() {
@@ -373,6 +374,8 @@
 
         function handleTouchMove(evt) {
             evt.preventDefault();
+            if (isGameOver) return;
+            if (!touchStartX || !touchStartY) return;
             if (isGameOver) return;
             const touch = evt.touches[0];
             const deltaX = touch.clientX - touchStartX;
