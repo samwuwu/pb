@@ -107,7 +107,7 @@
                 opacity: 1;
             }
         }
-        #restartButton {
+        #restartButton { margin: 0 auto; display: block;
             padding: 10px 20px; /* 增加按钮内边距 */
             background-color: #61dafb; /* 按钮背景颜色 */
             color: #282c34; /* 按钮文字颜色 */
@@ -171,7 +171,7 @@
             <input type="text" id="playerName" placeholder="🎉请输入您的姓名" style="width: 150px;"/> <!-- 设置宽度 -->
             <button id="submitButton" onclick="handleSubmit()">提交</button> <!-- 提交按钮 -->
         </div>
-        <div id="restartContainer" style="display: none;">
+        <div id="restartContainer" style="display: none; text-align: center;">
             <button id="restartButton">再来一次？</button>
         </div>
         <div id="topScores" style="margin-top: 10px;"></div> <!-- 显示排行榜 -->
