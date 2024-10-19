@@ -363,11 +363,13 @@
 
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > THRESHOLD) {
                 snake.changeDirection(deltaX > 0 ? 'Right' : 'Left');
-            } else if (Math.abs(dy) > THRESHOLD) {
-                snake.changeDirection(dy > 0 ? 'Down' : 'Up');
+            } else if (Math.abs(deltaY) > THRESHOLD) {
+                snake.changeDirection(deltaY > 0 ? 'Down' : 'Up');
             }
-            touchStartX = touchEndX; // 更新触摸起始位置
-            touchStartY = touchEndY; // 更新触摸起始位置
+
+            // 更新触摸起始位置
+            touchStartX = touchEndX; 
+            touchStartY = touchEndY; 
         }
 
         function updateLeaderboardFromServer() {
