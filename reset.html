@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重置排行榜</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+        }
+        #resetButton {
+            padding: 10px 20px;
+            background-color: #dc3545;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #resetButton:hover {
+            background-color: #c82333;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>重置排行榜</h1>
+        <button id="resetButton">重置排行榜</button>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // 重置排行榜函数
+        function resetLeaderboard() {
+            fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard', {
+                method: 'DELETE',
+            })
+            .then(response => {
+                const messageDiv = document.getElementById('message');
+                if (response.ok) {
+                    messageDiv.textContent = '排行榜已成功重置。';
+                    messageDiv.style.color = 'green';
+                } else {
+                    messageDiv.textContent = '重置排行榜失败，请重试。';
+                    messageDiv.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = '请求出错，请检查网络连接。';
+                messageDiv.style.color = 'red';
+                console.error('请求错误:', error);
+            });
+        }
+
+        // 绑定重置按钮的点击事件
+        document.getElementById('resetButton').addEventListener('click', resetLeaderboard);
+    </script>
+</body>
+</html>

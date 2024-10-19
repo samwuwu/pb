@@ -381,13 +381,14 @@
             snake.changeDirection(direction);
         });
 
-        canvas.addEventListener('touchstart', (e) => {
+        // 将触摸事件监听器添加到整个 body
+        document.body.addEventListener('touchstart', (e) => {
             const touch = e.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
         });
 
-        canvas.addEventListener('touchmove', (e) => {
+        document.body.addEventListener('touchmove', (e) => {
             e.preventDefault(); // 防止页面滚动
             if (isGameOver) return;
             const touch = e.touches[0];
