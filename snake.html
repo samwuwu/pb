@@ -178,8 +178,8 @@
         let scale = 20;
         let rows, columns;
         let snake, food, gameInterval, isGameOver = false;
-        let touchStartX = 0, touchStartY = 0;
-const THRESHOLD = 20;
+        let touchStartX = null;
+let touchStartY = null;
 const THRESHOLD = 30;
         let currentScore = 0;
 
@@ -362,31 +362,29 @@ const THRESHOLD = 30;
             snake.changeDirection(direction);
         });
 
-        document.body.addEventListener('touchstart', handleTouchStart, false);
-        document.body.addEventListener('touchmove', handleTouchMove, false);
+        
 
         function handleTouchStart(evt) {
-            evt.preventDefault();
-            if (isGameOver) return;
-            const firstTouch = evt.touches[0];
-            touchStartX = firstTouch.clientX;
-            touchStartY = firstTouch.clientY;
-        }
+    evt.preventDefault();
+    if (isGameOver) return;
+    const firstTouch = evt.touches[0];
+    touchStartX = firstTouch.clientX;
+    touchStartY = firstTouch.clientY;
+}
 
         function handleTouchMove(evt) {
-            evt.preventDefault();
-            if (isGameOver) return;
-            if (touchStartX === null || touchStartY === null) return;
-            if (isGameOver) return;
-            if (!touchStartX || !touchStartY) return;
-            if (isGameOver) return;
-            const touch = evt.touches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = touch.clientY - touchStartY;
-
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > THRESHOLD) {
-                snake.changeDirection(deltaX > 0 ? 'Right' : 'Left');
-            } else if (Math.abs(deltaY) > THRESHOLD) {
+    evt.preventDefault();
+    if (!touchStartX || !touchStartY || isGameOver) return;
+    const touchEndX = evt.touches[0].clientX;
+    const touchEndY = evt.touches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        snake.changeDirection(deltaX > 0 ? 'Right' : 'Left');
+    } else {
+        snake.changeDirection(deltaY > 0 ? 'Down' : 'Up');
+    }
+} else if (Math.abs(deltaY) > THRESHOLD) {
                 snake.changeDirection(deltaY > 0 ? 'Down' : 'Up');
             }
             
