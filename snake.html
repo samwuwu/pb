@@ -388,6 +388,8 @@
             touchStartY = touch.clientY;
         });
 
+        const THRESHOLD = 30; // 设置一个阈值***📱滑动阈值
+
         document.body.addEventListener('touchmove', (e) => {
             e.preventDefault(); // 防止页面滚动
             if (isGameOver) return;
@@ -395,9 +397,9 @@
             const dx = touch.clientX - touchStartX;
             const dy = touch.clientY - touchStartY;
 
-            if (Math.abs(dx) > Math.abs(dy)) {
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > THRESHOLD) {
                 snake.changeDirection(dx > 0 ? 'Right' : 'Left');
-            } else {
+            } else if (Math.abs(dy) > THRESHOLD) {
                 snake.changeDirection(dy > 0 ? 'Down' : 'Up');
             }
             touchStartX = touch.clientX;
