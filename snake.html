@@ -5,86 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/snake.svg" type="image/svg">
     <title>休息🐍下</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            background-color: #f0f0f0;
-            overflow: hidden;
+        /* 新增样式以确保排行榜在游戏区域上方 */
+        #leaderboard {
+            position: absolute;
+            top: 0; /* 将排行榜置顶 */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 5; /* 确保在游戏区域上方 */
+            height: 80px; /* 设置排行榜高度 */
+            overflow: hidden; /* 隐藏溢出内容 */
+            display: flex; /* 使用flex布局 */
+            flex-direction: row; /* 横向排列 */
+            justify-content: space-between; /* 均匀分布 */
+            align-items: center; /* 垂直居中 */
+            width: 100%; /* 设置排行榜宽度为100% */
+        }
+        #leaderboard h3 {
+            margin: 0; /* 去掉默认的margin */
+            padding: 0; /* 去掉默认的padding */
+            font-weight: normal; /* 去掉加粗 */
+            font-size: 16px; /* 设置字体大小为16px（可根据需要调整） */
+            white-space: nowrap; /* 确保文本不换行 */
+        }
+        #leaderboardList {
+            display: flex; /* 使用flex布局 */
+            flex-direction: row; /* 横向排列 */
+            margin: 0; /* 去掉默认的margin */
+            padding: 0; /* 去掉默认的padding */
+            list-style-type: none; /* 去掉列表样式 */
+            justify-content: space-around; /* 均匀分布 */
+            width: 100%; /* 使列表占满宽度 */
+            white-space: nowrap; /* 确保条目在一行上显示 */
+        }
+        #leaderboardList li {
+            height: 18px; /* 每个条目的高度 */
+            line-height: 20px; /* 垂直居中 */
         }
         #gameContainer {
+            margin-top: 95px; /* 设置游戏区域与排行榜之间的间距 */
+        }
+        #controlCard {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        canvas {
-            background-color: #333;
-            
-            margin-top: 10px;
-            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.5);
-        }
-        #scoreDisplay {
-            font-size: 24px;
-            color: #333;
-            margin: 15px 0;
-            font-family: 'Arial', sans-serif;
+            justify-content: space-between;
             background-color: #fff;
             padding: 10px;
-            border-radius: 5px;
+            border-radius: 10px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            margin-bottom: 5px;
         }
-        #startButton, #restartButton {
-            padding: 15px 30px;
+        #startButton {
+            padding: 5px 30px; /* 设置按钮的高度为较低的值 */
             background-color: #28a745;
             color: white;
-            font-size: 20px;
+            font-size: 16px;
             border: none;
-            border-radius: 10px;
+            border-radius: 5px;
             cursor: pointer;
-            margin-top: 20px;
             transition: background-color 0.3s ease;
         }
-        #startButton:hover, #restartButton:hover {
+        #startButton:hover {
             background-color: #218838;
         }
+        #scoreDisplay {
+            font-size: 18px;
+            color: #333;
+            background-color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
+        }
         #scorePopup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            font-size: 24px;
-            text-align: center;
-            display: none;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 400px;
-            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.7);
+            display: none; /* 初始隐藏 */
+            position: fixed; /* 固定定位 */
+            top: 50%; /* 垂直居中 */
+            left: 50%; /* 水平居中 */
+            transform: translate(-50%, -50%); /* 使其居中 */
+            background-color: #282c34; /* 深色背景 */
+            border-radius: 10px; /* 圆角 */
+            padding: 20px; /* 内边距 */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* 阴影效果 */
+            z-index: 10; /* 确保在其他元素之上 */
+            text-align: center; /* 文本居中 */
+            animation: fadeIn 0.3s; /* 添加淡入动画 */
+            color: #61dafb; /* 字体颜色 */
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        #restartButton {
+            padding: 10px 20px; /* 增加按钮内边距 */
+            background-color: #61dafb; /* 按钮背景颜色 */
+            color: #282c34; /* 按钮文字颜色 */
+            border: none; /* 去掉边框 */
+            border-radius: 5px; /* 圆角 */
+            cursor: pointer; /* 鼠标指针样式 */
+            transition: background-color 0.3s; /* 背景颜色过渡效果 */
+            margin-top: 10px; /* 增加顶部间距 */
+        }
+        #restartButton:hover {
+            background-color: #21a1f1; /* 悬停时的背景颜色 */
+        }
+        /* 使弹出窗口中的内容居中 */
+        #scorePopup > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 垂直居中 */
+            justify-content: center; /* 水平居中 */
+        }
+        #playerName {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 80%; /* 设置宽度 */
+            max-width: 300px; /* 最大宽度 */
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+        }
+        #submitButton, #restartButton {
+            padding: 10px 20px; /* 设置按钮内边距 */
+            background-color: #61dafb; /* 按钮背景颜色 */
+            color: #282c34; /* 按钮文字颜色 */
+            border: none; /* 去掉边框 */
+            border-radius: 5px; /* 圆角 */
+            cursor: pointer; /* 鼠标指针样式 */
+            transition: background-color 0.3s; /* 背景颜色过渡效果 */
+            margin-left: 10px; /* 增加按钮间距 */
+        }
+        #submitButton:hover, #restartButton:hover {
+            background-color: #21a1f1; /* 悬停时的背景颜色 */
         }
     </style>
 </head>
 <body>
+    <div id="leaderboard">
+        <h3>排行榜</h3>
+        <ul id="leaderboardList"> <!-- 修改为 ul -->
+            <li>暂无记录</li>
+        </ul>
+    </div>
     <div id="gameContainer">
-                <div id="controlCard" style="display: flex; align-items: center; justify-content: space-between; background-color: #fff; padding: 10px; border-radius: 10px; box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2); margin-bottom: 20px; gap: 10px; width: 100%; max-width: 600px; box-sizing: border-box;">
-            <button id="startButton" style="padding: 5px; font-size: 18px; height: 50px; width: 120px;">开始游戏</button>
-            <div id="scoreDisplay" style="height: 30px; width: 100px; display: flex; align-items: center; justify-content: center;">得分: 0</div>
-        </div>
+        <div id="controlCard">
+            <button id="startButton">开始游戏</button>
+            <div id="scoreDisplay">得分: 0</div>
         </div>
         <canvas id="gameCanvas" style="border-radius: 10px;"></canvas>
-            </div>
+    </div>
     <div id="scorePopup">
         <p id="scoreText"></p>
-        <button id="restartButton" style="display: block; margin: 20px auto;">再来一次？？？</button>
+        <div id="nameInputContainer" style="display: none;">
+            <input type="text" id="playerName" placeholder="🎉请输入您的姓名" style="width: 150px;"/> <!-- 设置宽度 -->
+            <button id="submitButton" onclick="handleSubmit()">提交</button> <!-- 提交按钮 -->
+        </div>
+        <div id="restartContainer" style="display: none;">
+            <button id="restartButton">再来一次？</button>
+        </div>
+        <div id="topScores" style="margin-top: 10px;"></div> <!-- 显示排行榜 -->
     </div>
 
     <script>
@@ -97,11 +187,10 @@
         const scoreDisplay = document.getElementById('scoreDisplay');
         let scale = 20;
         let rows, columns;
-
-        let snake;
-        let food;
-        let gameInterval;
-        let isGameOver = false;
+        let snake, food, gameInterval, isGameOver = false;
+        let touchStartX = 0, touchStartY = 0;
+        let currentScrollIndex = 0; // 当前滚动索引
+        let currentScore = 0; // 当前得分
 
         function resizeCanvas() {
             const maxSize = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9);
@@ -176,7 +265,8 @@
             this.eat = function(food) {
                 if (this.x === food.x && this.y === food.y) {
                     this.total++;
-                    updateScore(this.total);
+                    currentScore++; // 更新当前得分
+                    console.log(`得分更新: ${currentScore}`); // 调试输出
                     return true;
                 }
                 return false;
@@ -216,8 +306,8 @@
             food = new Food();
             food.randomLocation();
             isGameOver = false;
-            updateScore(0);
-
+            updateScore(0); // 初始化得分显示为0
+            updateLeaderboardFromServer(); // 刷新排行榜
             gameInterval = window.setInterval(() => {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 food.draw();
@@ -225,34 +315,65 @@
                 snake.draw();
                 if (snake.eat(food)) {
                     food.randomLocation();
+                    updateScore(currentScore); // 更新得分显示
                 }
                 snake.checkCollision();
             }, 150);
-
             startButton.style.display = 'none';
         }
 
         function endGame() {
             clearInterval(gameInterval);
             isGameOver = true;
-            scoreText.textContent = `游戏结束！你的得分是: ${snake.total}`;
+            scoreText.textContent = `游戏结束！你的得分是: ${currentScore}`; // 显示当前得分
             scorePopup.style.display = 'block';
-            restartButton.style.display = 'block';
+
+            // 显示排行榜
+            displayTopScores();
+
+            // 检查分数是否在前三名
+            isInTopThree(currentScore).then(isTopThree => {
+                const nameInputContainer = document.getElementById('nameInputContainer');
+                const playerNameInput = document.getElementById('playerName');
+                const submitButton = document.getElementById('submitButton'); // 新增提交按钮
+                const restartContainer = document.getElementById('restartContainer');
+
+                if (isTopThree) {
+                    playerNameInput.value = ''; // 清空输入框
+                    nameInputContainer.style.display = 'flex'; // 显示输入框和提交按钮
+                    restartContainer.style.display = 'none'; // 隐藏再来一次按钮
+                    playerNameInput.focus(); // 聚焦输入框
+                } else {
+                    nameInputContainer.style.display = 'none'; // 隐藏输入框和提交按钮
+                    restartContainer.style.display = 'block'; // 显示再来一次按钮
+                }
+            });
+        }
+
+        function handleSubmit() {
+            const playerNameInput = document.getElementById('playerName');
+            const playerName = playerNameInput.value.trim();
+            if (playerName) {
+                submitScore(playerName, currentScore) // 提交当前得分
+                    .then(() => {
+                        // 提交后返回主页或执行其他逻辑
+                        window.location.href = 'snake.html'; // 替换为您的主页链接
+                    });
+            }
         }
 
         function restartGame() {
             scorePopup.style.display = 'none';
-            restartButton.style.display = 'none';
+            restartButton.style.display = 'none'; // 隐藏重启按钮
+            currentScore = 0; // 重置当前得分
+            updateLeaderboardFromServer(); // 刷新排行榜
             startGame();
             isGameOver = false;
         }
 
         function updateScore(score) {
-            scoreDisplay.textContent = `Score: ${score}`;
+            scoreDisplay.textContent = `得分: ${score}`;
         }
-
-        startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', restartGame);
 
         window.addEventListener('keydown', (e) => {
             if (isGameOver) return;
@@ -260,35 +381,137 @@
             snake.changeDirection(direction);
         });
 
-        document.body.addEventListener('touchstart', handleTouchStart, false);
-        document.body.addEventListener('touchmove', handleTouchMove, false);
+        canvas.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
 
-        let touchStartX = null;
-        let touchStartY = null;
-
-        function handleTouchStart(evt) {
-            evt.preventDefault();
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // 防止页面滚动
             if (isGameOver) return;
-            const firstTouch = evt.touches[0];
-            touchStartX = firstTouch.clientX;
-            touchStartY = firstTouch.clientY;
-        }
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
 
-        function handleTouchMove(evt) {
-            evt.preventDefault();
-            if (!touchStartX || !touchStartY || isGameOver) return;
-            const touchEndX = evt.touches[0].clientX;
-            const touchEndY = evt.touches[0].clientY;
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                snake.changeDirection(deltaX > 0 ? 'Right' : 'Left');
+            if (Math.abs(dx) > Math.abs(dy)) {
+                snake.changeDirection(dx > 0 ? 'Right' : 'Left');
             } else {
-                snake.changeDirection(deltaY > 0 ? 'Down' : 'Up');
+                snake.changeDirection(dy > 0 ? 'Down' : 'Up');
             }
-        }
-    </script>
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
 
-    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "1a7a1518d83e42549d96d6c490ef4776"}'></script><!-- End Cloudflare Web Analytics -->
+        function updateLeaderboardFromServer() {
+            fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('获取排行榜失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const leaderboardList = document.getElementById('leaderboardList');
+                    leaderboardList.innerHTML = '';
+                    if (!Array.isArray(data) || data.length === 0) {
+                        const noRecordItem = document.createElement('li');
+                        noRecordItem.textContent = '暂无记录';
+                        leaderboardList.appendChild(noRecordItem);
+                    } else {
+                        data
+                            .sort((a, b) => b.score - a.score)
+                            .slice(0, 3)
+                            .forEach((entry, index) => {
+                                const listItem = document.createElement('li');
+                                // 添加排名符号
+                                const rankSymbol = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                                listItem.textContent = `${rankSymbol} ${entry.name}: ${entry.score} 分`;
+                                leaderboardList.appendChild(listItem);
+                            });
+                    }
+                })
+                .catch(error => {
+                    console.error('获取排行榜失败:', error);
+                });
+        }
+
+        function isInTopThree(score) {
+            // 获取当前排行榜并检查分数
+            return fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('获取排行榜失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        const topScores = data.sort((a, b) => b.score - a.score).slice(0, 3);
+                        return topScores.length < 3 || score > topScores[topScores.length - 1].score;
+                    }
+                    return true; // 如果没有记录，默认进入前三名
+                })
+                .catch(error => {
+                    console.error('检查排行榜失败:', error);
+                    return false; // 出现错误时，默认不进入前三名
+                });
+        }
+
+        function submitScore(name, score) {
+            return fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name, score: score })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应不正常');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('分数提交成功:', data);
+                updateLeaderboardFromServer(); // 更新排行榜
+            })
+            .catch(error => {
+                console.error('提交分数失败:', error);
+            });
+        }
+
+        function displayTopScores() {
+            fetch('https://leaderboard-service.sep12th.workers.dev/api/leaderboard')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('获取排行榜失败');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const topScoresDiv = document.getElementById('topScores');
+                    topScoresDiv.innerHTML = ''; // 清空之前的内容
+                    if (Array.isArray(data) && data.length > 0) {
+                        const topScores = data.sort((a, b) => b.score - a.score).slice(0, 3);
+                        topScores.forEach((entry, index) => {
+                            const rankSymbol = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+                            const scoreItem = document.createElement('div');
+                            scoreItem.textContent = `${rankSymbol} ${entry.name}: ${entry.score} 分`;
+                            topScoresDiv.appendChild(scoreItem);
+                        });
+                    } else {
+                        topScoresDiv.textContent = '暂无记录';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取排行榜失败:', error);
+                });
+        }
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', restartGame);
+        window.addEventListener('load', updateLeaderboardFromServer);
+    </script>
 </body>
 </html>
