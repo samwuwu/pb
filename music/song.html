@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随音而行 - 致敬方大同</title>
+    <style>
+        :root {
+            --background-color: #2A2A2A;
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --progress-bar-bg: rgba(255, 255, 255, 0.2);
+            --progress-bar-fg: #FFFFFF;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .song-container {
+            background: linear-gradient(180deg, rgba(60,60,60,0.5) 0%, var(--background-color) 30%);
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 3rem;
+        }
+
+        .album-cover {
+            width: 320px;
+            height: 320px;
+            margin: 1rem auto;
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 4px 60px rgba(0,0,0,0.5);
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .song-title {
+            font-size: 22px;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.3rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .artist {
+            font-size: 19px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: normal;
+        }
+
+        .lyrics {
+            white-space: pre-line;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            padding-bottom: 120px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .song-info {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .section-title {
+            color: var(--text-primary);
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .lyric-line {
+            padding: 0.5rem 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .lyric-line:hover {
+            color: var(--text-primary);
+        }
+
+        .lyric-line.active {
+            color: var(--text-primary);
+            font-weight: bold;
+            transform: scale(1.05);
+        }
+
+        .fixed-player {
+            background: transparent;
+            padding: 0 1.5rem 2rem;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--progress-bar-bg);
+            border-radius: 1.5px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--progress-bar-fg);
+            border-radius: 1.5px;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin: 0.5rem 0 1rem;
+            font-weight: 500;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4rem;
+            margin: 1rem 0;
+        }
+
+        .control-button {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            opacity: 1;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-button {
+            font-size: 40px;
+            width: 45px;
+            height: 45px;
+        }
+
+        .control-button:hover {
+            transform: scale(1.1);
+        }
+
+        .bottom-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0 1rem;
+        }
+
+        .lyrics-button {
+            color: var(--text-secondary);
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .airplay-button {
+            color: var(--text-secondary);
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .queue-button {
+            color: var(--text-secondary);
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        @media (max-width: 480px) {
+            .album-cover {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .player-controls {
+                gap: 3rem;
+            }
+            
+            .control-button {
+                font-size: 24px;
+                width: 30px;
+                height: 30px;
+            }
+            
+            .play-button {
+                font-size: 36px;
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="song-container">
+        <div class="album-cover">
+            <img src="album-cover.jpg" alt="专辑封面">
+        </div>
+        <h1 class="song-title">随音而行</h1>
+        <div class="artist">- 致敬方大同</div>
+        <div class="lyrics">
+            <div class="section-title">[Verse 1]</div>
+            <div class="lyric-line" data-time="0">《黑白》琴键上 听见风</div>
+            <div class="lyric-line" data-time="4">《南音》 回荡着 自由歌声</div>
+            <div class="lyric-line" data-time="8">你我和旋律，《三人游》</div>
+            <div class="lyric-line" data-time="12">节奏在心中 跳动着自由</div>
+
+            <div class="section-title">[Chorus]</div>
+            <div class="lyric-line" data-time="16">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="20">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="24">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="28">自由不羁灵魂 永不被阻碍</div>
+
+            <div class="section-title">[Verse 2]</div>
+            <div class="lyric-line" data-time="32">《橙月》 光下 轻轻哼唱</div>
+            <div class="lyric-line" data-time="36">放飞 千纸鹤 承载愿望</div>
+            <div class="lyric-line" data-time="40">纵然渺小如 《小小虫》</div>
+            <div class="lyric-line" data-time="44">音符也能照亮寂寞夜空</div>
+
+            <div class="section-title">[Chorus]</div>
+            <div class="lyric-line" data-time="48">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="52">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="56">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="60">自由不羁灵魂 永不被阻碍</div>
+
+            <div class="section-title">[Bridge]</div>
+            <div class="lyric-line" data-time="64">旋律在耳边 轻轻流淌</div>
+            <div class="lyric-line" data-time="68">歌声在世界 回响不忘</div>
+            <div class="lyric-line" data-time="72">《如果爱》 能跨越时光</div>
+            <div class="lyric-line" data-time="76">音乐是最温暖的光</div>
+
+            <div class="section-title">[Chorus]</div>
+            <div class="lyric-line" data-time="80">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="84">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="88">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="92">自由不羁灵魂 永不被阻碍</div>
+
+            <div class="section-title">[Outro]</div>
+            <div class="lyric-line" data-time="96">风吹起 旋律仍在耳际</div>
+            <div class="lyric-line" data-time="100">音乐不停 记忆随音延续……</div>
+        </div>
+        <div class="song-info">
+            <p>类型：致敬歌曲</p>
+            <p>致敬对象：方大同</p>
+            <p>创作灵感：方大同经典歌曲串烧</p>
+        </div>
+    </div>
+
+    <div class="fixed-player">
+        <div class="progress-bar" id="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="time-info">
+            <span id="current-time">0:03</span>
+            <span id="duration">-3:04</span>
+        </div>
+        <div class="player-controls">
+            <button class="control-button" id="prev">⏮</button>
+            <button class="control-button play-button" id="play">⏸</button>
+            <button class="control-button" id="next">⏭</button>
+        </div>
+        <div class="bottom-controls">
+            <button class="lyrics-button">💬</button>
+            <button class="airplay-button">🎯</button>
+            <button class="queue-button">≣</button>
+        </div>
+        <audio id="audio-player" style="display: none;">
+            <source src="随音而行.mp3" type="audio/mpeg">
+            您的浏览器不支持音频播放。
+        </audio>
+    </div>
+
+    <script>
+        const audio = document.getElementById('audio-player');
+        const lyrics = document.querySelectorAll('.lyric-line');
+        const playButton = document.getElementById('play');
+        const progressBar = document.getElementById('progress');
+        const progressContainer = document.getElementById('progress-bar');
+        const currentTimeDisplay = document.getElementById('current-time');
+        const durationDisplay = document.getElementById('duration');
+        const volumeSlider = document.querySelector('.volume-slider');
+        const volumeProgress = document.getElementById('volume-progress');
+        const shuffleButton = document.getElementById('shuffle');
+        const repeatButton = document.getElementById('repeat');
+        let currentLyric = null;
+        let isPlaying = false;
+        let isShuffled = false;
+        let repeatMode = 0; // 0: 不循环, 1: 单曲循环, 2: 列表循环
+
+        // 播放/暂停控制
+        playButton.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                playButton.textContent = '▶';
+            } else {
+                audio.play();
+                playButton.textContent = '⏸';
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // 进度条更新
+        audio.addEventListener('timeupdate', () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+            currentTimeDisplay.textContent = formatTime(audio.currentTime);
+        });
+
+        // 点击进度条跳转
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = pos * audio.duration;
+        });
+
+        // 音量控制
+        volumeSlider.addEventListener('click', (e) => {
+            const rect = volumeSlider.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audio.volume = pos;
+            volumeProgress.style.width = `${pos * 100}%`;
+        });
+
+        // 随机播放
+        shuffleButton.addEventListener('click', () => {
+            isShuffled = !isShuffled;
+            shuffleButton.style.color = isShuffled ? '#1DB954' : '#FFFFFF';
+        });
+
+        // 循环模式
+        repeatButton.addEventListener('click', () => {
+            repeatMode = (repeatMode + 1) % 3;
+            switch(repeatMode) {
+                case 0:
+                    repeatButton.textContent = '🔁';
+                    break;
+                case 1:
+                    repeatButton.textContent = '🔂';
+                    break;
+                case 2:
+                    repeatButton.textContent = '🔁';
+                    break;
+            }
+        });
+
+        // 格式化时间
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 设置总时长
+        audio.addEventListener('loadedmetadata', () => {
+            durationDisplay.textContent = formatTime(audio.duration);
+            volumeProgress.style.width = `${audio.volume * 100}%`;
+        });
+
+        // 歌词同步
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            
+            lyrics.forEach(lyric => lyric.classList.remove('active'));
+            
+            for (let i = lyrics.length - 1; i >= 0; i--) {
+                const time = parseFloat(lyrics[i].dataset.time);
+                if (currentTime >= time) {
+                    lyrics[i].classList.add('active');
+                    if (currentLyric !== lyrics[i]) {
+                        currentLyric = lyrics[i];
+                        currentLyric.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                    break;
+                }
+            }
+        });
+
+        // 点击歌词跳转
+        lyrics.forEach(lyric => {
+            lyric.addEventListener('click', () => {
+                const time = parseFloat(lyric.dataset.time);
+                audio.currentTime = time;
+                if (!isPlaying) {
+                    audio.play();
+                    playButton.textContent = '⏸';
+                    isPlaying = true;
+                }
+            });
+        });
+
+        // 专辑封面旋转动画和唱臂效果
+        const albumCover = document.querySelector('.album-cover');
+        audio.addEventListener('play', () => {
+            albumCover.style.animationPlayState = 'running';
+            albumCover.classList.add('playing');
+            albumCover.classList.remove('paused');
+        });
+        audio.addEventListener('pause', () => {
+            albumCover.style.animationPlayState = 'paused';
+            albumCover.classList.remove('playing');
+            albumCover.classList.add('paused');
+        });
+
+        // 播放结束处理
+        audio.addEventListener('ended', () => {
+            if (repeatMode === 1) {
+                audio.currentTime = 0;
+                audio.play();
+            } else if (repeatMode === 2) {
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                isPlaying = false;
+                playButton.textContent = '▶';
+            }
+        });
+    </script>
+</body>
+</html> 
