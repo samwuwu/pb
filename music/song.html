@@ -9,11 +9,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="随音而行">
-    <link rel="apple-touch-icon" href="album-cover.jpg">
+    <link rel="apple-touch-icon" href="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
+    <link rel="apple-touch-icon-precomposed" href="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
+    <link rel="apple-touch-startup-image" href="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
     <meta name="apple-music-nowplaying-title" content="随音而行">
     <meta name="apple-music-nowplaying-artist" content="致敬方大同">
     <meta name="apple-music-nowplaying-album" content="随音而行">
-    <meta name="apple-music-nowplaying-artwork" content="album-cover.jpg">
+    <meta name="apple-music-nowplaying-artwork" content="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
     <meta name="description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
     <meta property="og:title" content="随音而行 - 致敬方大同">
     <meta property="og:description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
@@ -502,12 +504,12 @@
                 artist: '致敬方大同',
                 album: '随音而行',
                 artwork: [
-                    { src: 'album-cover.jpg', sizes: '96x96', type: 'image/jpeg' },
-                    { src: 'album-cover.jpg', sizes: '128x128', type: 'image/jpeg' },
-                    { src: 'album-cover.jpg', sizes: '192x192', type: 'image/jpeg' },
-                    { src: 'album-cover.jpg', sizes: '256x256', type: 'image/jpeg' },
-                    { src: 'album-cover.jpg', sizes: '384x384', type: 'image/jpeg' },
-                    { src: 'album-cover.jpg', sizes: '512x512', type: 'image/jpeg' }
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '96x96', type: 'image/jpeg' },
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '128x128', type: 'image/jpeg' },
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '192x192', type: 'image/jpeg' },
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '256x256', type: 'image/jpeg' },
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '384x384', type: 'image/jpeg' },
+                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '512x512', type: 'image/jpeg' }
                 ]
             });
             
@@ -556,7 +558,14 @@
                 audio.pause();
                 playButton.innerHTML = '▶';
             } else {
-                audio.play();
+                audio.play().then(() => {
+                    // 播放成功后更新MediaSession
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = 'playing';
+                    }
+                }).catch(error => {
+                    console.error('播放失败:', error);
+                });
                 playButton.innerHTML = '⏸';
             }
             isPlaying = !isPlaying;
@@ -579,6 +588,15 @@
                 progressBar.style.width = `${progress}%`;
                 currentTimeDisplay.textContent = formatTime(audio.currentTime);
                 lastUpdateTime = now;
+                
+                // 更新MediaSession状态
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.setPositionState({
+                        duration: audio.duration,
+                        playbackRate: audio.playbackRate,
+                        position: audio.currentTime
+                    });
+                }
             }
         });
 
@@ -599,6 +617,30 @@
         // 设置总时长
         audio.addEventListener('loadedmetadata', () => {
             durationDisplay.textContent = formatTime(audio.duration);
+            
+            // 确保在音频加载后更新MediaSession元数据
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: '随音而行',
+                    artist: '致敬方大同',
+                    album: '随音而行',
+                    artwork: [
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '96x96', type: 'image/jpeg' },
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '128x128', type: 'image/jpeg' },
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '192x192', type: 'image/jpeg' },
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '256x256', type: 'image/jpeg' },
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '384x384', type: 'image/jpeg' },
+                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '512x512', type: 'image/jpeg' }
+                    ]
+                });
+                
+                // 设置播放时间信息
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate,
+                    position: audio.currentTime
+                });
+            }
         });
 
         // 优化后的歌词同步
@@ -686,6 +728,26 @@
                     }
                 }
             });
+        });
+
+        // 尝试自动播放（可能会被浏览器阻止，但值得一试）
+        document.addEventListener('DOMContentLoaded', function() {
+            // 延迟一秒尝试自动播放
+            setTimeout(() => {
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        // 自动播放成功
+                        playButton.innerHTML = '⏸';
+                        isPlaying = true;
+                    })
+                    .catch(error => {
+                        // 自动播放被阻止
+                        console.log("自动播放被阻止，需要用户交互");
+                    });
+                }
+            }, 1000);
         });
     </script>
 </body>
