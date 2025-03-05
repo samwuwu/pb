@@ -10,6 +10,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="随音而行">
     <link rel="apple-touch-icon" href="album-cover.jpg">
+    <meta name="apple-music-nowplaying-title" content="随音而行">
+    <meta name="apple-music-nowplaying-artist" content="致敬方大同">
+    <meta name="apple-music-nowplaying-album" content="随音而行">
+    <meta name="apple-music-nowplaying-artwork" content="album-cover.jpg">
     <meta name="description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
     <meta property="og:title" content="随音而行 - 致敬方大同">
     <meta property="og:description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
@@ -344,6 +348,14 @@
             display: none;
         }
 
+        #audio-player {
+            position: absolute;
+            opacity: 0;
+            height: 0;
+            width: 0;
+            z-index: -1;
+        }
+
         @media (max-width: 480px) {
             .album-cover {
                 width: 280px;
@@ -462,7 +474,7 @@
         </div>
         <div class="additional-controls">
         </div>
-        <audio id="audio-player" style="display: none;" preload="auto" playsinline webkit-playsinline>
+        <audio id="audio-player" controls preload="auto" playsinline webkit-playsinline>
             <source src="随音而行.mp3" type="audio/mpeg">
             您的浏览器不支持音频播放。
         </audio>
@@ -490,7 +502,12 @@
                 artist: '致敬方大同',
                 album: '随音而行',
                 artwork: [
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '512x512', type: 'image/jpeg' }
+                    { src: 'album-cover.jpg', sizes: '96x96', type: 'image/jpeg' },
+                    { src: 'album-cover.jpg', sizes: '128x128', type: 'image/jpeg' },
+                    { src: 'album-cover.jpg', sizes: '192x192', type: 'image/jpeg' },
+                    { src: 'album-cover.jpg', sizes: '256x256', type: 'image/jpeg' },
+                    { src: 'album-cover.jpg', sizes: '384x384', type: 'image/jpeg' },
+                    { src: 'album-cover.jpg', sizes: '512x512', type: 'image/jpeg' }
                 ]
             });
             
