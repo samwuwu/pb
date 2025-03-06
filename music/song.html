@@ -122,6 +122,15 @@
             font-size: 24px;
             cursor: pointer;
             padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-lyrics svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
         }
 
         .lyrics {
@@ -298,6 +307,12 @@
             justify-content: center;
         }
 
+        .control-button svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
         .control-button#prev,
         .control-button#next,
         .control-button#play {
@@ -310,6 +325,36 @@
             font-size: 32px;
             width: 35px;
             height: 35px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        
+        .play-button svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        
+        .play-button.playing .play-icon {
+            display: none;
+        }
+        
+        .play-button.playing .pause-icon {
+            display: block;
+        }
+        
+        .play-button.paused .play-icon {
+            display: block;
+        }
+        
+        .play-button.paused .pause-icon {
+            display: none;
         }
 
         .lyrics-button {
@@ -418,7 +463,11 @@
         <div class="lyrics-header">
             <div></div>
             <div class="song-title" style="font-size: 17px;">随音而行</div>
-            <button class="close-lyrics">✕</button>
+            <button class="close-lyrics">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
         </div>
         <div class="lyrics show">
             <div class="section-title">[Verse 1]</div>
@@ -484,9 +533,24 @@
             <span id="duration">-3:04</span>
         </div>
         <div class="player-controls">
-            <button class="control-button" id="prev">⏮︎</button>
-            <button class="control-button play-button" id="play">▶</button>
-            <button class="control-button" id="next">⏭︎</button>
+            <button class="control-button" id="prev">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+            </button>
+            <button class="control-button play-button paused" id="play">
+                <svg class="play-icon" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg class="pause-icon" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+            </button>
+            <button class="control-button" id="next">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                </svg>
+            </button>
         </div>
         <div class="additional-controls">
         </div>
@@ -628,7 +692,8 @@
                     navigator.mediaSession.playbackState = 'playing';
                     document.querySelector('.album-cover').classList.add('playing');
                     document.querySelector('.album-cover').classList.remove('paused');
-                    playButton.innerHTML = '⏸';
+                    playButton.classList.add('playing');
+                    playButton.classList.remove('paused');
                     isPlaying = true;
                     
                     // 更新位置状态，提高锁屏控制的准确性
@@ -652,7 +717,8 @@
                     navigator.mediaSession.playbackState = 'paused';
                     document.querySelector('.album-cover').classList.remove('playing');
                     document.querySelector('.album-cover').classList.add('paused');
-                    playButton.innerHTML = '▶';
+                    playButton.classList.remove('playing');
+                    playButton.classList.add('paused');
                     isPlaying = false;
                 });
                 
@@ -739,7 +805,8 @@
                 if (playPromise !== undefined) {
                     playPromise.then(_ => {
                         // 播放成功
-                        playButton.innerHTML = '⏸';
+                        playButton.classList.add('playing');
+                        playButton.classList.remove('paused');
                         isPlaying = true;
                         albumCover.classList.add('playing');
                         
@@ -762,7 +829,8 @@
             } else {
                 // 暂停音频
                 audio.pause();
-                playButton.innerHTML = '▶';
+                playButton.classList.remove('playing');
+                playButton.classList.add('paused');
                 isPlaying = false;
                 albumCover.classList.remove('playing');
                 
@@ -885,7 +953,8 @@
         // 播放结束处理
         audio.addEventListener('ended', () => {
             isPlaying = false;
-            playButton.textContent = '▶';
+            playButton.classList.remove('playing');
+            playButton.classList.add('paused');
             navigator.mediaSession.playbackState = 'none';
         });
 
@@ -925,7 +994,8 @@
             if (document.visibilityState === 'visible') {
                 // 页面可见时，如果正在播放，确保UI状态正确
                 if (!audio.paused) {
-                    playButton.innerHTML = '⏸';
+                    playButton.classList.add('playing');
+                    playButton.classList.remove('paused');
                     isPlaying = true;
                     albumCover.classList.add('playing');
                     
