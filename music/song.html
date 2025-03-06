@@ -66,6 +66,8 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .song-container {
@@ -94,11 +96,35 @@
             overflow-y: auto;
             padding: 2rem 1rem;
             pointer-events: none;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: var(--text-secondary) transparent;
+            transition: opacity 0.3s ease;
+        }
+
+        .lyrics-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lyrics-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .lyrics-container::-webkit-scrollbar-thumb {
+            background-color: var(--text-secondary);
+            border-radius: 3px;
         }
 
         .lyrics-container.show {
             display: block;
             pointer-events: auto;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .lyrics-header {
@@ -113,6 +139,17 @@
             justify-content: space-between;
             align-items: center;
             pointer-events: auto;
+        }
+
+        .lyrics-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            flex: 1;
+            font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
 
         .close-lyrics {
@@ -140,29 +177,82 @@
             line-height: 2;
             display: block;
             text-align: center;
+            font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+
+        .lyrics::before,
+        .lyrics::after {
+            display: none;
         }
 
         .lyric-line {
-            padding: 0.8rem 0;
-            transition: all 0.3s ease;
+            padding: 1.2rem 0;
+            transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
             cursor: pointer;
-            opacity: 0.7;
-            font-size: 16px;
+            opacity: 0.5;
+            font-size: 17px;
             text-align: center;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+            margin: 0.3rem 0;
+            border-radius: 8px;
+            transform: scale(1);
+            filter: blur(0.5px);
         }
 
         .lyric-line:hover {
             color: var(--text-primary);
             opacity: 0.9;
             transform: scale(1.02);
+            filter: blur(0);
         }
 
         .lyric-line.active {
             color: var(--text-primary);
             opacity: 1;
-            font-size: 18px;
-            font-weight: 500;
+            font-size: 20px;
+            font-weight: 600;
             transform: scale(1.05);
+            animation: highlight-no-bg 2s ease;
+            margin: 0.5rem 0;
+            filter: blur(0);
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .lyric-line.near-active {
+            opacity: 0.8;
+            filter: blur(0.2px);
+            transform: scale(1.01);
+            transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .lyric-line.far {
+            opacity: 0.3;
+            filter: blur(1px);
+            transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        @keyframes highlight-no-bg {
+            0% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+            40% {
+                transform: scale(1.07);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes highlight {
+            0% { opacity: 0; }
+            100% { opacity: 0; }
         }
 
         .album-cover {
@@ -237,17 +327,6 @@
             font-size: 0.9rem;
             width: 100%;
             max-width: 600px;
-        }
-
-        .section-title {
-            color: var(--text-primary);
-            font-weight: bold;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-align: center;
         }
 
         .fixed-player {
@@ -439,6 +518,23 @@
                 width: 40px;
                 height: 40px;
             }
+            
+            .lyric-line {
+                font-size: 16px;
+                padding: 0.9rem 0;
+                margin: 0.2rem 0;
+            }
+            
+            .lyric-line.active {
+                font-size: 18px;
+                margin: 0.4rem 0;
+            }
+            
+            .section-title {
+                font-size: 13px;
+                margin-top: 1.5rem;
+                margin-bottom: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -461,8 +557,8 @@
 
     <div class="lyrics-container">
         <div class="lyrics-header">
-            <div></div>
-            <div class="song-title" style="font-size: 17px;">随音而行</div>
+            <div style="width: 20px;"></div>
+            <div class="lyrics-title">随音而行</div>
             <button class="close-lyrics">
                 <svg viewBox="0 0 24 24">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -470,56 +566,47 @@
             </button>
         </div>
         <div class="lyrics show">
-            <div class="section-title">[Verse 1]</div>
             <div class="lyric-line" data-time="11">《黑白》琴键上 听见风</div>
             <div class="lyric-line" data-time="16">《南音》 回荡着 自由歌声</div>
             <div class="lyric-line" data-time="21">你我和旋律，《三人游》</div>
             <div class="lyric-line" data-time="26">节奏在心中 跳动着自由</div>
 
-            <div class="section-title">[Chorus]</div>
-            <div class="lyric-line" data-time="31">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="30">你是 《特别的人》 教我懂得 《爱爱爱》</div>
             <div class="lyric-line" data-time="36">陪我走过 《危险世界》 迎接 《未来》</div>
             <div class="lyric-line" data-time="41">你的音乐如清风 将心打开</div>
             <div class="lyric-line" data-time="46">自由不羁灵魂 永不被阻碍</div>
 
-            <div class="section-title">[Verse 2]</div>
             <div class="lyric-line" data-time="51">《橙月》 光下 轻轻哼唱</div>
             <div class="lyric-line" data-time="56">放飞 《千纸鹤》 承载愿望</div>
-            <div class="lyric-line" data-time="61">纵然渺小如 《小小虫》</div>
-            <div class="lyric-line" data-time="66">音符也能照亮寂寞夜空</div>
+            <div class="lyric-line" data-time="62">纵然渺小如 《小小虫》</div>
+            <div class="lyric-line" data-time="67">音符也能照亮寂寞夜空</div>
 
-            <div class="section-title">[Chorus]</div>
-            <div class="lyric-line" data-time="71">你是 《特别的人》 教我懂得 《爱爱爱》</div>
-            <div class="lyric-line" data-time="76">陪我走过 《危险世界》 迎接 《未来》</div>
-            <div class="lyric-line" data-time="81">你的音乐如清风 将心打开</div>
-            <div class="lyric-line" data-time="86">自由不羁灵魂 永不被阻碍</div>
+            <div class="lyric-line" data-time="72">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="78">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="83">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="88">自由不羁灵魂 永不被阻碍</div>
 
-            <div class="section-title">[Verse 2]</div>
-            <div class="lyric-line" data-time="91">《橙月》 光下 轻轻哼唱</div>
-            <div class="lyric-line" data-time="96">放飞 《千纸鹤》 承载愿望</div>
-            <div class="lyric-line" data-time="101">纵然渺小如 《小小虫》</div>
-            <div class="lyric-line" data-time="106">音符也能照亮寂寞夜空</div>
+            <div class="lyric-line" data-time="95">《橙月》 光下 轻轻哼唱</div>
+            <div class="lyric-line" data-time="99">放飞 《千纸鹤》 承载愿望</div>
+            <div class="lyric-line" data-time="104">纵然渺小如 《小小虫》</div>
+            <div class="lyric-line" data-time="109">音符也能照亮寂寞夜空</div>
 
-            <div class="section-title">[Chorus]</div>
-            <div class="lyric-line" data-time="111">你是 《特别的人》 教我懂得 《爱爱爱》</div>
-            <div class="lyric-line" data-time="117">陪我走过 《危险世界》 迎接 《未来》</div>
-            <div class="lyric-line" data-time="123">你的音乐如清风 将心打开</div>
-            <div class="lyric-line" data-time="129">自由不羁灵魂 永不被阻碍</div>
+            <div class="lyric-line" data-time="115">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="120">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="126">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="131">自由不羁灵魂 永不被阻碍</div>
 
-            <div class="section-title">[Bridge]</div>
-            <div class="lyric-line" data-time="135">旋律在耳边 轻轻流淌</div>
-            <div class="lyric-line" data-time="140">歌声在世界 回响不忘</div>
-            <div class="lyric-line" data-time="145">《如果爱》 能跨越时光</div>
-            <div class="lyric-line" data-time="150">音乐是最温暖的光</div>
+            <div class="lyric-line" data-time="136">旋律在耳边 轻轻流淌</div>
+            <div class="lyric-line" data-time="141">歌声在世界 回响不忘</div>
+            <div class="lyric-line" data-time="146">《如果爱》 能跨越时光</div>
+            <div class="lyric-line" data-time="152">音乐是最温暖的光</div>
 
-            <div class="section-title">[Chorus]</div>
-            <div class="lyric-line" data-time="156">你是 《特别的人》 教我懂得 《爱爱爱》</div>
-            <div class="lyric-line" data-time="161">陪我走过 《危险世界》 迎接 《未来》</div>
-            <div class="lyric-line" data-time="166">你的音乐如清风 将心打开</div>
-            <div class="lyric-line" data-time="171">自由不羁灵魂 永不被阻碍</div>
+            <div class="lyric-line" data-time="157">你是 《特别的人》 教我懂得 《爱爱爱》</div>
+            <div class="lyric-line" data-time="162">陪我走过 《危险世界》 迎接 《未来》</div>
+            <div class="lyric-line" data-time="168">你的音乐如清风 将心打开</div>
+            <div class="lyric-line" data-time="173">自由不羁灵魂 永不被阻碍</div>
 
-            <div class="section-title">[Outro]</div>
-            <div class="lyric-line" data-time="176">风吹起 旋律仍在耳际</div>
+            <div class="lyric-line" data-time="177">风吹起 旋律仍在耳际</div>
             <div class="lyric-line" data-time="181">音乐不停 记忆随音延续……</div>
         </div>
     </div>
@@ -918,34 +1005,83 @@
             if (now - lastLyricUpdate >= UPDATE_INTERVAL) {
                 const currentTime = audio.currentTime;
                 let activeLyric = null;
+                let minTimeDiff = Infinity;
                 
-                for (let i = lyrics.length - 1; i >= 0; i--) {
+                // 查找最接近当前时间的歌词
+                for (let i = 0; i < lyrics.length; i++) {
                     const time = parseFloat(lyrics[i].dataset.time);
-                    if (currentTime >= time && currentTime < time + 6) {
+                    const timeDiff = currentTime - time;
+                    
+                    // 延长歌词停留时间（从8秒增加到15秒）
+                    if (timeDiff >= -0.5 && timeDiff < minTimeDiff && timeDiff < 15) {
+                        minTimeDiff = timeDiff;
                         activeLyric = lyrics[i];
-                        break;
                     }
                 }
-
+                
+                // 如果找到了活跃歌词且与当前活跃歌词不同
                 if (activeLyric && activeLyric !== currentLyric) {
                     if (currentLyric) {
                         currentLyric.classList.remove('active');
                     }
-                    activeLyric.classList.add('active');
+                    
+                    // 设置当前活跃歌词
                     currentLyric = activeLyric;
+                    
+                    // 更新歌词样式
+                    updateLyricStyles();
                     
                     // 使用 requestAnimationFrame 优化滚动性能
                     requestAnimationFrame(() => {
-                        activeLyric.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
+                        // 计算滚动位置，使活跃歌词在容器中居中显示
+                        const lyricsContainer = document.querySelector('.lyrics-container');
+                        if (lyricsContainer && lyricsContainer.classList.contains('show')) {
+                            const containerHeight = lyricsContainer.clientHeight;
+                            const lyricPosition = activeLyric.offsetTop;
+                            const lyricHeight = activeLyric.clientHeight;
+                            const scrollPosition = lyricPosition - (containerHeight / 2) + (lyricHeight / 2);
+                            
+                            lyricsContainer.scrollTo({
+                                top: scrollPosition,
+                                behavior: 'smooth'
+                            });
+                        }
                     });
                 }
                 
                 lastLyricUpdate = now;
             }
         });
+
+        // 更新歌词样式函数 - 优化过渡效果
+        function updateLyricStyles() {
+            if (!currentLyric) return;
+            
+            // 移除所有歌词的特殊类
+            lyrics.forEach(lyric => {
+                lyric.classList.remove('active', 'near-active', 'far');
+            });
+            
+            // 添加活跃歌词类
+            currentLyric.classList.add('active');
+            
+            // 为活跃歌词周围的歌词添加近距离类
+            const activeIndex = Array.from(lyrics).indexOf(currentLyric);
+            
+            // 增加近距离类的范围（从前后2行扩展到前后3行）
+            for (let i = Math.max(0, activeIndex - 3); i <= Math.min(lyrics.length - 1, activeIndex + 3); i++) {
+                if (i !== activeIndex) {
+                    lyrics[i].classList.add('near-active');
+                }
+            }
+            
+            // 为其他歌词添加远距离类
+            for (let i = 0; i < lyrics.length; i++) {
+                if (i < activeIndex - 3 || i > activeIndex + 3) {
+                    lyrics[i].classList.add('far');
+                }
+            }
+        }
 
         // 专辑封面旋转动画
         const albumCover = document.querySelector('.album-cover');
@@ -967,11 +1103,18 @@
         lyricsButton.addEventListener('click', () => {
             lyricsContainer.classList.add('show');
             document.body.style.overflow = 'hidden';
+            
+            // 初始化歌词状态
+            updateLyricStyles();
         });
 
         closeLyricsButton.addEventListener('click', () => {
-            lyricsContainer.classList.remove('show');
-            document.body.style.overflow = '';
+            lyricsContainer.style.opacity = '0';
+            setTimeout(() => {
+                lyricsContainer.classList.remove('show');
+                document.body.style.overflow = '';
+                lyricsContainer.style.opacity = '';
+            }, 300);
         });
 
         // 歌词点击事件处理
@@ -980,10 +1123,36 @@
                 const time = parseFloat(lyric.dataset.time);
                 if (!isNaN(time)) {
                     audio.currentTime = time;
+                    
+                    // 立即更新当前歌词，不等待timeupdate事件
+                    if (currentLyric) {
+                        currentLyric.classList.remove('active');
+                    }
+                    currentLyric = lyric;
+                    updateLyricStyles();
+                    
+                    // 移除自动播放的逻辑
+                    // 如果音乐没有播放，显示一个提示，告知用户需要点击播放按钮
                     if (!isPlaying) {
-                        audio.play().catch(error => {
-                            console.error('播放失败:', error);
-                        });
+                        const playHint = document.createElement('div');
+                        playHint.className = 'play-hint';
+                        playHint.textContent = '请点击播放按钮开始播放';
+                        playHint.style.position = 'fixed';
+                        playHint.style.bottom = '180px';
+                        playHint.style.left = '50%';
+                        playHint.style.transform = 'translateX(-50%)';
+                        playHint.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                        playHint.style.color = '#fff';
+                        playHint.style.padding = '8px 16px';
+                        playHint.style.borderRadius = '20px';
+                        playHint.style.fontSize = '14px';
+                        playHint.style.zIndex = '3000';
+                        document.body.appendChild(playHint);
+                        
+                        // 3秒后自动移除提示
+                        setTimeout(() => {
+                            document.body.removeChild(playHint);
+                        }, 3000);
                     }
                 }
             });
@@ -1033,39 +1202,32 @@
             const preloadImg = new Image();
             preloadImg.src = 'album-cover.jpg';
             
-            // 确保在用户交互后才尝试播放
-            document.body.addEventListener('click', function bodyClick() {
-                // 移除事件监听器，确保只执行一次
-                document.body.removeEventListener('click', bodyClick);
+            // 手动校准歌词时间
+            function calibrateLyrics() {
+                // 获取所有歌词行
+                const lyricLines = document.querySelectorAll('.lyric-line');
                 
-                // 延迟一秒尝试播放
-                setTimeout(() => {
-                    setupMediaSession(); // 确保MediaSession在播放前设置
-                    const playPromise = audio.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise.then(_ => {
-                            // 播放成功
-                            console.log("播放成功");
-                            // iOS特殊处理：确保锁屏显示
-                            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-                                // 重新设置音频源，触发iOS的媒体会话更新
-                                const currentTime = audio.currentTime;
-                                const wasPlaying = !audio.paused;
-                                audio.src = audio.querySelector('source').src;
-                                audio.currentTime = currentTime;
-                                if (wasPlaying) {
-                                    audio.play();
-                                }
-                            }
-                        })
-                        .catch(error => {
-                            // 播放被阻止
-                            console.log("播放需要用户交互:", error);
-                        });
+                // 如果歌词时间需要整体调整，可以在这里修改
+                // 例如，如果歌词整体提前2秒显示
+                const timeOffset = -1.5; // 根据需要调整这个值，负值表示提前显示
+                
+                lyricLines.forEach(line => {
+                    const originalTime = parseFloat(line.dataset.time);
+                    if (!isNaN(originalTime)) {
+                        // 应用时间偏移
+                        line.dataset.time = (originalTime + timeOffset).toString();
                     }
-                }, 1000);
-            }, { once: true });
+                });
+                
+                console.log('歌词时间校准完成，偏移量：' + timeOffset + '秒');
+            }
+            
+            // 调用校准函数
+            calibrateLyrics();
+            
+            // 移除全局点击自动播放逻辑
+            // 仅在必要时设置媒体会话，但不自动播放
+            setupMediaSession();
         });
     </script>
 </body>
