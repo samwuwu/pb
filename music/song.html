@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>随音而行 - 致敬方大同</title>
     <link rel="icon" type="image/png" href="album-cover.jpg">
+    <link rel="manifest" href="manifest.json">
     <!-- iOS 锁屏显示相关 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -16,6 +17,7 @@
     <meta name="apple-music-nowplaying-artist" content="致敬方大同">
     <meta name="apple-music-nowplaying-album" content="随音而行">
     <meta name="apple-music-nowplaying-artwork" content="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
+    <meta name="theme-color" content="#2A2A2A">
     <meta name="description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
     <meta property="og:title" content="随音而行 - 致敬方大同">
     <meta property="og:description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
@@ -33,6 +35,12 @@
     <meta name="weixin:title" content="随音而行 - 致敬方大同">
     <meta name="weixin:description" content="随音而行 - 致敬方大同，一首充满音乐情怀的歌曲">
     <meta name="weixin:image" content="http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=">
+    <!-- PWA iOS 特定标签 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- 预加载音频文件 -->
+    <link rel="preload" href="随音而行.mp3" as="audio" type="audio/mpeg">
     <style>
         :root {
             --background-color: #2A2A2A;
@@ -497,78 +505,143 @@
         let lastUpdateTime = 0;
         const UPDATE_INTERVAL = 100; // 更新间隔（毫秒）
 
+        // 注册Service Worker以支持PWA功能
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(registration => {
+                    console.log('ServiceWorker 注册成功: ', registration.scope);
+                }).catch(error => {
+                    console.log('ServiceWorker 注册失败: ', error);
+                });
+            });
+        }
+
         // 设置 MediaSession API
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: '随音而行',
-                artist: '致敬方大同',
-                album: '随音而行',
-                artwork: [
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '96x96', type: 'image/jpeg' },
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '128x128', type: 'image/jpeg' },
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '192x192', type: 'image/jpeg' },
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '256x256', type: 'image/jpeg' },
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '384x384', type: 'image/jpeg' },
-                    { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '512x512', type: 'image/jpeg' }
-                ]
-            });
-            
-            // 更新 MediaSession 状态
-            audio.addEventListener('play', function() {
-                navigator.mediaSession.playbackState = 'playing';
-            });
-            
-            audio.addEventListener('pause', function() {
-                navigator.mediaSession.playbackState = 'paused';
-            });
-            
-            navigator.mediaSession.setActionHandler('play', function() {
-                audio.play();
-                playButton.innerHTML = '⏸';
-                isPlaying = true;
-            });
-            
-            navigator.mediaSession.setActionHandler('pause', function() {
-                audio.pause();
-                playButton.innerHTML = '▶';
-                isPlaying = false;
-            });
-            
-            navigator.mediaSession.setActionHandler('previoustrack', function() {
-                audio.currentTime = 0;
-            });
-            
-            navigator.mediaSession.setActionHandler('nexttrack', function() {
-                audio.currentTime = 0;
-            });
-            
-            // 更新进度
-            navigator.mediaSession.setActionHandler('seekto', function(details) {
-                if (details.fastSeek && 'fastSeek' in audio) {
-                    audio.fastSeek(details.seekTime);
-                    return;
+        function setupMediaSession() {
+            if ('mediaSession' in navigator) {
+                // 使用本地图片路径，确保可以在锁屏时访问
+                const artworkUrl = 'album-cover.jpg';
+                
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: '随音而行',
+                    artist: '致敬方大同',
+                    album: '随音而行',
+                    artwork: [
+                        { src: artworkUrl, sizes: '96x96', type: 'image/jpeg' },
+                        { src: artworkUrl, sizes: '128x128', type: 'image/jpeg' },
+                        { src: artworkUrl, sizes: '192x192', type: 'image/jpeg' },
+                        { src: artworkUrl, sizes: '256x256', type: 'image/jpeg' },
+                        { src: artworkUrl, sizes: '384x384', type: 'image/jpeg' },
+                        { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
+                    ]
+                });
+                
+                // 更新 MediaSession 状态
+                audio.addEventListener('play', function() {
+                    navigator.mediaSession.playbackState = 'playing';
+                    document.querySelector('.album-cover').classList.add('playing');
+                    document.querySelector('.album-cover').classList.remove('paused');
+                    playButton.innerHTML = '⏸';
+                    isPlaying = true;
+                    
+                    // 更新位置状态，提高锁屏控制的准确性
+                    updatePositionState();
+                });
+                
+                audio.addEventListener('pause', function() {
+                    navigator.mediaSession.playbackState = 'paused';
+                    document.querySelector('.album-cover').classList.remove('playing');
+                    document.querySelector('.album-cover').classList.add('paused');
+                    playButton.innerHTML = '▶';
+                    isPlaying = false;
+                });
+                
+                // 定期更新位置状态
+                audio.addEventListener('timeupdate', function() {
+                    if (isPlaying && 'mediaSession' in navigator) {
+                        updatePositionState();
+                    }
+                });
+                
+                // 设置媒体会话动作处理程序
+                navigator.mediaSession.setActionHandler('play', function() {
+                    audio.play();
+                });
+                
+                navigator.mediaSession.setActionHandler('pause', function() {
+                    audio.pause();
+                });
+                
+                navigator.mediaSession.setActionHandler('previoustrack', function() {
+                    audio.currentTime = 0;
+                });
+                
+                navigator.mediaSession.setActionHandler('nexttrack', function() {
+                    audio.currentTime = 0;
+                });
+                
+                // 添加跳转功能
+                navigator.mediaSession.setActionHandler('seekto', function(details) {
+                    if (details.fastSeek && 'fastSeek' in audio) {
+                        audio.fastSeek(details.seekTime);
+                        return;
+                    }
+                    audio.currentTime = details.seekTime;
+                    updatePositionState();
+                });
+                
+                // 添加前进后退功能
+                const skipTime = 10; // 跳转时间（秒）
+                
+                navigator.mediaSession.setActionHandler('seekbackward', function(event) {
+                    const skipAmount = event.seekOffset || skipTime;
+                    audio.currentTime = Math.max(audio.currentTime - skipAmount, 0);
+                    updatePositionState();
+                });
+                
+                navigator.mediaSession.setActionHandler('seekforward', function(event) {
+                    const skipAmount = event.seekOffset || skipTime;
+                    audio.currentTime = Math.min(audio.currentTime + skipAmount, audio.duration);
+                    updatePositionState();
+                });
+                
+                // 尝试添加停止功能（部分浏览器支持）
+                try {
+                    navigator.mediaSession.setActionHandler('stop', function() {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        navigator.mediaSession.playbackState = 'none';
+                    });
+                } catch (error) {
+                    console.log('不支持"stop"操作: ', error);
                 }
-                audio.currentTime = details.seekTime;
-            });
+            }
+        }
+        
+        // 更新位置状态函数
+        function updatePositionState() {
+            if ('setPositionState' in navigator.mediaSession) {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration || 0,
+                    playbackRate: audio.playbackRate || 1,
+                    position: audio.currentTime || 0
+                });
+            }
         }
 
         // 播放/暂停控制
         playButton.addEventListener('click', () => {
             if (isPlaying) {
                 audio.pause();
-                playButton.innerHTML = '▶';
             } else {
-                audio.play().then(() => {
-                    // 播放成功后更新MediaSession
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.playbackState = 'playing';
-                    }
-                }).catch(error => {
-                    console.error('播放失败:', error);
-                });
-                playButton.innerHTML = '⏸';
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error('播放失败:', error);
+                    });
+                }
             }
-            isPlaying = !isPlaying;
         });
 
         // 上一首/下一首控制
@@ -588,15 +661,6 @@
                 progressBar.style.width = `${progress}%`;
                 currentTimeDisplay.textContent = formatTime(audio.currentTime);
                 lastUpdateTime = now;
-                
-                // 更新MediaSession状态
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.setPositionState({
-                        duration: audio.duration,
-                        playbackRate: audio.playbackRate,
-                        position: audio.currentTime
-                    });
-                }
             }
         });
 
@@ -617,30 +681,8 @@
         // 设置总时长
         audio.addEventListener('loadedmetadata', () => {
             durationDisplay.textContent = formatTime(audio.duration);
-            
-            // 确保在音频加载后更新MediaSession元数据
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: '随音而行',
-                    artist: '致敬方大同',
-                    album: '随音而行',
-                    artwork: [
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '96x96', type: 'image/jpeg' },
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '128x128', type: 'image/jpeg' },
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '192x192', type: 'image/jpeg' },
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '256x256', type: 'image/jpeg' },
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '384x384', type: 'image/jpeg' },
-                        { src: 'http://ssjubnqgf.hb-bkt.clouddn.com/3_%E5%89%AF%E6%9C%AC.jpg?e=1741008814&token=GryFlGn-HrjFEsnON-Bi773y93uO2rIzCkQcOr_c:-q7bKshNTX3nedc4XLeve8onnIA=', sizes: '512x512', type: 'image/jpeg' }
-                    ]
-                });
-                
-                // 设置播放时间信息
-                navigator.mediaSession.setPositionState({
-                    duration: audio.duration,
-                    playbackRate: audio.playbackRate,
-                    position: audio.currentTime
-                });
-            }
+            setupMediaSession(); // 在音频加载后设置MediaSession
+            updatePositionState(); // 初始化位置状态
         });
 
         // 优化后的歌词同步
@@ -681,22 +723,12 @@
 
         // 专辑封面旋转动画
         const albumCover = document.querySelector('.album-cover');
-        audio.addEventListener('play', () => {
-            albumCover.style.animationPlayState = 'running';
-            albumCover.classList.add('playing');
-            albumCover.classList.remove('paused');
-        });
         
-        audio.addEventListener('pause', () => {
-            albumCover.style.animationPlayState = 'paused';
-            albumCover.classList.remove('playing');
-            albumCover.classList.add('paused');
-        });
-
         // 播放结束处理
         audio.addEventListener('ended', () => {
             isPlaying = false;
             playButton.textContent = '▶';
+            navigator.mediaSession.playbackState = 'none';
         });
 
         // 歌词显示/隐藏功能
@@ -722,32 +754,55 @@
                 if (!isNaN(time)) {
                     audio.currentTime = time;
                     if (!isPlaying) {
-                        audio.play();
-                        playButton.innerHTML = '⏸';
-                        isPlaying = true;
+                        audio.play().catch(error => {
+                            console.error('播放失败:', error);
+                        });
                     }
                 }
             });
         });
 
-        // 尝试自动播放（可能会被浏览器阻止，但值得一试）
-        document.addEventListener('DOMContentLoaded', function() {
-            // 延迟一秒尝试自动播放
-            setTimeout(() => {
-                const playPromise = audio.play();
-                
-                if (playPromise !== undefined) {
-                    playPromise.then(_ => {
-                        // 自动播放成功
-                        playButton.innerHTML = '⏸';
-                        isPlaying = true;
-                    })
-                    .catch(error => {
-                        // 自动播放被阻止
-                        console.log("自动播放被阻止，需要用户交互");
-                    });
+        // 处理页面可见性变化，优化后台播放体验
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                // 页面可见时，如果正在播放，确保UI状态正确
+                if (!audio.paused) {
+                    playButton.innerHTML = '⏸';
+                    isPlaying = true;
+                    albumCover.classList.add('playing');
                 }
-            }, 1000);
+            }
+        });
+
+        // 处理音频错误
+        audio.addEventListener('error', (e) => {
+            console.error('音频播放错误:', e);
+            alert('音频加载失败，请检查网络连接或刷新页面重试。');
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 确保在用户交互后才尝试播放
+            document.body.addEventListener('click', function bodyClick() {
+                // 移除事件监听器，确保只执行一次
+                document.body.removeEventListener('click', bodyClick);
+                
+                // 延迟一秒尝试播放
+                setTimeout(() => {
+                    const playPromise = audio.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            // 播放成功
+                            console.log("播放成功");
+                        })
+                        .catch(error => {
+                            // 播放被阻止
+                            console.log("播放需要用户交互:", error);
+                        });
+                    }
+                }, 1000);
+            }, { once: true });
         });
     </script>
 </body>

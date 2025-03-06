@@ -1,0 +1,41 @@
+{
+  "name": "随音而行 - 致敬方大同",
+  "short_name": "随音而行",
+  "start_url": "./song.html",
+  "display": "standalone",
+  "background_color": "#2A2A2A",
+  "theme_color": "#2A2A2A",
+  "description": "随音而行 - 致敬方大同，一首充满音乐情怀的歌曲",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "album-cover.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "album-cover.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "album-cover.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "album-cover.jpg",
+      "sizes": "320x568",
+      "type": "image/jpeg"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "shortcuts": [],
+  "categories": ["music", "entertainment"]
+} 
