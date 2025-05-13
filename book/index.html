@@ -323,6 +323,9 @@
         }
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            :root {
+                --base-font-size: 1em; /* 移动端默认字体大小 */
+            }
             .main-content-wrapper {
                 padding-top: 60px; /* Adjust if header is smaller */
                 padding-left: 10px;
@@ -346,9 +349,7 @@
             h2 {
                 font-size: 1.5em;
             }
-            p {
-                font-size: 1em;
-            }
+            /* p { font-size: 1em; } */ /* Removed to allow var(--base-font-size) to take effect */
         }
         @media (max-width: 480px) {
             .main-content-wrapper {
