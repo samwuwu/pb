@@ -16,7 +16,7 @@
             { name: '大', size: 24 },
             { name: '特大', size: 28 }
         ],
-        DEFAULT_FONT_SIZE_INDEX: 1, // '中' (20px)
+        DEFAULT_FONT_SIZE_INDEX: 2, // '中' (20px) -> '大' (24px)
         FONT_FAMILIES: [
             { name: '仓耳今楷', value: '"TsangerJinKaiW02", "仓耳今楷01-27533-W02", "仓耳今楷", serif' },
             { name: '默认黑体 (思源)', value: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif' },
