@@ -1,3 +1,11 @@
+@font-face {
+    font-family: '仓耳今楷01-27533-W02';
+    src: url('fonts/01-27533-W02.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* General Body Styles */
 body {
     /* Initial default font stack, JS will override based on user choice or specific default */

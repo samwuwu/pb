@@ -28,10 +28,7 @@
         THEMES: ['system', 'light', 'dark'],
         DEFAULT_THEME_INDEX: 0, // 'system'
         SCROLL_SHOW_TOP_BTN_THRESHOLD: 300, // Pixels
-        SHARE_POPUP_OFFSET_TOP: 10, // Pixels
-        SHARE_POPUP_OFFSET_BOTTOM: 10, // Pixels
-        DEBOUNCE_DELAY: 50, // Milliseconds for touchend selection
-        FEEDBACK_MESSAGE_DURATION: 1500 // Milliseconds
+        FEEDBACK_MESSAGE_DURATION: 1500 // Milliseconds (Keep for bookmarks)
     };
 
     const novelData = {
@@ -48,7 +45,7 @@
                         <p>清晨的航站楼本该是高效而有序的，但今天，混乱像一剂催化剂，在她负责的登机口迅速发酵。一位计划经T市中转前往东南亚某国的旅客，因签证信息与边检系统记录存在细微出入，被暂时拦下。焦灼的汗珠从旅客额角渗出，他不懂中文，英文也磕磕绊绊，登机口用作应急的翼语通-多语种广播系统偏偏在这时掉了链子，播报出的安抚和解释含混不清，反而加剧了他的不安。</p>
                         <p>雪上加霜的是，地面离港系统突然卡顿，屏幕上显示的登机旅客列表与实际登机的人数迟迟无法对应。绿色的"已登机"数字固执地停在一个令人尴尬的数值上，远低于实际人数。机组已经开始通过无线电催促："地服地服，旅客登机情况？能否准时关门？"那声音带着职业性的冷静，却像一把小锤，不轻不重地敲在知微紧绷的神经上。</p>
                         <p>而本该最后登机的几位旅客，被这突如其来的签证风波和系统故障搅得情绪激动，其中一位中年男士涨红了脸，挥舞着登机牌，高声质问："你们航空公司怎么回事？这点小事都处理不明白？我们要延误了！"</p>
-                        <p>知微感到一阵强烈的眩晕。她不是没准备，那些厚厚的《地服突发事件应急处理流程手册》条款，她昨夜还在枕边翻阅，每一条都清晰地印在脑海中，却在这一刻化作一堆杂乱的符号，根本无法在脑海中迅速串联起应对眼前乱局的完整链条。 她试图在微信工作群里搜寻，可海量的聊天记录和通知截图，根本无从下手。她下意识地拨打师傅李姐的电话，听筒里只有冰冷的忙音，像是在嘲笑她的孤立无援。</p>
+                        <p>知微感到一阵强烈的眩晕。她不是没准备，那些厚厚的《地服突发事件应急处理流程手册》条款，她昨夜还在枕边翻阅，每一条都清晰地印在脑海中，却在这一刻化作一堆杂乱的符号，根本无法在脑海中迅速串联起应对眼前乱局的完整链条。 她试图在工作群里搜寻，可海量的聊天记录和通知截图，根本无从下手。她下意识地拨打师傅李姐的电话，听筒里只有冰冷的忙音，像是在嘲笑她的孤立无援。</p>
                         <p>"你们不是专业的吗？连这点小事都处理不明白？"中年男士的质问携着热浪扑面而来，像一把锋利的刀，直刺知微心中最脆弱的角落。她努力想开口解释、安抚，可喉咙像被堵住一般，连一句完整的话都组织不起来。乘客的焦躁、机组的催促、同事们各自忙碌的身影，以及那本似乎永远翻不到正确页码的手册，共同织成一张密不透风的网，将她牢牢困住。羞愧和一种深不见底的无力感，让她几乎无法呼吸。她明明"拥有"着这些知识，却发现它们在最需要的时候，竟如此遥远和无力，比一无所知更加绝望。</p>
                         <p>她下意识地低下头，盯着自己那双在地面上徒劳地挪动了几次的新制服皮鞋，脑海中一片混乱，最终只剩下令人窒息的空白。</p>
                         <p>人群中，另一个声音幽幽传来，带着一丝不易察觉的讥讽："呵，现在的年轻人啊……"</p>
@@ -240,8 +237,7 @@
         currentFontSizeNameEl, fontFamilySelector, themeCycleBtn, themeIcons,
         tocBtn, tocPanel, closeTocBtn, bookmarkBtn, bookmarksPanel,
         addCurrentBookmarkBtn, bookmarksListEl, overlay, returnToTopBtn,
-        progressBar, currentYearEl, sharePopup, copySelectionBtn,
-        copyChapterLinkBtn, shareEmailBtn, mainTitleEl;
+        progressBar, currentYearEl, mainTitleEl;
 
     function cacheDOMElements() {
         novelContentEl = document.getElementById('novelContent');
@@ -268,10 +264,6 @@
         returnToTopBtn = document.getElementById('returnToTopBtn');
         progressBar = document.getElementById('progressBar');
         currentYearEl = document.getElementById('currentYear'); // Fallback in HTML
-        sharePopup = document.getElementById('sharePopup');
-        copySelectionBtn = document.getElementById('copySelectionBtn');
-        copyChapterLinkBtn = document.getElementById('copyChapterLinkBtn');
-        shareEmailBtn = document.getElementById('shareEmailBtn');
     }
 
     // --- State Variables ---
@@ -279,7 +271,6 @@
     let currentFontFamily = NOVEL_READER_CONFIG.FONT_FAMILIES[0].value;
     let currentTheme = NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX];
     let bookmarks = [];
-    let currentSelectedText = "";
     let activePanel = null; // To keep track of which panel is open
 
     // --- Utility Functions ---
@@ -650,96 +641,6 @@
         bookmarksListEl.appendChild(fragment);
     }
 
-    // --- Share Popup ---
-    function handleTextSelection(event) {
-        if (!sharePopup || !novelContentEl) return;
-        try {
-            const selection = window.getSelection();
-            if (!selection || selection.rangeCount === 0) {
-                currentSelectedText = "";
-                sharePopup.style.display = 'none';
-                return;
-            }
-            currentSelectedText = selection.toString().trim();
-
-            if (currentSelectedText.length > 0 && novelContentEl.contains(selection.anchorNode)) {
-                const range = selection.getRangeAt(0);
-                const rect = range.getBoundingClientRect();
-                
-                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-
-                sharePopup.style.display = 'block'; // Show first to get offsetWidth/Height
-
-                let popupTop = rect.top + scrollTop - sharePopup.offsetHeight - NOVEL_READER_CONFIG.SHARE_POPUP_OFFSET_TOP;
-                let popupLeft = rect.left + scrollLeft + (rect.width / 2) - (sharePopup.offsetWidth / 2);
-
-                // Adjust if too high
-                if (popupTop < scrollTop + 5) {
-                    popupTop = rect.bottom + scrollTop + NOVEL_READER_CONFIG.SHARE_POPUP_OFFSET_BOTTOM;
-                }
-                // Adjust if too far left/right
-                if (popupLeft < scrollLeft + 5) popupLeft = scrollLeft + 5;
-                if (popupLeft + sharePopup.offsetWidth > scrollLeft + window.innerWidth - 5) {
-                    popupLeft = scrollLeft + window.innerWidth - sharePopup.offsetWidth - 5;
-                }
-
-                sharePopup.style.left = `${popupLeft}px`;
-                sharePopup.style.top = `${popupTop}px`;
-
-            } else {
-                sharePopup.style.display = 'none';
-            }
-        } catch (e) {
-            console.error("Error handling text selection:", e);
-            sharePopup.style.display = 'none';
-        }
-    }
-    
-    function copyToClipboard(text, buttonElement, feedbackText, originalText) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text)
-                .then(() => {
-                    showFeedbackMessage(buttonElement, feedbackText, originalText);
-                })
-                .catch(err => {
-                    console.error('无法复制: ', err);
-                    showFeedbackMessage(buttonElement, '复制失败', originalText);
-                     // Fallback for older browsers or if permission denied
-                    try {
-                        const textArea = document.createElement("textarea");
-                        textArea.value = text;
-                        textArea.style.position = "fixed"; //avoid scrolling to bottom
-                        document.body.appendChild(textArea);
-                        textArea.focus();
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        showFeedbackMessage(buttonElement, feedbackText, originalText);
-                    } catch (e) {
-                        alert("复制失败，您的浏览器可能不支持此功能。");
-                    }
-                });
-        } else {
-             // Fallback for very old browsers
-            try {
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showFeedbackMessage(buttonElement, feedbackText, originalText);
-            } catch (e) {
-                 alert("复制失败，您的浏览器可能不支持此功能。");
-            }
-        }
-        sharePopup.style.display = 'none';
-    }
-
-
     // --- Event Listeners Setup ---
     function setupEventListeners() {
         themeCycleBtn.addEventListener('click', cycleTheme);
@@ -785,13 +686,6 @@
                     closePanel(activePanel, controllingButton);
                 }
             }
-            if (sharePopup.style.display === 'block' && !sharePopup.contains(e.target) && !novelContentEl.contains(e.target)) {
-                 // Check if click is outside novel content too, to avoid closing immediately after selection
-                const selection = window.getSelection();
-                if (!selection || selection.toString().trim() === "") {
-                     sharePopup.style.display = 'none';
-                }
-            }
         });
         
         // Keyboard accessibility for panels
@@ -800,9 +694,6 @@
                 if (activePanel) {
                     const controllingButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
                     closePanel(activePanel, controllingButton);
-                }
-                if (sharePopup.style.display === 'block') {
-                    sharePopup.style.display = 'none';
                 }
             }
         });
@@ -822,61 +713,10 @@
             const scrollPercent = (docHeight > 0 ? (scrollTop / docHeight) : 0) * 100;
             progressBar.style.width = `${scrollPercent}%`;
 
-            // Hide share popup on scroll
-            if (sharePopup.style.display === 'block') {
-                sharePopup.style.display = 'none';
-            }
         }, { passive: true }); // Use passive listener for scroll
 
         returnToTopBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
-        // Text selection for share popup
-        novelContentEl.addEventListener('mouseup', handleTextSelection);
-        novelContentEl.addEventListener('touchend', (event) => {
-            // Delay to allow selection to finalize on touch devices
-            setTimeout(() => handleTextSelection(event), NOVEL_READER_CONFIG.DEBOUNCE_DELAY);
-        });
-         // Hide share popup if user clicks inside novel content but collapses selection
-        novelContentEl.addEventListener('mousedown', (event) => {
-            if (sharePopup.style.display === 'block' && !sharePopup.contains(event.target)) {
-                const selection = window.getSelection();
-                if (selection && selection.isCollapsed) {
-                    sharePopup.style.display = 'none';
-                }
-            }
-        });
-
-
-        copySelectionBtn.addEventListener('click', () => {
-            if (currentSelectedText) {
-                const citation = `\n\n——选自《${novelData.title}》by ${novelData.author}`;
-                copyToClipboard(currentSelectedText + citation, copySelectionBtn, '已复制!', '复制选中内容');
-            }
-        });
-
-        copyChapterLinkBtn.addEventListener('click', () => {
-            const visibleChapterInfo = getVisibleChapterInfo();
-            if (visibleChapterInfo && visibleChapterInfo.id) {
-                const chapterUrl = `${window.location.href.split('#')[0]}#${visibleChapterInfo.id}`;
-                copyToClipboard(chapterUrl, copyChapterLinkBtn, '链接已复制!', '复制本章链接');
-            } else {
-                showFeedbackMessage(copyChapterLinkBtn, '无法获取链接', '复制本章链接');
-            }
-        });
-
-        shareEmailBtn.addEventListener('click', () => {
-            const visibleChapterInfo = getVisibleChapterInfo();
-            let subject = `分享小说章节: 《${novelData.title}》`;
-            let body = `我正在阅读《${novelData.title}》by ${novelData.author}，觉得这段内容很棒：\n\n"${currentSelectedText}"\n\n`;
-            if (visibleChapterInfo && visibleChapterInfo.id) {
-                subject = `分享小说章节: 《${novelData.title}》 - ${visibleChapterInfo.title}`;
-                body += `来自章节: ${visibleChapterInfo.title}\n章节链接: ${window.location.href.split('#')[0]}#${visibleChapterInfo.id}\n`;
-            }
-            const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.open(mailtoLink, '_blank');
-            sharePopup.style.display = 'none';
         });
     }
 
