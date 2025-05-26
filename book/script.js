@@ -16,7 +16,7 @@
             { name: '大', size: 24 },
             { name: '特大', size: 28 }
         ],
-        DEFAULT_FONT_SIZE_INDEX: 2, // '中' (20px) -> '大' (24px)
+        DEFAULT_FONT_SIZE_INDEX: 2, // '大' (24px)
         FONT_FAMILIES: [
             { name: '仓耳今楷', value: '"TsangerJinKaiW02", "仓耳今楷01-27533-W02", "仓耳今楷", serif' },
             { name: '默认黑体 (思源)', value: '"Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif' },
@@ -25,8 +25,8 @@
             { name: '平台默认无衬线', value: 'sans-serif' },
             { name: '平台默认衬线', value: 'serif' }
         ],
-        THEMES: ['system', 'light', 'dark'],
-        DEFAULT_THEME_INDEX: 0, // 'system'
+        THEMES: ['light', 'dark'], // Removed 'system'
+        DEFAULT_THEME_INDEX: 0, // Default to 'light' (index 0 of the new THEMES array)
         SCROLL_SHOW_TOP_BTN_THRESHOLD: 300, // Pixels
         FEEDBACK_MESSAGE_DURATION: 1500 // Milliseconds (Keep for bookmarks)
     };
@@ -249,7 +249,6 @@
         fontFamilySelector = document.getElementById('fontFamilySelector');
         themeCycleBtn = document.getElementById('themeCycleBtn');
         themeIcons = {
-            system: document.getElementById('themeIconSystem'),
             light: document.getElementById('themeIconLight'),
             dark: document.getElementById('themeIconDark')
         };
@@ -375,47 +374,33 @@
     }
 
     function updateThemeIcon(effectiveThemeState) { // effectiveThemeState is 'light' or 'dark'
-        if (themeIcons.system) themeIcons.system.classList.add('hidden'); // Always hide system icon
+        // Ensure themeIcons.system is not referenced if it was part of an older themeIcons structure
+        // if (themeIcons.system) themeIcons.system.classList.add('hidden'); 
+
         if (themeIcons.light) themeIcons.light.classList.add('hidden');
         if (themeIcons.dark) themeIcons.dark.classList.add('hidden');
 
-        if (effectiveThemeState === 'dark') {
+        if (effectiveThemeState === 'light') { // Current theme is light, show icon to switch to dark (moon)
             if (themeIcons.dark) themeIcons.dark.classList.remove('hidden');
-        } else { // Default to light (effectiveThemeState === 'light')
+        } else { // Current theme is dark, show icon to switch to light (sun)
             if (themeIcons.light) themeIcons.light.classList.remove('hidden');
         }
     }
 
-    function applyTheme(themeToApply) {
-        currentTheme = themeToApply; // currentTheme can be 'system', 'light', or 'dark'
-        let effectiveThemeForIcon = themeToApply; // This will be resolved to 'light' or 'dark' for the icon
+    function applyTheme(themeToApply) { // themeToApply will only be 'light' or 'dark'
+        currentTheme = themeToApply;
 
-        if (themeToApply === 'dark' || (themeToApply === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (themeToApply === 'dark') {
             document.documentElement.classList.add('dark');
-            if (themeToApply === 'system') {
-                effectiveThemeForIcon = 'dark'; // System is dark, show dark icon
-            }
-        } else { // themeToApply is 'light' or (themeToApply is 'system' and system is light)
+        } else { // themeToApply is 'light'
             document.documentElement.classList.remove('dark');
-            if (themeToApply === 'system') {
-                effectiveThemeForIcon = 'light'; // System is light, show light icon
-            }
         }
-        safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME, themeToApply); // Save the actual preference ('system', 'light', or 'dark')
-        updateThemeIcon(effectiveThemeForIcon); // Update icon based on effective appearance
+        safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME, themeToApply);
+        updateThemeIcon(themeToApply); // Pass the current theme directly
     }
 
     function cycleTheme() {
-        let newTheme;
-        if (currentTheme === 'system') {
-            // If current effective theme is dark (system is dark), switch to light mode
-            // If current effective theme is light (system is light), switch to dark mode
-            newTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
-        } else if (currentTheme === 'light') {
-            newTheme = 'dark';
-        } else { // currentTheme === 'dark'
-            newTheme = 'light';
-        }
+        const newTheme = (currentTheme === 'light') ? 'dark' : 'light';
         applyTheme(newTheme);
     }
 
@@ -730,10 +715,14 @@
         
         loadNovel();
 
-        // Load Theme
-        const savedTheme = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME) || NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX];
-        const savedThemeIndex = NOVEL_READER_CONFIG.THEMES.indexOf(savedTheme);
-        currentTheme = NOVEL_READER_CONFIG.THEMES[savedThemeIndex !== -1 ? savedThemeIndex : NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX];
+        // Load Theme - Simplified as 'system' is removed
+        const savedTheme = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME);
+        // Check if savedTheme is one of the valid new themes ('light' or 'dark')
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+            currentTheme = savedTheme;
+        } else {
+            currentTheme = NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX]; // Default to 'light'
+        }
         applyTheme(currentTheme);
         
         // Load Font Size
