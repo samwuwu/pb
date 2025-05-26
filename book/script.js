@@ -318,16 +318,17 @@
         const contentFragment = document.createDocumentFragment();
         const tocFragment = document.createDocumentFragment();
 
-        // Add novel title and author to main content
-        mainTitleEl = document.createElement('h1');
-        mainTitleEl.className = 'text-3xl font-bold mb-2 text-center'; // Match prose h1
-        mainTitleEl.textContent = novelData.title;
-        contentFragment.appendChild(mainTitleEl);
+        // Create a wrapper for title and author to center them as a block
+        const titleAuthorWrapper = document.createElement('div');
+        titleAuthorWrapper.className = 'flex flex-col items-center'; // This will center the H1 and P blocks
 
-        const authorEl = document.createElement('p');
-        authorEl.className = 'subtitle'; // Match prose subtitle
-        authorEl.textContent = `作者：${novelData.author}`;
-        contentFragment.appendChild(authorEl);
+        // Add novel title
+        mainTitleEl = document.createElement('h1');
+        mainTitleEl.className = 'text-3xl font-bold mb-2 text-center'; // text-center here is fine
+        mainTitleEl.textContent = novelData.title;
+        titleAuthorWrapper.appendChild(mainTitleEl);
+
+        contentFragment.appendChild(titleAuthorWrapper); // Add the wrapper to the main content fragment
 
         novelData.chapters.forEach(chapter => {
             const readingTime = calculateReadingTime(chapter.content);
