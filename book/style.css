@@ -27,6 +27,12 @@ body {
     margin-bottom: 1.3em;
 }
 
+/* Make sure paragraph itself doesn't have bottom margin if a toggle button follows */
+.prose p:has(+ .toggle-notes-btn) {
+    margin-bottom: 0.5em; /* Reduce bottom margin if notes toggle follows */
+}
+
+
 .prose h1, .prose h2, .prose h3 {
     text-indent: 0;
     margin-top: 2.2em;
@@ -272,42 +278,18 @@ body {
     background-color: #bb86fc; /* purple for dark mode */
 }
 
-/* Share Popup */
 #sharePopup {
-    /* position: absolute; /* JS will set this based on selection now to fixed */
-    /* display: none; /* JS controls display */
-    /* background-color: white; Tailwind equivalent: bg-white */
-    /* border: 1px solid #ccc; Tailwind equivalent: border border-gray-300 */
-    /* border-radius: 8px; Tailwind equivalent: rounded-lg */
-    /* padding: 10px; Tailwind equivalent: p-2.5 or p-3 */
-    /* box-shadow: 0 4px 12px rgba(0,0,0,0.15); Tailwind equivalent: shadow-lg or shadow-xl */
     z-index: 1000;
-    font-size: 0.875rem; /* text-sm */
+    font-size: 0.875rem; 
     min-width: 180px;
-    /* Tailwind classes are applied directly in HTML for this element */
 }
 
-.dark #sharePopup {
-    /* Tailwind dark mode classes applied in HTML */
-}
+.dark #sharePopup {}
+#sharePopup button {}
+.dark #sharePopup button {}
+#sharePopup button:hover {}
+.dark #sharePopup button:hover {}
 
-#sharePopup button {
-   /* Tailwind classes applied in HTML */
-}
-
-.dark #sharePopup button {
-    /* Tailwind dark mode classes applied in HTML */
-}
-
-#sharePopup button:hover {
-    /* Tailwind hover classes applied in HTML */
-}
-
-.dark #sharePopup button:hover {
-    /* Tailwind dark mode hover classes applied in HTML */
-}
-
-/* Helper class for screen readers only */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -321,78 +303,134 @@ body {
 }
 
 .dark #tocList a:hover {
-    background-color: #374151; /* Tailwind's gray-700 for dark mode */
-    color: #f9fafb; /* Tailwind's text-gray-50 or a very light gray for hover text */
+    background-color: #374151; 
+    color: #f9fafb; 
 }
 
-/* Force light background for tocPanel when NOT in .dark mode, overriding media queries */
 html:not(.dark) #tocPanel {
-    background-color: white !important; /* Tailwind's bg-white */
-    color: #1f2937 !important; /* Tailwind's text-gray-800 */
+    background-color: white !important; 
+    color: #1f2937 !important; 
 }
 
 html:not(.dark) #tocPanel a {
-    color: #1f2937 !important; /* Tailwind's text-gray-800 */
+    color: #1f2937 !important; 
 }
 
 html:not(.dark) #tocList a:hover {
-    background-color: #f3f4f6 !important; /* Tailwind's gray-100 for light mode */
-    color: #111827 !important; /* Tailwind's text-gray-900 for hover text */
+    background-color: #f3f4f6 !important; 
+    color: #111827 !important; 
 }
 
-/* Force light styles for header when NOT in .dark mode, overriding media queries */
 html:not(.dark) header.fixed {
-    background-color: rgba(255, 255, 255, 0.8) !important; /* bg-white/80 */
-    /* Assuming header text/icons should be dark in light mode */
-    /* Tailwind's default text color for body is text-gray-800, which is dark. */
-    /* If specific elements in header need color override, they should be targeted. */
-    /* For example, if svgs in header buttons are light and need to be dark: */
+    background-color: rgba(255, 255, 255, 0.8) !important; 
 }
 
 html:not(.dark) header.fixed button svg {
-    stroke: #1f2937 !important; /* Example: text-gray-800 for SVG strokes */
+    stroke: #1f2937 !important; 
 }
 
-/* Ensure the main title in header also adheres to light mode text color */
 html:not(.dark) header.fixed .text-xl.font-semibold {
-    color: #1f2937 !important; /* text-gray-800 */
+    color: #1f2937 !important; 
 }
 
-/* Force light styles for fontPanel when NOT in .dark mode */
 html:not(.dark) #fontPanel {
     background-color: white !important;
-    color: #1f2937 !important; /* Default text color for the panel */
+    color: #1f2937 !important; 
 }
 
 html:not(.dark) #fontPanel label,
 html:not(.dark) #fontPanel .text-sm.text-gray-600,
 html:not(.dark) #fontPanel .text-lg.font-semibold {
-    color: #4b5563 !important; /* text-gray-600 or similar for labels */
+    color: #4b5563 !important; 
 }
 
 html:not(.dark) #fontPanel #currentFontSizeName {
-    color: #6b7280 !important; /* text-gray-500 */
+    color: #6b7280 !important; 
 }
 
 html:not(.dark) #fontPanel input[type="range"] {
-    background: #ddd !important; /* light-gray-300 */
+    background: #ddd !important; 
 }
 
 html:not(.dark) #fontPanel input[type="range"]::-webkit-slider-thumb {
-    background: #3b82f6 !important; /* blue-500 */
+    background: #3b82f6 !important; 
 }
 
 html:not(.dark) #fontPanel input[type="range"]::-moz-range-thumb {
-    background: #3b82f6 !important; /* blue-500 */
+    background: #3b82f6 !important; 
 }
 
 html:not(.dark) #fontPanel select {
     background-color: white !important;
-    border-color: #d1d5db !important; /* border-gray-300 */
-    color: #1f2937 !important; /* text-gray-800 */
+    border-color: #d1d5db !important; 
+    color: #1f2937 !important; 
 }
 
 html:not(.dark) #fontPanel select option {
     background-color: white !important;
     color: #1f2937 !important;
 } 
+
+/* START: Styles for Notes Display & Toggle Functionality */
+.notes-container {
+    text-indent: 0; 
+}
+
+.notes-container.notes-hidden { /* Class to hide the notes container */
+    display: none;
+}
+
+.notes-container p {
+    text-indent: 0; 
+    margin-bottom: 0.5em; 
+    line-height: 1.6; 
+}
+
+.note-item {
+    /* Tailwind classes are applied in script.js for individual note items */
+}
+
+.note-content {
+    font-size: 0.9em; 
+}
+
+.selected-text-quote {
+    padding-left: 0.75em; 
+    border-left: 3px solid #cbd5e1; /* Tailwind's border-gray-300 */
+    margin-bottom: 0.5em; /* Added some margin below the quote */
+}
+.dark .selected-text-quote {
+    border-left-color: #4b5563; /* Tailwind's border-gray-600 */
+}
+
+.note-meta {
+    /* For author and timestamp */
+}
+
+.note-meta .font-medium { 
+    /* For author name specifically */
+}
+
+.notes-container .italic { 
+    /* For loading/no notes messages */
+}
+.notes-container .text-red-500 {
+    /* For error messages */
+}
+.dark .notes-container .text-red-400 {
+    /* For dark mode error messages */
+}
+
+.toggle-notes-btn {
+    /* Tailwind classes are applied directly in script.js:
+       text-xs ml-2 my-1 px-2 py-1 border border-blue-500 dark:border-purple-500 
+       text-blue-600 dark:text-purple-400 hover:bg-blue-50 dark:hover:bg-purple-900 
+       rounded transition-colors duration-150 focus:outline-none focus:ring-2 
+       focus:ring-blue-400 dark:focus:ring-purple-600 
+    */
+    cursor: pointer;
+    /* Add any additional non-Tailwind styles if needed */
+    margin-left: 2em; /* Align with paragraph indent, or adjust as preferred */
+    margin-bottom: 0.8em; /* Space before the notes container if it's on next line */
+}
+/* END: Styles for Notes Display & Toggle Functionality */

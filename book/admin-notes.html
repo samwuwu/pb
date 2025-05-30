@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="《知微见著》后台笔记管理 - 查看和删除所有笔记。">
+    <title>后台笔记管理 - 《知微见著》</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css"> </head>
+<body class="bg-white text-gray-800 text-base flex flex-col min-h-screen">
+
+    <header class="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md p-4 flex justify-between items-center h-16" aria-label="页面顶部操作栏">
+        <div class="flex items-center">
+            <a href="zwjz.html" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 mr-2" aria-label="返回阅读页面">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+            </a>
+            <div class="text-xl font-semibold" role="heading" aria-level="1">后台笔记管理</div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <p id="usernameDisplay" class="px-2 py-1 text-sm text-gray-800 dark:text-gray-200 truncate w-24 sm:w-32"></p>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 pt-20">
+        <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative mb-8" role="alert">
+            <strong class="font-bold">安全警告！</strong>
+            <span class="block sm:inline">此页面包含敏感操作。管理员密码硬编码在Worker中，请勿在生产环境中使用此方法。</span>
+        </div>
+
+        <div id="adminLoginContainer" class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 dark:text-white">管理员认证</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">请输入管理员密码以解锁操作功能。</p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                <input type="password" id="adminPasswordInput" placeholder="管理员密码" 
+                       class="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 text-sm dark:text-white shadow-sm">
+                <button id="adminLoginBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-purple-500 flex-shrink-0">解锁</button>
+            </div>
+            <p id="adminError" class="text-red-500 dark:text-red-400 text-sm mt-2 hidden">密码错误。</p>
+        </div>
+
+        <div id="adminFunctions" class="hidden">
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
+                <h2 class="text-2xl font-semibold mb-4 dark:text-white">所有笔记的段落ID</h2>
+                <button id="listAllNotesBtn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">列出所有笔记段落ID</button>
+                <p id="listNotesError" class="text-red-500 dark:text-red-400 text-sm mt-2 hidden"></p>
+                <div id="allNotesList" class="mt-4 space-y-2 text-gray-700 dark:text-gray-300 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded p-2">
+                    <p class="text-gray-500 dark:text-gray-400">点击按钮加载所有笔记段落ID。</p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 mb-8">
+                <h2 class="text-2xl font-semibold mb-4 dark:text-white">查看指定章节/段落笔记</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">请输入要查看笔记的章节或段落ID。例如：`chapter-0` 或 `chapter-1-p-5`。</p>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                    <input type="text" id="noteIdInput" placeholder="输入章节或段落ID" 
+                           class="flex-grow p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 text-sm dark:text-white shadow-sm">
+                    <button id="fetchNotesBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-purple-500 flex-shrink-0">查看笔记</button>
+                </div>
+                <p id="fetchNotesError" class="text-red-500 dark:text-red-400 text-sm mt-2 hidden"></p>
+            </div>
+
+            <div id="notesListContainer" class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+                <h2 class="text-2xl font-semibold mb-4 dark:text-white">笔记列表</h2>
+                <div id="notesDisplayArea" class="space-y-4">
+                    <p class="text-gray-500 dark:text-gray-400">输入ID后点击“查看笔记”来加载。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-6 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-8">
+        <p>&copy; <span id="currentYear">2024</span> AI·Orange &《知微见著》版权所有.</p>
+        <p><a href="zwjz.html" class="text-blue-500 hover:underline dark:text-purple-400">返回阅读页面</a> | <a href="admin-notes.html" class="text-blue-500 hover:underline dark:text-purple-400">后台笔记管理</a></p>
+    </footer>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-[1001] flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full mx-4" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalMessage">
+            <h3 id="modalTitle" class="text-lg font-semibold mb-4 dark:text-white">确认操作</h3>
+            <p id="modalMessage" class="text-gray-700 dark:text-gray-300 mb-4">你确定要执行此操作吗？</p>
+            <div id="modalAdminPasswordInputGroup" class="mb-6 hidden"> <label for="confirmAdminPasswordInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">请输入管理员密码以确认：</label>
+                <input type="password" id="confirmAdminPasswordInput" 
+                       class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-sm dark:text-white shadow-sm" 
+                       placeholder="管理员密码">
+                <p id="confirmAdminPasswordError" class="text-red-500 dark:text-red-400 text-xs mt-1 hidden">密码错误，请重试。</p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelConfirmBtn" class="px-4 py-2 text-sm font-medium bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">取消</button>
+                <button id="confirmActionBtn" class="px-4 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">确认</button>
+            </div>
+        </div>
+    </div>
+    <div id="overlay" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 overlay-hidden" aria-hidden="true" tabindex="-1"></div>
+
+    <script src="admin-notes-script.js" defer></script>
+</body>
+</html>

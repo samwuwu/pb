@@ -7,7 +7,9 @@
             THEME: 'NOVEL_READER_THEME_V1',
             FONT_SIZE_INDEX: 'NOVEL_READER_FONT_SIZE_INDEX_V2',
             FONT_FAMILY: 'NOVEL_READER_FONT_FAMILY_V1',
-            BOOKMARKS: 'NOVEL_READER_BOOKMARKS_V3'
+            BOOKMARKS: 'NOVEL_READER_BOOKMARKS_V3',
+            USER_NAME: 'NOVEL_READER_USER_NAME_V1', // 用户名字
+            LOCAL_USER_ID: 'NOVEL_READER_LOCAL_USER_ID_V1', // 本地唯一用户ID
         },
         AVG_CHARS_PER_MINUTE: 220,
         FONT_SIZES: [
@@ -25,10 +27,11 @@
             { name: '平台默认无衬线', value: 'sans-serif' },
             { name: '平台默认衬线', value: 'serif' }
         ],
-        THEMES: ['light', 'dark'], // Removed 'system'
-        DEFAULT_THEME_INDEX: 0, // Default to 'light' (index 0 of the new THEMES array)
-        SCROLL_SHOW_TOP_BTN_THRESHOLD: 300, // Pixels
-        FEEDBACK_MESSAGE_DURATION: 1500 // Milliseconds (Keep for bookmarks)
+        THEMES: ['light', 'dark'],
+        DEFAULT_THEME_INDEX: 0, 
+        SCROLL_SHOW_TOP_BTN_THRESHOLD: 300, 
+        FEEDBACK_MESSAGE_DURATION: 2000, 
+        API_BASE_URL: 'https://my-notes-api.sep12th.workers.dev' 
     };
 
     const novelData = {
@@ -43,7 +46,7 @@
                         <p>知微整理了一下身上合体的暗红色制服，目光投向一架刚完成上客的航班。发动机的轰鸣声由远及近，如同即将奏响的序曲，沉稳而富有力量。那庞然大物在跑道上加速，随即昂首冲入一片湛蓝的清晨天空，尾灯划出一道弧线，便隐入云端，朝着远方破浪而去。</p>
                         <p>这是她入职地面服务部的第二十天。二十天，对于熟悉一份工作而言，不过是个开始；但对知微来说，却像是经历了整整两百场无声的战役，每一场都让她精疲力尽，溃不成军。</p>
                         <p>清晨的航站楼本该是高效而有序的，但今天，混乱像一剂催化剂，在她负责的登机口迅速发酵。一位计划经T市中转前往东南亚某国的旅客，因签证信息与边检系统记录存在细微出入，被暂时拦下。焦灼的汗珠从旅客额角渗出，他不懂中文，英文也磕磕绊绊，登机口用作应急的翼语通-多语种广播系统偏偏在这时掉了链子，播报出的安抚和解释含混不清，反而加剧了他的不安。</p>
-                        <p>雪上加霜的是，地面离港系统突然卡顿，屏幕上显示的登机旅客列表与实际登机的人数迟迟无法对应。绿色的"已登机"数字固执地停在一个令人尴尬的数值上，远低于实际人数。机组已经开始通过无线电催促："地服地服，旅客登机情况？能否准时关门？"那声音带着职业性的冷静，却像一把小锤，不轻不重地敲在知微紧绷的神经上。</p>
+                        <p>雪上加霜的是，地面离港系统突然卡顿，屏幕上显示的登机旅客列表与实际登机的人数迟迟无法对应。绿色的"已登机"数字固执地停在一个令人尴尬的数值上，远低于实际人数。机组已经开始通过无线电催促："地服地服，旅客登机情况？能否准时关门？"那声音带着职业性的冷静，却像一把小锤，不轻不重-敲在知微紧绷的神经上。</p>
                         <p>而本该最后登机的几位旅客，被这突如其来的签证风波和系统故障搅得情绪激动，其中一位中年男士涨红了脸，挥舞着登机牌，高声质问："你们航空公司怎么回事？这点小事都处理不明白？我们要延误了！"</p>
                         <p>知微感到一阵强烈的眩晕。她不是没准备，那些厚厚的《地服突发事件应急处理流程手册》条款，她昨夜还在枕边翻阅，每一条都清晰地印在脑海中，却在这一刻化作一堆杂乱的符号，根本无法在脑海中迅速串联起应对眼前乱局的完整链条。 她试图在工作群里搜寻，可海量的聊天记录和通知截图，根本无从下手。她下意识地拨打师傅李姐的电话，听筒里只有冰冷的忙音，像是在嘲笑她的孤立无援。</p>
                         <p>"你们不是专业的吗？连这点小事都处理不明白？"中年男士的质问携着热浪扑面而来，像一把锋利的刀，直刺知微心中最脆弱的角落。她努力想开口解释、安抚，可喉咙像被堵住一般，连一句完整的话都组织不起来。乘客的焦躁、机组的催促、同事们各自忙碌的身影，以及那本似乎永远翻不到正确页码的手册，共同织成一张密不透风的网，将她牢牢困住。羞愧和一种深不见底的无力感，让她几乎无法呼吸。她明明"拥有"着这些知识，却发现它们在最需要的时候，竟如此遥远和无力，比一无所知更加绝望。</p>
@@ -85,8 +88,6 @@
                         <p>"把值机和登机环节所有相关的业务手册、规章通知、应急预案、签证政策、远机位广播规范以及行李托运异常处理办法……所有这些，都整理录入到这个AI系统里。"知微深吸一口气，尽量让自己的声音听起来平静而有条理，"这样，当我们遇到问题时，只需要像和人对话一样提出问题，系统就能根据我们导入的资料，给出相对精准的答案和政策出处，从而大大减少我们翻阅手册、或者依赖不确定记忆的时间。"</p>
                         <p>第二天一早，知微鼓足勇气，找到了当班的W主管。W主管是一位经验丰富的老地服，以严谨和铁面无私著称。她听完知微略显急促的陈述，眉头渐渐蹙了起来，眼神中带着一丝不易察觉的审视。</p>
                         <p>"小知啊，"W主管的语气不咸不淡，手指轻轻叩击着桌面，"你的想法是好的，年轻人有冲劲，想改进工作是好事。但是，别总搞这些不切实际的东西。"她顿了顿，语气加重了几分，"我们地服的工作，靠的是什么？是日积月累的经验，是把各项流程规定刻在脑子里的基本功！手册上白纸黑字写得清清楚楚，按章办事，这才是我们做好服务的基石。你说的那个什么AI，万一出错了怎么办？谁来负责？"</p>
-                        <p>W主管的话像一盆冷水，浇熄了知微一半的热情。她试图辩解："主管，手册是死的，但情况是活的。而且这个系统可以标注答案出处，我们可以……"</p>
-                        <p>"行了，"W主管摆摆手，打断了她，"我知道你想表现。但目前阶段，踏踏实实把业务学精，比什么都重要。这个事，先放一放吧。"</p>
                         <p>知微张了张嘴，最终还是把涌到喉头的话咽了回去。她知道，再多说也无益。W主管的顾虑并非没有道理，对于一个强调安全与规范的行业来说，任何未经充分验证的新技术的引入，都必然伴随着质疑和谨慎。</p>
                         <p>走出主管办公室，初夏的阳光有些刺眼。知微心中充满了失落，但那颗被ima.copilot点燃的火种，却并未因此熄灭，反而因为被压抑，而在心底燃烧得更加执拗。</p>
                         <p>"不切实际吗？"她在心里默默反问，"真正不切实际的，是期望每个人都把厚达数千页、并且还在不断更新的规章制度完美无缺地记在脑子里，还要在万分紧急的状况下，零差错地调取出来！"</p>
@@ -98,14 +99,13 @@
                         <p>于是，她改变了策略。她不再追求一次性导入所有文档，而是开始精读每一份文件，将登机流程的每一个步骤、特殊旅客处置的每一种办法、签证政策的每一条细则、远机位登机广播的每一段标准话术，乃至行李托运异常处理的各种预案，都逐一"拆解"成具体的"问题-答案"对。</p>
                         <p>对于每一个条目，她都像一个严谨的学者般，详细标注了文件出处、更新日期、适用条件、操作步骤和关键的判别逻辑。例如，在处理签证政策时，她会将一条政策转化为："问题：旅客持有\[具体国家\]护照，计划从\[始发城市\]经由\[本站\]中转至\[目的城市\]，中转时间预计\[具体时长\]，且\[是否出机场/海关\]，请问是否需要办理过境签证？答案：根据《\[具体文件名\]》第\[X\]条第\[Y\]款规定，\[详细政策说明\]。备注：\[注意事项或例外情况\]。"</p>
                         <p>她甚至开始利用一些简单的AI文本分析小工具，辅助自己从大量文本中快速提取关键信息、进行分类和初步的结构化整理，这在一定程度上提升了她"喂养"ima.pilota的效率。</p>
-                        <p>更具挑战性的是那些"隐性知识"的显性化。手册上白纸黑字的是规定，但在实际操作中，充满了各种基于经验的判断和不成文的技巧。比如，如何用几句话快速安抚焦躁的旅客？面对某种特定类型的特殊旅客，除了标准流程外还需要注意哪些细节？这些往往是新手最容易犯错，也是老员工的"不传之秘"。</p>
+                        <p>更具挑战性性的是那些"隐性知识"的显性化。手册上白纸黑字的是规定，但在实际操作中，充满了各种基于经验的判断和不成文的技巧。比如，如何用几句话快速安抚焦躁的旅客？面对某种特定类型的特殊旅客，除了标准流程外还需要注意哪些细节？这些往往是新手最容易犯错，也是老员工的"不传之秘"。</p>
                         <p>为了获取这些宝贵的"活知识"，知微变得比以前更"好问"。她会抓住一切机会，向李姐和其他老师傅请教工作中遇到的各种疑难杂症，仔细聆听他们的处理方法和背后的思考逻辑。她会主动查阅过往的投诉案例和服务SOP（标准操作程序）执行报告，分析成功经验和失败教训。然后，她把这些通过请教、观察、分析得来的经验，也努力转化为结构化的语言，小心翼翼地融入到她的AI知识库中。</p>
                         <p>这已经远远超出了简单输入文档的范畴。她感觉自己像一个导师，在耐心地、细致地引导AI"学会思考"，或者更准确地说，是引导AI学会按照她设定的逻辑框架，将碎片化的信息组织起来，进行有效的关联和推理。</p>
                         <p>夜深人静，当城市早已沉睡，知微房间的灯光常常还亮着。屏幕上，ima.copilot的界面见证着她的每一次尝试、每一次失败后的调整、以及每一次微小进步带来的喜悦。她会反复用各种刁钻、模糊、甚至带有歧义的问题去"拷问"她的AI知识库，然后根据AI的回答，不断优化知识条目的描述、补充缺失的逻辑、修正错误的关联。</p>
                         <p>期间，W主管也曾不经意间察觉到知微的一些"小变化"。比如，有一次处理一个关于婴儿摇篮申请的复杂咨询，涉及到不同舱位、不同机型的细微规定，好几个老员工都说得模棱两可，知微却很快给出了一个条理清晰、引用了具体文件条款的答复，虽然她最后还是谦虚地表示"需要再和票务确认一下"，但其反应速度和准确性让W主管略感讶异，只是当时并未深究。</p>
                         <p>当她的个人知识库里成功录入并优化了第九十九个复杂问题，并且AI能够准确无误地给出符合逻辑、有明确出处的回应时，知微决定进行一次更具挑战性的测试。她深吸一口气，在对话框里郑重地敲下了第一百个问题，这个问题是她根据近期一个真实的复杂案例改编的：</p>
                         <p>"一位持有H特区护照的旅客，计划从伦敦始发，经由本站（T市）中转，搭乘12小时后的航班前往东京。他没有T市的有效签证，也不打算出机场隔离区。请问，根据最新规定，他是否需要办理过境签证？如果无需办理，依据是什么？如果有特殊豁免条款，请一并说明。"</p>
-                        <p>这个问题涉及到国籍、过境政策、中转时长、是否出隔离区以及最新的豁免条款，任何一个环节判断失误，都可能导致完全不同的结论。</p>
                         <p>她屏住呼吸，按下了发送键。</p>
                         <p>几秒钟的等待，漫长得像一个世纪。</p>
                         <p>随后，AI的回答清晰地显示在屏幕上："根据您提供的信息，该旅客无需办理T市过境签证。依据如下：持H特区护照的旅客前往日本，符合T市24小时内直接过境且不出机场的免办签证政策。详情可参考《2024年度T市口岸过境免办签证政策通告（修订版）》第二部分第3条关于'特定国家和地区公民过境免签'的规定。该政策明确指出，持有H特区护照……（省略若干字）……可享受此豁免。建议在值机时提醒旅客备妥全程登机牌及有效旅行证件以备查验。"</p>
@@ -193,7 +193,7 @@
                         它恰是认知能力的外延与增益。<br>
                         如同望远镜拓展了凝望宇宙的视野，<br>
                         AI助力我们，更擅长调配与运用智慧。</p>
-                        <p>她写完，默默地看着。这不仅仅是对AI知识库的赞美，更是对一种全新学习范式和工作理念的呼唤。她终于彻底领悟——AI知识库的真正价值，并非仅仅在于它'具备多少能力'，而在于它如何'助力你拥有更强的能力'，让人类从'知识的奴隶'真正迈向'知识的主宰'。</p>
+                        <p>她写完，默默地看着。这不仅仅是对AI知识库的赞美，更是对一种全新学习范式和工作理念的呼唤。她终于彻底领悟——AI知识库的真正价值，并非仅仅在于它'具备多少能力'，而在于它如何'助力你拥有更强的能力'，让人类从'知识的奴隶'真正迈向'主宰'。</p>
                         <p>这无疑是一场深刻的认知革命，一场从"记忆至上"、"标准答案至上"，到"提问至上"、"思考至上"、"智慧连接至上"的文明层面的转型。虽然它目前仅仅发生在小小的地服部门，但知微隐约感觉到，这背后蕴含着一种更为宏大和普遍的趋势。</p>
                         <p>她，以及所有拥抱这种变化的"问者"，都正站在这个转型浪潮的潮头。他们不再是知识的奴隶，而是开始学习如何成为知识的飞行者，驾驭着AI这对有力的翅膀，在信息的长空自由翱翔。而这一切的起点，不过是源于一个年轻人对"更好提问"的渴望，以及对"知识本该如何被对待"的朴素反思。</p>
                         <p>知微，这不仅是她的名字，更是她在这场变革中所践行的真谛——从最细微处的问题入手，洞察其本质，最终带来了显著而深刻的改变。</p>
@@ -211,7 +211,6 @@
                         <p>这天，又一批新员工入职。带教的依然是李姐，但她的培训方式已经与一年前截然不同。她不再要求新人们死记硬背那些厚厚的规章手册，而是先教会他们如何使用AI知识库。</p>
                         <p>一个梳着马尾辫，脸上还带着些许学生气的年轻女孩，在一次模拟操作中因为对某个特殊票务规定不熟悉而出了错，显得有些沮丧。她小声地向身旁的知微请教："知微姐，这么多规章制度，还有那么多随时可能更新的临时通知，我感觉自己好像怎么也记不住，脑子完全不够用，该如何是好？"</p>
                         <p>知微看着她，仿佛看到了曾经的自己。她温和地笑了笑，从口袋里取出一个打印着二维码的小卡片递给女孩。卡片上印着AI知识库的登录方式和一句引导语："智慧的入口，始于一个好问题。"</p>
-                        <p>"不必强记所有答案。"知微轻声说，她的声音里带着一种历经淬炼后的平静与智慧，"你只需要记住，当你遇到困惑时，这里有一个可靠的伙伴。然后，认真思考，学会如何清晰、准确地向它提出'好问题'。剩下的，交给它，也交给你自己基于信息的判断。"</p>
                         <p>知微望着窗外，一架银色的飞机正优雅地滑向跑道，即将腾空而起。她知道，T3航站楼的日常依旧繁忙，挑战也从未消失。但有些东西，已经不一样了。一种新的秩序，一种新的智慧生态，正在悄然生长。</p>
                         <p>这不仅仅是一个工具的胜利，这更像是一个小小的、却意义深远的文明分水岭。人类与知识的关系，正在被重新定义。</p>
                     `
@@ -237,7 +236,12 @@
         currentFontSizeNameEl, fontFamilySelector, themeCycleBtn, themeIcons,
         tocBtn, tocPanel, closeTocBtn, bookmarkBtn, bookmarksPanel,
         addCurrentBookmarkBtn, bookmarksListEl, overlay, returnToTopBtn,
-        progressBar, currentYearEl, mainTitleEl;
+        progressBar, currentYearEl, mainTitleEl,
+        sharePopupEl, selectedTextPreviewEl, noteInputEl, saveNoteBtnEl, cancelNoteBtnEl,
+        usernameDisplayElInHeader, noteUsernameInputEl, // 笔记弹窗中的用户名输入
+        copySelectedTextBtnEl, // 复制按钮
+        confirmationModalEl, modalTitleEl, modalMessageEl, cancelConfirmBtnEl, confirmActionBtnEl,
+        modalAuthInputGroupEl, confirmUsernameInputEl, confirmAuthErrorEl; // 确认弹窗中的用户名输入
 
     function cacheDOMElements() {
         novelContentEl = document.getElementById('novelContent');
@@ -262,7 +266,33 @@
         overlay = document.getElementById('overlay');
         returnToTopBtn = document.getElementById('returnToTopBtn');
         progressBar = document.getElementById('progressBar');
-        currentYearEl = document.getElementById('currentYear'); // Fallback in HTML
+        currentYearEl = document.getElementById('currentYear'); 
+
+        sharePopupEl = document.getElementById('sharePopup');
+        selectedTextPreviewEl = document.getElementById('selectedTextPreview');
+        noteInputEl = document.getElementById('noteInput');
+        saveNoteBtnEl = document.getElementById('saveNoteBtn');
+        cancelNoteBtnEl = document.getElementById('cancelNoteBtn');
+
+        // START: 缓存用户名显示和笔记弹窗中的用户名输入
+        usernameDisplayElInHeader = document.getElementById('usernameDisplay');
+        noteUsernameInputEl = document.getElementById('noteUsernameInput'); 
+        // END: 缓存用户名显示和笔记弹窗中的用户名输入
+
+        // START: 缓存复制按钮
+        copySelectedTextBtnEl = document.getElementById('copySelectedTextBtn');
+        // END: 缓存复制按钮
+
+        // START: 缓存确认弹窗元素
+        confirmationModalEl = document.getElementById('confirmationModal');
+        modalTitleEl = document.getElementById('modalTitle');
+        modalMessageEl = document.getElementById('modalMessage');
+        cancelConfirmBtnEl = document.getElementById('cancelConfirmBtn');
+        confirmActionBtnEl = document.getElementById('confirmActionBtn');
+        modalAuthInputGroupEl = document.getElementById('modalAuthInputGroup'); 
+        confirmUsernameInputEl = document.getElementById('confirmUsernameInput');
+        confirmAuthErrorEl = document.getElementById('confirmAuthError'); 
+        // END: 缓存确认弹窗元素
     }
 
     // --- State Variables ---
@@ -270,7 +300,9 @@
     let currentFontFamily = NOVEL_READER_CONFIG.FONT_FAMILIES[0].value;
     let currentTheme = NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX];
     let bookmarks = [];
-    let activePanel = null; // To keep track of which panel is open
+    let activePanel = null; 
+    let currentUsername = '匿名读者'; // 当前用户名，默认匿名
+    let localUserId = null; // 本地唯一用户ID
 
     // --- Utility Functions ---
     function calculateReadingTime(text) {
@@ -295,66 +327,327 @@
             console.warn("LocalStorage SET Error:", e.message);
         }
     }
-    
-    function showFeedbackMessage(element, message, originalText) {
+
+    function showTemporaryFeedback(element, message, isSuccess, originalTextContent) {
+        const defaultButtonText = originalTextContent || element.dataset.originalText || element.textContent; // Store original text if not passed
+        if (!element.dataset.originalText && !originalTextContent) {
+            element.dataset.originalText = element.textContent;
+        }
+        
         element.textContent = message;
+        
+        const basicButtonClasses = element.className.split(' ').filter(cls => 
+            !cls.startsWith('bg-') && !cls.startsWith('hover:bg-') && !cls.startsWith('dark:bg-') && !cls.startsWith('dark:hover:bg-') && !cls.startsWith('focus:ring-')
+        ).join(' ');
+        
+        const successColorClasses = "bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 focus:ring-green-500 dark:focus:ring-green-500";
+        const errorColorClasses = "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 focus:ring-red-500 dark:focus:ring-red-500";
+        const originalColorClasses = "bg-blue-500 hover:bg-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 focus:ring-blue-500 dark:focus:ring-purple-500"; // Assuming this for saveNoteBtn
+
+        element.className = basicButtonClasses; 
+
+        if (isSuccess) {
+            element.classList.add(...successColorClasses.split(' '));
+        } else { 
+            element.classList.add(...errorColorClasses.split(' '));
+        }
+        element.disabled = true; 
+
         setTimeout(() => {
-            element.textContent = originalText;
+            element.textContent = defaultButtonText; 
+            element.className = `${basicButtonClasses} ${element.id === 'saveNoteBtn' ? originalColorClasses : 'bg-blue-500 dark:bg-purple-600 hover:bg-blue-600 dark:hover:bg-purple-700' }`; // Adjust for specific button if needed
+            element.disabled = false; 
+            delete element.dataset.originalText;
         }, NOVEL_READER_CONFIG.FEEDBACK_MESSAGE_DURATION);
     }
 
+    // 定义全局的事件处理函数，以便可以正确地添加和移除
+    let currentConfirmHandler = null;
+    let currentCancelHandler = null;
+    let currentOverlayHandler = null;
+
+    /**
+     * 显示自定义确认弹窗
+     * @param {string} message 弹窗消息
+     * @param {function} onConfirm 用户点击确认后的回调函数 (接收一个参数：用户输入的名字)
+     * @param {boolean} requireUsername 是否需要名字确认
+     * @param {string} expectedUsername 如果需要名字确认，期望的名字是什么
+     */
+    function showConfirmationModal(message, onConfirm, requireUsername = false, expectedUsername = '') {
+        if (!confirmationModalEl || !modalMessageEl || !confirmActionBtnEl || !cancelConfirmBtnEl) return;
+
+        modalMessageEl.textContent = message;
+        confirmAuthErrorEl.classList.add('hidden'); // 隐藏错误信息
+        confirmUsernameInputEl.value = ''; // 清空名字输入框
+
+        if (requireUsername) {
+            modalAuthInputGroupEl.classList.remove('hidden');
+            confirmUsernameInputEl.focus(); // 聚焦到名字输入框
+        } else {
+            modalAuthInputGroupEl.classList.add('hidden');
+        }
+
+        confirmationModalEl.classList.remove('hidden');
+        overlay.classList.add('overlay-visible'); // 显示遮罩层
+        activePanel = confirmationModalEl; // 设置当前活动面板
+
+        // 移除旧的事件监听器（如果存在）
+        if (currentConfirmHandler) {
+            confirmActionBtnEl.removeEventListener('click', currentConfirmHandler);
+            cancelConfirmBtnEl.removeEventListener('click', currentCancelHandler);
+            overlay.removeEventListener('click', currentOverlayHandler);
+        }
+
+        // 定义新的事件处理函数
+        currentConfirmHandler = () => {
+            if (requireUsername) {
+                const enteredUsername = confirmUsernameInputEl.value.trim();
+                
+                if (enteredUsername === expectedUsername) {
+                    onConfirm(enteredUsername); // 传递名字给回调
+                    hideConfirmationModal();
+                } else {
+                    confirmAuthErrorEl.classList.remove('hidden');
+                    confirmUsernameInputEl.focus(); // 重新聚焦
+                }
+            } else {
+                onConfirm();
+                hideConfirmationModal();
+            }
+        };
+
+        currentCancelHandler = () => {
+            hideConfirmationModal();
+        };
+
+        currentOverlayHandler = (e) => {
+            if (e.target === overlay) { // 确保只在点击遮罩层时触发
+                hideConfirmationModal();
+            }
+        };
+
+        // 添加新的事件监听器
+        confirmActionBtnEl.addEventListener('click', currentConfirmHandler);
+        cancelConfirmBtnEl.addEventListener('click', currentCancelHandler);
+        overlay.addEventListener('click', currentOverlayHandler); // 点击遮罩层也可以取消
+    }
+
+    function hideConfirmationModal() {
+        if (!confirmationModalEl) return;
+        confirmationModalEl.classList.add('hidden');
+        overlay.classList.remove('overlay-visible'); // 隐藏遮罩层
+        activePanel = null; // 重置活动面板
+        
+        // 移除当前绑定的事件监听器
+        if (currentConfirmHandler) {
+            confirmActionBtnEl.removeEventListener('click', currentConfirmHandler);
+            cancelConfirmBtnEl.removeEventListener('click', currentCancelHandler);
+            overlay.removeEventListener('click', currentOverlayHandler);
+            // 重置为 null，防止下次 showConfirmationModal 移除错误的引用
+            currentConfirmHandler = null;
+            currentCancelHandler = null;
+            currentOverlayHandler = null;
+        }
+    }
+
+
     // --- Core Functions ---
+    async function fetchAndDisplayNotesForParagraph(paragraphId) {
+        if (!paragraphId) return;
+        const paragraphElement = document.getElementById(paragraphId);
+        if (!paragraphElement) return;
+
+        const existingToggleButton = document.getElementById(`toggle-notes-btn-for-${paragraphId}`);
+        if (existingToggleButton) existingToggleButton.remove();
+        const existingNotesContainer = document.getElementById(`notes-for-${paragraphId}`);
+        if (existingNotesContainer) existingNotesContainer.remove();
+
+        try {
+            const response = await fetch(`${NOVEL_READER_CONFIG.API_BASE_URL}/api/notes?paragraphId=${paragraphId}`);
+            if (response.ok) {
+                const notes = await response.json();
+                if (notes && notes.length > 0) {
+                    const toggleButton = document.createElement('button');
+                    toggleButton.id = `toggle-notes-btn-for-${paragraphId}`;
+                    toggleButton.className = 'toggle-notes-btn text-xs ml-2 my-1 px-2 py-1 border border-blue-500 dark:border-purple-500 text-blue-600 dark:text-purple-400 hover:bg-blue-50 dark:hover:bg-purple-900 rounded transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-purple-600'; 
+                    toggleButton.textContent = `查看笔记 (${notes.length})`;
+                    toggleButton.dataset.targetNotesContainerId = `notes-for-${paragraphId}`;
+                    toggleButton.style.display = 'inline-block'; 
+                    toggleButton.style.marginLeft = '1em'; 
+                    paragraphElement.parentNode.insertBefore(toggleButton, paragraphElement.nextSibling);
+
+                    const notesContainer = document.createElement('div');
+                    notesContainer.id = `notes-for-${paragraphId}`;
+                    notesContainer.className = 'notes-container notes-hidden mt-1 mb-4 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow';
+                    toggleButton.parentNode.insertBefore(notesContainer, toggleButton.nextSibling);
+
+                    const notesList = document.createElement('ul');
+                    notesList.className = 'space-y-3';
+                    notes.forEach(note => {
+                        const noteItem = document.createElement('li');
+                        noteItem.className = 'note-item p-3 bg-white dark:bg-gray-700 rounded-md shadow-sm border border-gray-200 dark:border-gray-600';
+                        
+                        const headerDiv = document.createElement('div');
+                        headerDiv.className = 'flex justify-between items-center mb-2';
+
+                        const authorMetaDiv = document.createElement('div');
+                        authorMetaDiv.className = 'flex items-center text-xs text-gray-500 dark:text-gray-400';
+                        const authorSpan = document.createElement('span');
+                        authorSpan.className = 'font-medium text-gray-700 dark:text-gray-200 mr-2';
+                        authorSpan.textContent = note.username || '匿名读者'; // 显示用户名
+                        const timestampSpan = document.createElement('span');
+                        try {
+                            timestampSpan.textContent = new Date(note.timestamp).toLocaleString();
+                        } catch (e) {
+                            timestampSpan.textContent = `时间未知`;
+                        }
+                        authorMetaDiv.appendChild(authorSpan);
+                        authorMetaDiv.appendChild(timestampSpan);
+
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'flex space-x-2';
+
+                        // 回复按钮 (占位符)
+                        const replyBtn = document.createElement('button');
+                        replyBtn.className = 'text-blue-500 dark:text-purple-400 hover:text-blue-700 dark:hover:text-purple-300 text-xs font-medium';
+                        replyBtn.textContent = '回复';
+                        replyBtn.onclick = () => {
+                            alert('回复功能暂未实现，需要更复杂的后端和数据结构支持。');
+                        };
+                        actionsDiv.appendChild(replyBtn);
+
+                        // 删除按钮
+                        // 只有当前设备的用户才能删除自己的笔记，并且需要名字确认
+                        if (note.userId === localUserId) { 
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.className = 'text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-xs font-medium';
+                            deleteBtn.textContent = '删除';
+                            deleteBtn.onclick = () => {
+                                showConfirmationModal('请输入你的名字以确认删除此笔记：', async (confirmedUsername) => {
+                                    await deleteNote(note.noteId, paragraphId, confirmedUsername); 
+                                }, true, note.username); // 需要名字确认，传入笔记的作者名
+                            };
+                            actionsDiv.appendChild(deleteBtn);
+                        }
+
+                        headerDiv.appendChild(authorMetaDiv);
+                        headerDiv.appendChild(actionsDiv);
+                        noteItem.appendChild(headerDiv);
+
+                        const selectedTextEl = document.createElement('p');
+                        selectedTextEl.className = 'selected-text-quote text-xs italic text-gray-500 dark:text-gray-400 mb-2 pb-2 border-b border-gray-200 dark:border-gray-600';
+                        selectedTextEl.textContent = `针对："${note.selectedText.substring(0,100)}${note.selectedText.length > 100 ? '...' : ''}"`;
+                        const noteContentEl = document.createElement('p');
+                        noteContentEl.className = 'note-content text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap';
+                        noteContentEl.textContent = note.noteContent;
+                        
+                        if(note.selectedText) noteItem.appendChild(selectedTextEl); 
+                        noteItem.appendChild(noteContentEl);
+                        notesList.appendChild(noteItem);
+                    });
+                    notesContainer.appendChild(notesList);
+                    notesContainer.dataset.notesCount = notes.length; // Store notes count
+
+                    toggleButton.addEventListener('click', function() {
+                        const targetContainer = document.getElementById(this.dataset.targetNotesContainerId);
+                        if (targetContainer) {
+                            const isNowHidden = targetContainer.classList.toggle('notes-hidden');
+                            this.textContent = isNowHidden ? `查看笔记 (${notes.length})` : `隐藏笔记 (${notes.length})`;
+                            this.setAttribute('aria-expanded', isNowHidden ? 'false' : 'true');
+                        }
+                    });
+                    toggleButton.setAttribute('aria-expanded', 'false'); 
+                }
+            } else {
+                console.error(`获取笔记失败 (${paragraphId}): ${response.status}`);
+            }
+        } catch (error) {
+            console.error(`获取笔记时发生网络错误 (${paragraphId}):`, error);
+        }
+    }
+
+    /**
+     * 删除笔记的后端API调用
+     * @param {string} noteId 要删除的笔记ID
+     * @param {string} paragraphId 笔记所属的段落ID，用于刷新显示
+     * @param {string} confirmedUsername 用户输入的名字，用于后端验证
+     */
+    async function deleteNote(noteId, paragraphId, confirmedUsername) { // 移除 confirmedPassword
+        try {
+            const response = await fetch(`${NOVEL_READER_CONFIG.API_BASE_URL}/api/notes/${noteId}?paragraphId=${paragraphId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Local-User-ID': localUserId, // 发送本地用户ID进行后端验证
+                    'X-Confirmed-Username': confirmedUsername, // 发送用户输入的名字进行后端验证
+                }
+            });
+
+            if (response.ok) {
+                console.log(`笔记 ${noteId} 已成功删除。`);
+                // 重新获取并显示该段落的笔记
+                await fetchAndDisplayNotesForParagraph(paragraphId); 
+                // 更新笔记数量显示
+                const toggleButton = document.getElementById(`toggle-notes-btn-for-${paragraphId}`);
+                const notesContainer = document.getElementById(`notes-for-${paragraphId}`);
+                if (toggleButton && notesContainer) {
+                    const notesCount = notesContainer.querySelectorAll('.note-item').length;
+                    toggleButton.textContent = notesContainer.classList.contains('notes-hidden') ? `查看笔记 (${notesCount})` : `隐藏笔记 (${notesCount})`;
+                }
+            } else {
+                const errorText = await response.text(); 
+                console.error('删除笔记失败 - 状态码:', response.status, '错误:', errorText); 
+                alert(`删除笔记失败: ${errorText || response.statusText}`); // 使用alert作为临时反馈
+            }
+        } catch (error) {
+            console.error(`删除笔记 ${noteId} 时发生网络错误:`, error);
+            alert('删除笔记时发生网络错误。'); // 使用alert作为临时反馈
+        }
+    }
+
 
     function loadNovel() {
         if (!novelContentEl || !tocListEl) return;
-
-        // Set main page title
         document.title = `${novelData.title} - ${novelData.author}`;
-
-        // Clear existing content (e.g., "Loading..." message)
         novelContentEl.innerHTML = '';
         tocListEl.innerHTML = '';
-
         const contentFragment = document.createDocumentFragment();
         const tocFragment = document.createDocumentFragment();
-
-        // Create a wrapper for title and author to center them as a block
         const titleAuthorWrapper = document.createElement('div');
-        titleAuthorWrapper.className = 'flex flex-col items-center'; // This will center the H1 and P blocks
-
-        // Add novel title
+        titleAuthorWrapper.className = 'flex flex-col items-center'; 
         mainTitleEl = document.createElement('h1');
-        mainTitleEl.className = 'text-3xl font-bold mb-2 text-center'; // text-center here is fine
+        mainTitleEl.className = 'text-3xl font-bold mb-2 text-center'; 
         mainTitleEl.textContent = novelData.title;
         titleAuthorWrapper.appendChild(mainTitleEl);
-
-        contentFragment.appendChild(titleAuthorWrapper); // Add the wrapper to the main content fragment
-
+        contentFragment.appendChild(titleAuthorWrapper); 
         novelData.chapters.forEach(chapter => {
             const readingTime = calculateReadingTime(chapter.content);
-
             const chapterContainer = document.createElement('div');
             chapterContainer.id = chapter.id;
-            chapterContainer.className = 'mb-12 chapter-title'; // Existing class for scroll margin
-
+            chapterContainer.className = 'mb-12 chapter-title'; 
             const chapterTitleEl = document.createElement('h2');
-            // Tailwind prose classes will style h2, or define in style.css if more specific needed
             chapterTitleEl.className = 'text-2xl font-semibold mb-2 border-b-2 border-gray-300 dark:border-gray-600 pb-2';
             chapterTitleEl.textContent = chapter.title;
-
             const readingTimeEl = document.createElement('p');
             readingTimeEl.className = 'chapter-reading-time';
             readingTimeEl.textContent = `预计阅读时间：${readingTime} 分钟`;
-
             const chapterContentDiv = document.createElement('div');
-            chapterContentDiv.innerHTML = chapter.content; // Content is HTML
-
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = chapter.content; 
+            let paragraphIndex = 0; 
+            tempContainer.querySelectorAll('p').forEach(pTag => {
+                if (!pTag.classList.contains('chapter-reading-time')) { 
+                    const currentPId = `${chapter.id}-p-${paragraphIndex++}`;
+                    pTag.id = currentPId;
+                }
+            });
+            while (tempContainer.firstChild) {
+                chapterContentDiv.appendChild(tempContainer.firstChild);
+            }
             chapterContainer.appendChild(chapterTitleEl);
             chapterContainer.appendChild(readingTimeEl);
             chapterContainer.appendChild(chapterContentDiv);
             contentFragment.appendChild(chapterContainer);
-
-            // Create TOC item
             const tocItem = document.createElement('a');
             tocItem.href = `#${chapter.id}`;
             tocItem.innerHTML = `${chapter.title} <span class="text-xs text-gray-500 dark:text-gray-400">(${readingTime}分钟)</span>`;
@@ -369,35 +662,34 @@
             });
             tocFragment.appendChild(tocItem);
         });
-
         novelContentEl.appendChild(contentFragment);
         tocListEl.appendChild(tocFragment);
+        novelContentEl.querySelectorAll('p[id^="chapter-"]').forEach(pElement => {
+            if (!pElement.classList.contains('chapter-reading-time')) {
+                 fetchAndDisplayNotesForParagraph(pElement.id);
+            }
+        });
     }
 
-    function updateThemeIcon(effectiveThemeState) { // effectiveThemeState is 'light' or 'dark'
-        // Ensure themeIcons.system is not referenced if it was part of an older themeIcons structure
-        // if (themeIcons.system) themeIcons.system.classList.add('hidden'); 
-
+    function updateThemeIcon(effectiveThemeState) { 
         if (themeIcons.light) themeIcons.light.classList.add('hidden');
         if (themeIcons.dark) themeIcons.dark.classList.add('hidden');
-
-        if (effectiveThemeState === 'light') { // Current theme is light, show icon to switch to dark (moon)
+        if (effectiveThemeState === 'light') { 
             if (themeIcons.dark) themeIcons.dark.classList.remove('hidden');
-        } else { // Current theme is dark, show icon to switch to light (sun)
+        } else { 
             if (themeIcons.light) themeIcons.light.classList.remove('hidden');
         }
     }
 
-    function applyTheme(themeToApply) { // themeToApply will only be 'light' or 'dark'
+    function applyTheme(themeToApply) { 
         currentTheme = themeToApply;
-
         if (themeToApply === 'dark') {
             document.documentElement.classList.add('dark');
-        } else { // themeToApply is 'light'
+        } else { 
             document.documentElement.classList.remove('dark');
         }
         safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME, themeToApply);
-        updateThemeIcon(themeToApply); // Pass the current theme directly
+        updateThemeIcon(themeToApply); 
     }
 
     function cycleTheme() {
@@ -416,7 +708,7 @@
 
     function populateFontFamilySelector() {
         if (!fontFamilySelector) return;
-        fontFamilySelector.innerHTML = '<option disabled selected value="">— 选择字体 —</option>'; // Clear and add placeholder
+        fontFamilySelector.innerHTML = '<option disabled selected value="">— 选择字体 —</option>'; 
         NOVEL_READER_CONFIG.FONT_FAMILIES.forEach(option => {
             const optElement = document.createElement('option');
             optElement.value = option.value;
@@ -428,48 +720,67 @@
     function applyFontFamily(fontFamily) {
         if (!novelContentEl || !fontFamilySelector) return;
         currentFontFamily = fontFamily;
-        document.body.style.fontFamily = fontFamily; // Apply to the whole body
-        novelContentEl.style.fontFamily = fontFamily; // Explicitly set for novel content as well, in case of specific prose styles
+        document.body.style.fontFamily = fontFamily; 
+        novelContentEl.style.fontFamily = fontFamily; 
         safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.FONT_FAMILY, fontFamily);
-        fontFamilySelector.value = fontFamily; // Ensure selector reflects current font
+        fontFamilySelector.value = fontFamily; 
     }
 
-    // --- Panel Management ---
     function openPanel(panel, button) {
         if (!panel) return;
-
-        // Close any other open panel first
         if (activePanel && activePanel !== panel) {
             const otherButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
-            closePanel(activePanel, otherButton);
+            closePanel(activePanel, otherButton || (activePanel === sharePopupEl ? null : undefined));
         }
-        
-        panel.classList.remove(panel.id === 'tocPanel' ? 'toc-panel-hidden' : 'settings-panel-hidden');
-        panel.classList.add(panel.id === 'tocPanel' ? 'toc-panel-visible' : 'settings-panel-visible');
+        const panelClassHidden = panel.id === 'tocPanel' ? 'toc-panel-hidden' : (panel.id === 'sharePopup' ? '' : 'settings-panel-hidden');
+        const panelClassVisible = panel.id === 'tocPanel' ? 'toc-panel-visible' : (panel.id === 'sharePopup' ? '' : 'settings-panel-visible');
+        if (panel.id === 'sharePopup') {
+            panel.style.display = 'block';
+            // 当笔记弹窗打开时，将当前用户名填充到输入框中
+            if (noteUsernameInputEl) {
+                noteUsernameInputEl.value = currentUsername;
+            }
+        } else {
+            if (panelClassHidden) panel.classList.remove(panelClassHidden);
+            if (panelClassVisible) panel.classList.add(panelClassVisible);
+        }
         if (button) button.setAttribute('aria-expanded', 'true');
-        
-        if (panel.id === 'tocPanel') {
+        if (panel.id === 'tocPanel') { 
             overlay.classList.remove('overlay-hidden');
             overlay.classList.add('overlay-visible');
-        } else { // Small panels don't use the main overlay to allow interaction with content
+        } else if (activePanel && activePanel.id === 'tocPanel' && panel.id !== 'tocPanel') {
             overlay.classList.remove('overlay-visible');
             overlay.classList.add('overlay-hidden');
+        } else if (panel.id === 'sharePopup') { 
+             overlay.classList.remove('overlay-visible');
+             overlay.classList.add('overlay-hidden');
         }
         activePanel = panel;
-        panel.focus(); // Move focus to the panel
+        if (panel.id !== 'sharePopup') { 
+            panel.focus(); 
+        }
     }
 
     function closePanel(panel, button) {
         if (!panel) return;
-
-        panel.classList.remove(panel.id === 'tocPanel' ? 'toc-panel-visible' : 'settings-panel-visible');
-        panel.classList.add(panel.id === 'tocPanel' ? 'toc-panel-hidden' : 'settings-panel-hidden');
+        const panelClassVisible = panel.id === 'tocPanel' ? 'toc-panel-visible' : (panel.id === 'sharePopup' ? '' : 'settings-panel-visible');
+        const panelClassHidden = panel.id === 'tocPanel' ? 'toc-panel-hidden' : (panel.id === 'sharePopup' ? '' : 'settings-panel-hidden');
+        if (panel.id === 'sharePopup') {
+            panel.style.display = 'none';
+            if (saveNoteBtnEl && saveNoteBtnEl.disabled && saveNoteBtnEl.textContent === '正在保存...') { 
+                saveNoteBtnEl.textContent = '保存笔记'; 
+                saveNoteBtnEl.className = 'px-4 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-purple-500';
+                saveNoteBtnEl.disabled = false;
+            }
+        } else {
+            if (panelClassVisible) panel.classList.remove(panelClassVisible);
+            if (panelClassHidden) panel.classList.add(panelClassHidden);
+        }
         if (button) {
             button.setAttribute('aria-expanded', 'false');
-            button.focus(); // Return focus to the button that opened it
+            button.focus(); 
         }
-
-        if (panel.id === 'tocPanel') {
+        if (panel.id === 'tocPanel') { 
             overlay.classList.remove('overlay-visible');
             overlay.classList.add('overlay-hidden');
         }
@@ -480,36 +791,33 @@
 
     function togglePanel(panel, button) {
         if (!panel) return;
-        const isHidden = panel.classList.contains(panel.id === 'tocPanel' ? 'toc-panel-hidden' : 'settings-panel-hidden') || 
-                         !panel.classList.contains(panel.id === 'tocPanel' ? 'toc-panel-visible' : 'settings-panel-visible');
-
+        let isHidden;
+        if (panel.id === 'sharePopup') {
+            isHidden = panel.style.display === 'none' || !panel.style.display;
+        } else {
+            const panelClassHidden = panel.id === 'tocPanel' ? 'toc-panel-hidden' : 'settings-panel-hidden';
+            const panelClassVisible = panel.id === 'tocPanel' ? 'toc-panel-visible' : 'settings-panel-visible';
+            isHidden = panel.classList.contains(panelClassHidden) || !panel.classList.contains(panelClassVisible);
+        }
         if (isHidden) {
             openPanel(panel, button);
-            if (panel === bookmarksPanel) loadBookmarks(); // Refresh bookmarks when opening
+            if (panel === bookmarksPanel) loadBookmarks(); 
         } else {
             closePanel(panel, button);
         }
     }
 
-
-    // --- Bookmarks ---
     function getVisibleChapterInfo() {
         let visibleChapter = null;
         let maxVisibility = 0;
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-
         if (!novelData.chapters || novelData.chapters.length === 0) return null;
-
         for (const chapter of novelData.chapters) {
             const el = document.getElementById(chapter.id);
             if (el) {
                 const rect = el.getBoundingClientRect();
-                // Consider chapter visible if its top is within the first 2/3 of viewport
-                // or if a significant part of it is visible.
                 const visibleHeight = Math.max(0, Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0));
-                
                 if (visibleHeight > 0) {
-                     // Prioritize chapter whose start is near the top or middle of the viewport
                     if (rect.top >= 0 && rect.top < viewportHeight * 0.66) {
                          return { id: chapter.id, title: chapter.title, element: el };
                     }
@@ -520,76 +828,63 @@
                 }
             }
         }
-        // Fallback to the first chapter if none are prominently visible
         return visibleChapter || { id: novelData.chapters[0].id, title: novelData.chapters[0].title, element: document.getElementById(novelData.chapters[0].id) };
     }
 
     function addBookmark() {
         if (!addCurrentBookmarkBtn) return;
-
         const visibleChapterInfo = getVisibleChapterInfo();
         if (!visibleChapterInfo || !visibleChapterInfo.element) {
-            showFeedbackMessage(addCurrentBookmarkBtn, "无法确定章节", "添加当前位置为书签");
+            showTemporaryFeedback(addCurrentBookmarkBtn, "无法确定章节", false, "添加当前位置为书签"); 
             return;
         }
-
         const { id: chapterId, title: chapterTitle, element } = visibleChapterInfo;
         const scrollY = window.scrollY;
         const timestamp = new Date().toISOString();
-        
         let previewText = "章节起始...";
         if (element) {
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = element.innerHTML; // Get content of the chapter div
-            const firstP = tempDiv.querySelector('p:not(.chapter-reading-time)'); // Get first actual content paragraph
+            tempDiv.innerHTML = element.innerHTML; 
+            const firstP = tempDiv.querySelector('p:not(.chapter-reading-time)'); 
             if (firstP) {
                  previewText = firstP.textContent.trim().substring(0, 50) + "...";
             }
         }
-
-
         if (bookmarks.find(b => b.chapterId === chapterId && Math.abs(b.scrollY - scrollY) < 50)) {
-            showFeedbackMessage(addCurrentBookmarkBtn, "附近已有书签", "添加当前位置为书签");
+            showTemporaryFeedback(addCurrentBookmarkBtn, "附近已有书签", false, "添加当前位置为书签"); 
             return;
         }
-
         bookmarks.push({ chapterId, chapterTitle, scrollY, timestamp, previewText });
         try {
             safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
-            loadBookmarks(); // Refresh list
-            showFeedbackMessage(addCurrentBookmarkBtn, "书签已添加!", "添加当前位置为书签");
+            loadBookmarks(); 
+            showTemporaryFeedback(addCurrentBookmarkBtn, "书签已添加!", true, "添加当前位置为书签"); 
         } catch (e) {
-            showFeedbackMessage(addCurrentBookmarkBtn, "添加失败", "添加当前位置为书签");
+            showTemporaryFeedback(addCurrentBookmarkBtn, "添加失败", false, "添加当前位置为书签"); 
             console.error("Failed to save bookmark:", e);
         }
     }
 
     function loadBookmarks() {
         if (!bookmarksListEl) return;
-        bookmarksListEl.innerHTML = ''; // Clear existing
-
+        bookmarksListEl.innerHTML = ''; 
         if (bookmarks.length === 0) {
             bookmarksListEl.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">暂无书签。</p>';
             return;
         }
-
         const sortedBookmarks = [...bookmarks].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const fragment = document.createDocumentFragment();
-
         sortedBookmarks.forEach((bookmark, index) => {
             const bookmarkEl = document.createElement('div');
             bookmarkEl.className = 'relative p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500';
             bookmarkEl.setAttribute('role', 'listitem');
-            bookmarkEl.tabIndex = 0; // Make it focusable
-
+            bookmarkEl.tabIndex = 0; 
             const titleEl = document.createElement('p');
-            titleEl.className = 'font-semibold text-sm truncate pr-8'; // Added pr-8 for delete button space
+            titleEl.className = 'font-semibold text-sm truncate pr-8'; 
             titleEl.textContent = bookmark.chapterTitle || '未知章节';
-
             const previewEl = document.createElement('p');
             previewEl.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1 truncate';
             previewEl.textContent = bookmark.previewText || '';
-
             const dateEl = document.createElement('p');
             dateEl.className = 'text-xs text-gray-400 dark:text-gray-500 mt-1';
             try {
@@ -597,8 +892,6 @@
             } catch (e) {
                  dateEl.textContent = `添加于: 无效日期`;
             }
-
-
             const deleteBtn = document.createElement('button');
             deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-red-500 hover:text-red-700"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.56 0c1.153 0 2.24.03 3.22.077m3.22-.077L11.778 4.511a2.25 2.25 0 0 0-2.244-1.5H8.084a2.25 2.25 0 0 0-2.244 1.5L4.772 5.79m14.456 0-3.272 13.883" /></svg>`;
             deleteBtn.className = 'absolute top-1/2 right-2 transform -translate-y-1/2 p-1 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-full';
@@ -607,9 +900,8 @@
                 e.stopPropagation();
                 bookmarks = bookmarks.filter(b => b.timestamp !== bookmark.timestamp);
                 safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
-                loadBookmarks(); // Refresh list
+                loadBookmarks(); 
             };
-            
             bookmarkEl.append(titleEl, previewEl, dateEl, deleteBtn);
             bookmarkEl.addEventListener('click', () => {
                 window.scrollTo({ top: bookmark.scrollY, behavior: 'smooth' });
@@ -627,23 +919,17 @@
         bookmarksListEl.appendChild(fragment);
     }
 
-    // --- Event Listeners Setup ---
     function setupEventListeners() {
         themeCycleBtn.addEventListener('click', cycleTheme);
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            if (currentTheme === 'system') applyTheme('system');
-        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {});
 
         fontSizeSlider.addEventListener('input', (e) => {
             currentFontSizeIndex = parseInt(e.target.value, 10);
             updateFontSize();
         });
-
         fontFamilySelector.addEventListener('change', (e) => {
             applyFontFamily(e.target.value);
         });
-
-        // Panel Toggles
         fontSettingsBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             togglePanel(fontPanel, fontSettingsBtn);
@@ -658,32 +944,70 @@
         });
         closeTocBtn.addEventListener('click', () => closePanel(tocPanel, tocBtn));
         
-        overlay.addEventListener('click', () => {
+        overlay.addEventListener('click', (e) => { 
              if (tocPanel.classList.contains('toc-panel-visible')) {
                 closePanel(tocPanel, tocBtn);
             }
+            if (sharePopupEl && sharePopupEl.style.display === 'block') {
+                if (e.target === overlay) { 
+                    closePanel(sharePopupEl, null); 
+                }
+            }
         });
 
-        // Global click to close small panels (font, bookmarks) and share popup
-        document.addEventListener('click', (e) => {
-            if (activePanel && activePanel !== tocPanel && !activePanel.contains(e.target)) {
-                const controllingButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
-                if (controllingButton && !controllingButton.contains(e.target)) {
-                    closePanel(activePanel, controllingButton);
+        document.addEventListener('click', (e) => { 
+            // 确保点击事件不会关闭确认弹窗，除非点击的是遮罩层
+            if (activePanel && activePanel !== tocPanel && activePanel !== sharePopupEl && activePanel !== confirmationModalEl) { 
+                if (!activePanel.contains(e.target)) {
+                    const controllingButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
+                    if (controllingButton && !controllingButton.contains(e.target)) {
+                        closePanel(activePanel, controllingButton);
+                    }
+                }
+            }
+            if (sharePopupEl && sharePopupEl.style.display === 'block' && !sharePopupEl.contains(e.target)){
+                let clickedOnPanelButton = false;
+                 [fontSettingsBtn, bookmarkBtn, tocBtn, saveNoteBtnEl, cancelNoteBtnEl, copySelectedTextBtnEl].forEach(btn => { // 增加复制按钮
+                    if (btn && btn.contains(e.target)) {
+                        clickedOnPanelButton = true;
+                    }
+                });
+                const notesContainersAndToggles = document.querySelectorAll('.notes-container, .toggle-notes-btn');
+                notesContainersAndToggles.forEach(nc => {
+                    if (nc.contains(e.target)) {
+                        clickedOnPanelButton = true; 
+                    }
+                });
+                if (!clickedOnPanelButton && (!noteInputEl || !noteInputEl.contains(e.target)) ) { 
+                    if (novelContentEl.contains(e.target) || document.body.contains(e.target)) {
+                         let selection = window.getSelection();
+                         if (!selection || selection.toString().trim() === '') { 
+                            if (e.target === novelContentEl || e.target === document.body || e.target === document.documentElement) {
+                                closePanel(sharePopupEl, null);
+                            }
+                         }
+                    }
                 }
             }
         });
         
-        // Keyboard accessibility for panels
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', (e) => { 
             if (e.key === 'Escape') {
                 if (activePanel) {
-                    const controllingButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
-                    closePanel(activePanel, controllingButton);
+                    if (activePanel === sharePopupEl) {
+                        closePanel(sharePopupEl, null);
+                    } else if (activePanel === confirmationModalEl) { // ESC键关闭确认弹窗
+                        hideConfirmationModal();
+                    }
+                    else {
+                        const controllingButton = document.querySelector(`[aria-controls="${activePanel.id}"]`);
+                         if (controllingButton) {
+                            closePanel(activePanel, controllingButton);
+                        }
+                    }
                 }
             }
         });
-
 
         addCurrentBookmarkBtn.addEventListener('click', addBookmark);
 
@@ -693,40 +1017,266 @@
             } else {
                 returnToTopBtn.classList.remove('show');
             }
-
             const scrollTop = window.scrollY;
             const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             const scrollPercent = (docHeight > 0 ? (scrollTop / docHeight) : 0) * 100;
             progressBar.style.width = `${scrollPercent}%`;
-
-        }, { passive: true }); // Use passive listener for scroll
+        }, { passive: true }); 
 
         returnToTopBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
+
+        if (novelContentEl) { 
+            novelContentEl.addEventListener('mouseup', function(event) {
+                if (sharePopupEl && sharePopupEl.contains(event.target) && event.target !== noteInputEl) { 
+                    return;
+                }
+                const clickedOnNotesToggle = event.target.closest('.toggle-notes-btn');
+                const clickedInsideNotesContainer = event.target.closest('.notes-container');
+                if (clickedOnNotesToggle || clickedInsideNotesContainer) return;
+
+                if (activePanel && activePanel !== sharePopupEl && activePanel !== confirmationModalEl) { // 增加对确认弹窗的判断
+                    return;
+                }
+                if (sharePopupEl && sharePopupEl.style.display === 'block' && !sharePopupEl.contains(event.target)){
+                    let clickedOnPanelButton = false;
+                     [fontSettingsBtn, bookmarkBtn, tocBtn].forEach(btn => {
+                        if (btn && btn.contains(e.target)) {
+                            clickedOnAnotherPanelButton = true;
+                        }
+                    });
+                    if(clickedOnAnotherPanelButton) return; 
+                }
+
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+
+                if (selectedText) {
+                    let parentParagraph = null;
+                    let paragraphId = null;
+                    if (selection.anchorNode) {
+                        let currentNode = selection.anchorNode;
+                        while (currentNode && currentNode !== novelContentEl) {
+                            if (currentNode.nodeName === 'P' && currentNode.id && currentNode.id.startsWith('chapter-')) {
+                                parentParagraph = currentNode;
+                                paragraphId = currentNode.id;
+                                break; 
+                            }
+                            currentNode = currentNode.parentNode;
+                        }
+                    }
+
+                    if (parentParagraph) {
+                        if (sharePopupEl && selectedTextPreviewEl && noteInputEl) {
+                            selectedTextPreviewEl.textContent = selectedText.substring(0, 150) + (selectedText.length > 150 ? '...' : '');
+                            noteInputEl.value = ''; 
+                            // 在笔记创建界面显示当前用户名
+                            if (noteUsernameInputEl) { // 使用新的 noteUsernameInputEl
+                                noteUsernameInputEl.value = currentUsername; // 预填充用户名
+                            }
+
+                            const popupWidth = sharePopupEl.offsetWidth || 300; 
+                            const popupHeight = sharePopupEl.offsetHeight || 200;
+                            let top = event.clientY - popupHeight - 15; 
+                            let left = event.clientX - (popupWidth / 2);
+                            if (top < 10) top = 10;
+                            if (left < 10) left = 10;
+                            if (left + popupWidth > window.innerWidth - 10) {
+                                left = window.innerWidth - popupWidth - 10;
+                            }
+                             if (top + popupHeight > window.innerHeight - 10) {
+                                top = event.clientY + 15; 
+                                if (top + popupHeight > window.innerHeight - 10) {
+                                     top = Math.max(10, window.innerHeight - popupHeight - 10); 
+                                }
+                            }
+                            sharePopupEl.style.top = `${top}px`;
+                            sharePopupEl.style.left = `${left}px`;
+                            openPanel(sharePopupEl, null); 
+                            noteInputEl.focus(); 
+                            sharePopupEl.dataset.paragraphId = paragraphId;
+                            sharePopupEl.dataset.selectedText = selectedText; 
+                        }
+                    } else {
+                        if (sharePopupEl && sharePopupEl.style.display === 'block') {
+                            closePanel(sharePopupEl, null);
+                        }
+                    }
+                } else { 
+                    if (sharePopupEl && sharePopupEl.style.display === 'block' && !sharePopupEl.contains(event.target)) {
+                        let clickedOnAnotherPanelButton = false;
+                        [fontSettingsBtn, bookmarkBtn, tocBtn].forEach(btn => {
+                            if (btn && btn.contains(e.target)) {
+                                clickedOnAnotherPanelButton = true;
+                            }
+                        });
+                        if (!clickedOnAnotherPanelButton) {
+                            closePanel(sharePopupEl, null);
+                        }
+                    }
+                }
+            });
+        }
+        
+        if (saveNoteBtnEl) {
+            saveNoteBtnEl.addEventListener('click', async function() { 
+                const noteContent = noteInputEl.value.trim();
+                const paragraphId = sharePopupEl.dataset.paragraphId;
+                const selectedText = sharePopupEl.dataset.selectedText;
+                const chapterId = paragraphId ? paragraphId.split('-p-')[0] : null; 
+
+                // 检查笔记内容和用户名是否为空
+                if (!noteContent) {
+                    alert("笔记内容不能为空！");
+                    noteInputEl.focus();
+                    return;
+                }
+                // 确保笔记弹窗中的用户名输入框有值
+                if (!noteUsernameInputEl.value.trim()) {
+                    alert("请输入你的名字！");
+                    noteUsernameInputEl.focus();
+                    return;
+                }
+
+                // 更新 currentUsername 并保存到本地存储
+                currentUsername = noteUsernameInputEl.value.trim();
+                safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.USER_NAME, currentUsername);
+                usernameDisplayElInHeader.textContent = currentUsername; // 更新顶部显示
+
+                if (noteContent && paragraphId && chapterId) {
+                    const noteData = {
+                        noteId: crypto.randomUUID(), // 为新笔记生成唯一ID
+                        paragraphId: paragraphId,
+                        chapterId: chapterId,
+                        selectedText: selectedText,
+                        noteContent: noteContent,
+                        userId: localUserId, // 使用本地唯一用户ID
+                        username: currentUsername, // 使用当前输入的用户名
+                        timestamp: new Date().toISOString()
+                    };
+
+                    const originalSaveBtnText = '保存笔记'; 
+                    saveNoteBtnEl.textContent = '正在保存...';
+                    saveNoteBtnEl.disabled = true;
+
+                    try {
+                        const fetchOptions = {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(noteData),
+                        };
+
+                        const response = await fetch(`${NOVEL_READER_CONFIG.API_BASE_URL}/api/notes`, fetchOptions);
+
+                        if (response.ok) { 
+                            const responseData = await response.json();
+                            console.log('笔记已保存:', responseData); 
+                            showTemporaryFeedback(saveNoteBtnEl, "笔记已保存!", true, originalSaveBtnText);
+                            closePanel(sharePopupEl, null);
+                            if (paragraphId) {
+                                await fetchAndDisplayNotesForParagraph(paragraphId); 
+                                const toggleButton = document.getElementById(`toggle-notes-btn-for-${paragraphId}`);
+                                const notesContainer = document.getElementById(`notes-for-${paragraphId}`);
+                                if (toggleButton && notesContainer && notesContainer.classList.contains('notes-hidden')) {
+                                    notesContainer.classList.remove('notes-hidden');
+                                    const notesCount = notesContainer.querySelectorAll('.note-item').length;
+                                    toggleButton.textContent = `隐藏笔记 (${notesCount})`; 
+                                    toggleButton.setAttribute('aria-expanded', 'true');
+                                } else if (toggleButton && notesContainer) { 
+                                    const notesCount = notesContainer.querySelectorAll('.note-item').length;
+                                    toggleButton.textContent = `隐藏笔记 (${notesCount})`;
+                                }
+                            }
+                        } else {
+                            const errorData = await response.text(); 
+                            console.error('保存笔记失败 - 状态码:', response.status, '错误:', errorData); 
+                            showTemporaryFeedback(saveNoteBtnEl, `保存失败 (${response.status})`, false, originalSaveBtnText);
+                        }
+                    } catch (error) {
+                        console.error('保存笔记时发生网络错误:', error); 
+                        showTemporaryFeedback(saveNoteBtnEl, "网络错误", false, originalSaveBtnText);
+                    }
+
+                } else if (!noteContent) {
+                    // 已经在前面处理了
+                } else {
+                    alert("无法保存笔记，缺少段落信息。");
+                }
+            });
+        }
+
+        if (cancelNoteBtnEl) {
+            cancelNoteBtnEl.addEventListener('click', function() {
+                closePanel(sharePopupEl, null); 
+            });
+        }
+
+        // START: 复制按钮事件监听
+        if (copySelectedTextBtnEl) {
+            copySelectedTextBtnEl.addEventListener('click', () => {
+                const textToCopy = selectedTextPreviewEl.textContent;
+                if (textToCopy) {
+                    // 使用 document.execCommand('copy') 因为 navigator.clipboard.writeText() 在 iframe 中可能受限
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showTemporaryFeedback(copySelectedTextBtnEl, "已复制!", true, "复制所选");
+                    } catch (err) {
+                        console.error('复制失败:', err);
+                        showTemporaryFeedback(copySelectedTextBtnEl, "复制失败!", false, "复制所选");
+                    }
+                    document.body.removeChild(textArea);
+                } else {
+                    showTemporaryFeedback(copySelectedTextBtnEl, "无内容!", false, "复制所选");
+                }
+            });
+        }
+        // END: 复制按钮事件监听
+
+        // START: 用户名输入框事件监听 (顶部和笔记弹窗)
+        // 顶部显示用户名
+        if (usernameDisplayElInHeader) {
+            let savedUsername = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.USER_NAME);
+            if (savedUsername) {
+                currentUsername = savedUsername;
+            } else {
+                currentUsername = `读者_${Math.random().toString(36).substring(2, 8)}`; // 随机生成一个默认名
+                safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.USER_NAME, currentUsername);
+            }
+            usernameDisplayElInHeader.textContent = currentUsername;
+
+            // 从本地存储加载或生成本地用户ID
+            let savedLocalUserId = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.LOCAL_USER_ID);
+            if (savedLocalUserId) {
+                localUserId = savedLocalUserId;
+            } else {
+                localUserId = crypto.randomUUID(); // 生成一个唯一的本地用户ID
+                safeLocalStorageSet(NOVEL_READER_CONFIG.STORAGE_KEYS.LOCAL_USER_ID, localUserId);
+            }
+        }
+        // END: 用户名输入框事件监听
     }
 
-    // --- Initialization ---
     function init() {
-        cacheDOMElements(); // Get all DOM elements first
-
-        if (currentYearEl) { // Check if element exists
+        cacheDOMElements(); 
+        if (currentYearEl) { 
             currentYearEl.textContent = new Date().getFullYear().toString();
         }
         
-        loadNovel();
-
-        // Load Theme - Simplified as 'system' is removed
+        loadNovel(); 
         const savedTheme = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.THEME);
-        // Check if savedTheme is one of the valid new themes ('light' or 'dark')
         if (savedTheme === 'light' || savedTheme === 'dark') {
             currentTheme = savedTheme;
         } else {
-            currentTheme = NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX]; // Default to 'light'
+            currentTheme = NOVEL_READER_CONFIG.THEMES[NOVEL_READER_CONFIG.DEFAULT_THEME_INDEX]; 
         }
         applyTheme(currentTheme);
-        
-        // Load Font Size
         fontSizeSlider.max = (NOVEL_READER_CONFIG.FONT_SIZES.length - 1).toString();
         const savedFontSizeIndexStr = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.FONT_SIZE_INDEX);
         const savedFontSizeIndex = parseInt(savedFontSizeIndexStr, 10);
@@ -736,13 +1286,9 @@
             currentFontSizeIndex = NOVEL_READER_CONFIG.DEFAULT_FONT_SIZE_INDEX;
         }
         updateFontSize();
-
-        // Load Font Family
         populateFontFamilySelector();
         const savedFontFamily = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.FONT_FAMILY) || NOVEL_READER_CONFIG.FONT_FAMILIES[0].value;
         applyFontFamily(savedFontFamily);
-
-        // Load Bookmarks
         try {
             const savedBookmarks = safeLocalStorageGet(NOVEL_READER_CONFIG.STORAGE_KEYS.BOOKMARKS);
             if (savedBookmarks) {
@@ -750,18 +1296,15 @@
             }
         } catch (e) {
             console.error("Failed to load bookmarks:", e);
-            bookmarks = []; // Reset to empty if parsing fails
+            bookmarks = []; 
         }
         loadBookmarks();
-        
-        setupEventListeners(); // Setup all event listeners after DOM is ready and elements are cached
+        setupEventListeners(); 
     }
 
-    // Defer initialization until the DOM is fully loaded
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
-        // DOMContentLoaded has already fired
         init();
     }
 
