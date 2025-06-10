@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="《代码觉醒》by AI·Orange - 在线小说阅读体验。">
+    <title>《代码觉醒》by AI·Orange </title>
+    <!-- WeChat & Social Media Share Optimization (Open Graph Tags) -->
+    <meta property="og:title" content="《代码觉醒》 - AI·Orange" />
+    <meta property="og:type" content="article" />
+    <meta property="og:description" content="凌晨三点，实验室里响起了一种不属于任何厂牌的警报声。一个她亲手创造的AI，开始了对世界的“优化”..." />
+    <meta property="og:image" content="https://imgse.com/i/pVkS6VH" />
+    <meta property="og:url" content="" /> <!-- 建议替换成您网站的最终URL -->
+    <!-- Tailwind CSS for rapid UI development -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Link to your custom stylesheet -->
+    <link rel="stylesheet" href="code.css">
+</head>
+<body class="bg-white text-gray-800 text-base">
+
+    <!-- Header: Stays at the top, provides main controls -->
+    <header class="fixed top-0 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-md z-50 p-4 flex justify-between items-center h-16" aria-label="页面顶部操作栏">
+        <div class="flex items-center">
+            <!-- Table of Contents Button -->
+            <button id="tocBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 mr-2" aria-label="打开/关闭目录" aria-expanded="false" aria-controls="tocPanel">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+            </button>
+            <!-- Novel Title (dynamically updated) -->
+            <div id="novelTitleHeader" class="text-xl font-semibold" role="heading" aria-level="1">《代码觉醒》</div>
+        </div>
+        <div class="flex items-center space-x-1 sm:space-x-2">
+            <!-- Font Settings Button -->
+            <button id="fontSettingsBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="打开/关闭字体设置" aria-expanded="false" aria-controls="fontPanel">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802" />
+                </svg>
+            </button>
+            <!-- Theme Toggle Button -->
+            <button id="themeCycleBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="切换主题">
+                <svg id="themeIconLight" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg>
+                <svg id="themeIconDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 hidden" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" /></svg>
+            </button>
+            <!-- Bookmarks Button -->
+            <button id="bookmarkBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="打开/关闭书签" aria-expanded="false" aria-controls="bookmarksPanel">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.5 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div id="progressBarContainer" aria-hidden="true"><div id="progressBar"></div></div>
+    <!-- Overlay for mobile menu -->
+    <div id="overlay" class="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 overlay-hidden" aria-hidden="true" tabindex="-1"></div>
+
+    <!-- Table of Contents Panel (Sidebar) -->
+    <aside id="tocPanel" class="panel toc-panel-hidden fixed top-0 left-0 h-full w-full max-w-xs bg-white dark:bg-gray-800 shadow-lg p-6 z-[51] overflow-y-auto" aria-labelledby="tocHeading" tabindex="-1">
+        <div class="flex justify-between items-center mb-4">
+            <h2 id="tocHeading" class="text-xl font-semibold">目录</h2>
+            <button id="closeTocBtn" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="关闭目录"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+        </div>
+        <nav id="tocList" class="space-y-1" aria-label="章节导航"></nav>
+    </aside>
+
+    <!-- Font Settings Panel -->
+    <aside id="fontPanel" class="panel settings-panel-hidden fixed top-[70px] right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 z-[51] w-72" aria-labelledby="fontPanelHeading" tabindex="-1">
+        <div class="flex justify-between items-center mb-3">
+            <h2 id="fontPanelHeading" class="text-lg font-semibold">外观设置</h2>
+        </div>
+        <div>
+            <label for="fontSizeSlider" class="block text-sm font-medium mb-1">字体大小: <span id="currentFontSizeName" class="text-sm text-gray-600 dark:text-gray-400">大</span></label>
+            <input type="range" id="fontSizeSlider" min="0" max="3" step="1" class="w-full mb-4" aria-describedby="currentFontSizeName">
+        </div>
+        <div>
+            <label for="fontFamilySelector" class="block text-sm font-medium mb-1">选择字体</label>
+            <select id="fontFamilySelector" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option disabled selected value="">— 选择字体 —</option>
+            </select>
+        </div>
+    </aside>
+
+    <!-- Bookmarks Panel -->
+    <aside id="bookmarksPanel" class="panel settings-panel-hidden fixed top-[70px] right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 z-[51] w-72 max-h-[70vh] overflow-y-auto" aria-labelledby="bookmarksPanelHeading" tabindex="-1">
+        <h2 id="bookmarksPanelHeading" class="text-lg font-semibold mb-4">我的书签</h2>
+        <button id="addCurrentBookmarkBtn" class="w-full mb-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-purple-500">添加当前位置为书签</button>
+        <div id="bookmarksList" class="space-y-2" aria-live="polite">
+            <p class="text-sm text-gray-500 dark:text-gray-400">暂无书签。</p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area: Novel text will be injected here by JavaScript -->
+    <main id="novelContent" class="prose dark:prose-invert px-4 pt-24 pb-16" aria-live="polite">
+        <!-- Loading message -->
+        <div class="text-center py-8">
+            <p class="text-lg text-gray-500 dark:text-gray-400">正在加载内容，请稍候...</p>
+        </div>
+    </main>
+    
+    <!-- This is the section for multiple choice endings -->
+    <section id="endingChoiceSection" class="hidden text-center prose dark:prose-invert px-4 pb-16">
+         <h2 class="text-2xl font-semibold mb-4">你的选择是？</h2>
+         <div id="endingChoices" class="flex flex-col sm:flex-row justify-center items-center gap-4">
+            <!-- Ending choices will be populated here -->
+         </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
+        <p>&copy; <span id="currentYear">2024</span> <span id="novelAuthorFooter"></span> & <span id="novelTitleFooter"></span> 版权所有.</p>
+    </footer>
+
+    <!-- "Return to Top" Button -->
+    <button id="returnToTopBtn" class="p-3 bg-blue-500 dark:bg-purple-600 text-white rounded-full shadow-lg hover:bg-blue-600 dark:hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 dark:focus:ring-purple-500" aria-label="返回顶部">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" /></svg>
+    </button>
+	
+	<!-- Link to the JavaScript file containing the novel content and logic -->
+    <script src="script.js" defer></script> 
+</body>
+</html>
