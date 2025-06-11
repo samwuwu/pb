@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>值机大挑战</title>
+  <title>值机大挑战（优化版）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* 添加一些自定义过渡效果 */
@@ -38,7 +38,7 @@
       </div>
 
       <!-- 提示语 -->
-      <div id="feedback-message" class="text-center text-sm text-red-500 font-medium h-5">请找出旅客行李中不能托运的物品</div>
+      <div id="feedback-message" class="text-center text-sm text-red-500 font-medium h-5">请找出旅客行李中的违禁品</div>
 
       <!-- 旅客信息 -->
       <div onclick="game.showPassengerInfo()" class="flex items-center p-4 bg-gray-50 rounded-2xl cursor-pointer shadow-inner hover:bg-gray-100 transition-all">
@@ -97,17 +97,16 @@
       items: [
         { name: '打火机', prohibited: true, emoji: '🔥' },
         { name: '瓶装水', prohibited: false, emoji: '💧' },
-        { name: '管制刀具', prohibited: true, emoji: '🔪' },
+        { name: '水果刀', prohibited: true, emoji: '🔪' },
         { name: '牙刷', prohibited: false, emoji: '🪥' },
         { name: '笔记本电脑', prohibited: false, emoji: '💻' },
         { name: '充电宝', prohibited: true, emoji: '🔋' }, // 充电宝通常有携带规定，这里简化为违禁品
         { name: '雨伞', prohibited: false, emoji: '🌂' },
         { name: '手枪', prohibited: true, emoji: '🔫' },
         { name: '剃须刀', prohibited: false, emoji: '🪒'},
-        { name: '护照', prohibited: true, emoji: ' passport'},
+        { name: '护照', prohibited: false, emoji: ' passport'},
         { name: '相机', prohibited: false, emoji: '📷'},
         { name: '爆炸物', prohibited: true, emoji: '💣'}
-        { name: '电动行李箱', prohibited: true, emoji: '箱子'}
       ],
       passengers: [
         { name: '张三', avatar: '🧍' },
