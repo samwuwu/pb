@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>值机大挑战（优化版）</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 添加一些自定义过渡效果 */
+    .transition-all {
+      transition: all 0.3s ease-in-out;
+    }
+    /* 自定义弹窗的背景模糊效果 */
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
+
+  <div class="w-full max-w-md mx-auto">
+    <!-- 开始界面 -->
+    <div id="start-screen" class="p-8 text-center bg-white rounded-3xl shadow-2xl">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">值机大挑战</h1>
+      <p class="text-gray-500 mb-8">在规定时间内，正确识别出旅客行李中的所有违禁品，挑战你的火眼金睛！</p>
+      <button onclick="game.start()" class="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+        开始挑战
+      </button>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <div id="game-area" class="hidden p-4 bg-white rounded-3xl shadow-2xl space-y-4">
+      <!-- 顶部信息栏 -->
+      <div class="flex justify-between text-gray-600 text-base font-medium border-b pb-3">
+        <div class="bg-gray-100 px-4 py-1 rounded-lg">得分: <span id="score" class="font-bold">0</span></div>
+        <div class="bg-gray-100 px-4 py-1 rounded-lg">时间: <span id="time-left" class="font-bold">60</span>s</div>
+      </div>
+
+      <!-- 提示语 -->
+      <div id="feedback-message" class="text-center text-sm text-red-500 font-medium h-5">请找出旅客行李中的违禁品</div>
+
+      <!-- 旅客信息 -->
+      <div onclick="game.showPassengerInfo()" class="flex items-center p-4 bg-gray-50 rounded-2xl cursor-pointer shadow-inner hover:bg-gray-100 transition-all">
+        <div id="passenger-avatar" class="text-6xl">🧍</div>
+        <div class="ml-4">
+          <div class="text-sm text-gray-500">当前旅客</div>
+          <div id="passenger-name" class="text-xl font-semibold text-slate-700">旅客姓名</div>
+        </div>
+      </div>
+      
+      <!-- 行李物品清单 -->
+      <div id="item-list" class="grid grid-cols-2 gap-3 pt-2">
+        <!-- 物品会动态生成在这里 -->
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="pt-2">
+        <button id="submit-button" onclick="game.submitJudgment()" class="w-full py-3 rounded-xl bg-green-600 text-white font-semibold text-lg shadow-lg hover:bg-green-700 transition-all transform hover:scale-105">
+          完成检查
+        </button>
+         <button id="next-button" onclick="game.nextRound()" class="hidden w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+          下一位旅客
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏结束弹窗 -->
+  <div id="game-over-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="bg-white rounded-3xl p-8 text-center w-80 shadow-2xl transform transition-all scale-95 opacity-0" id="game-over-content">
+      <h2 class="text-3xl font-bold text-gray-800 mb-4">时间到！</h2>
+      <p class="text-lg text-gray-600 mb-2">恭喜你，完成了挑战！</p>
+      <p class="text-lg text-gray-600 mb-2">最终得分：</p>
+      <p id="final-score" class="text-5xl font-bold text-blue-500 my-4">0</p>
+      <button onclick="location.reload()" class="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold text-lg hover:bg-blue-700 transition-all">
+        再玩一次
+      </button>
+    </div>
+  </div>
+
+  <!-- 旅客信息弹窗 -->
+  <div id="info-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
+     <div class="bg-white rounded-3xl p-8 text-center w-80 shadow-2xl transform transition-all scale-95 opacity-0" id="info-content">
+      <h2 id="info-title" class="text-2xl font-bold text-gray-800 mb-4">提示</h2>
+      <p id="info-text" class="text-gray-600 mb-6">信息内容</p>
+      <button onclick="game.closeInfoModal()" class="w-full py-2 rounded-xl bg-gray-600 text-white font-semibold text-lg hover:bg-gray-700 transition-all">
+        关闭
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- 游戏数据配置 ---
+    const config = {
+      totalTime: 60, // 游戏总时长
+      items: [
+        { name: '打火机', prohibited: true, emoji: '🔥' },
+        { name: '瓶装水', prohibited: false, emoji: '💧' },
+        { name: '水果刀', prohibited: true, emoji: '🔪' },
+        { name: '牙刷', prohibited: false, emoji: '🪥' },
+        { name: '笔记本电脑', prohibited: false, emoji: '💻' },
+        { name: '充电宝', prohibited: true, emoji: '🔋' }, // 充电宝通常有携带规定，这里简化为违禁品
+        { name: '雨伞', prohibited: false, emoji: '🌂' },
+        { name: '手枪', prohibited: true, emoji: '🔫' },
+        { name: '剃须刀', prohibited: false, emoji: '🪒'},
+        { name: '护照', prohibited: false, emoji: ' passport'},
+        { name: '相机', prohibited: false, emoji: '📷'},
+        { name: '爆炸物', prohibited: true, emoji: '💣'}
+      ],
+      passengers: [
+        { name: '张三', avatar: '🧍' },
+        { name: '李四', avatar: '👩' },
+        { name: '王五', avatar: '👨‍🦰' },
+        { name: '赵六', avatar: '🧔' },
+        { name: '孙七', avatar: '👱‍♀️' }
+      ],
+      scoring: {
+        correctlyFound: 20,    // 正确找出违禁品
+        missedProhibited: -30, // 漏掉违禁品
+        wronglyMarked: -10,    // 错标普通品
+        correctlyIgnored: 5,   // 正确放行普通品
+        allCorrectBonus: 15    // 全对额外奖励
+      }
+    };
+
+    // --- DOM 元素缓存 ---
+    const DOMElements = {
+      startScreen: document.getElementById('start-screen'),
+      gameArea: document.getElementById('game-area'),
+      score: document.getElementById('score'),
+      timeLeft: document.getElementById('time-left'),
+      passengerAvatar: document.getElementById('passenger-avatar'),
+      passengerName: document.getElementById('passenger-name'),
+      itemList: document.getElementById('item-list'),
+      submitButton: document.getElementById('submit-button'),
+      nextButton: document.getElementById('next-button'),
+      feedbackMessage: document.getElementById('feedback-message'),
+      // 弹窗
+      gameOverModal: document.getElementById('game-over-modal'),
+      gameOverContent: document.getElementById('game-over-content'),
+      finalScore: document.getElementById('final-score'),
+      infoModal: document.getElementById('info-modal'),
+      infoContent: document.getElementById('info-content'),
+      infoTitle: document.getElementById('info-title'),
+      infoText: document.getElementById('info-text'),
+    };
+    
+    // --- 游戏状态管理 ---
+    const gameState = {
+      score: 0,
+      timeLeft: config.totalTime,
+      timer: null,
+      currentLuggage: [],
+      userSelection: [],
+      gameActive: false,
+    };
+
+    // --- 游戏主逻辑 ---
+    const game = {
+      /**
+       * 开始游戏
+       */
+      start() {
+        DOMElements.startScreen.classList.add('hidden');
+        DOMElements.gameArea.classList.remove('hidden');
+
+        // 初始化状态
+        gameState.score = 0;
+        gameState.timeLeft = config.totalTime;
+        gameState.gameActive = true;
+        
+        // 更新UI
+        DOMElements.score.textContent = gameState.score;
+        DOMElements.timeLeft.textContent = gameState.timeLeft;
+        
+        // 启动计时器
+        if (gameState.timer) clearInterval(gameState.timer);
+        gameState.timer = setInterval(() => {
+          gameState.timeLeft--;
+          DOMElements.timeLeft.textContent = gameState.timeLeft;
+          if (gameState.timeLeft <= 0) {
+            this.end();
+          }
+        }, 1000);
+        
+        this.nextRound();
+      },
+      
+      /**
+       * 游戏结束
+       */
+      end() {
+        clearInterval(gameState.timer);
+        gameState.gameActive = false;
+        DOMElements.finalScore.textContent = gameState.score;
+        DOMElements.gameOverModal.classList.remove('hidden');
+        // 添加动画效果
+        setTimeout(() => {
+            DOMElements.gameOverContent.classList.remove('scale-95', 'opacity-0');
+        }, 10);
+      },
+
+      /**
+       * 准备下一回合
+       */
+      nextRound() {
+        // 随机选择一位乘客
+        const passenger = this.getRandomElement(config.passengers);
+        DOMElements.passengerName.textContent = passenger.name;
+        DOMElements.passengerAvatar.textContent = passenger.avatar;
+
+        // 生成本轮行李（确保至少有一个违禁品，增加游戏性）
+        const prohibitedItems = config.items.filter(item => item.prohibited);
+        const normalItems = config.items.filter(item => !item.prohibited);
+        
+        gameState.currentLuggage = [
+            this.getRandomElement(prohibitedItems), // 保证至少1个
+            ...this.shuffle(normalItems).slice(0,2),
+            ...this.shuffle(config.items).slice(0,1) // 增加随机性
+        ].slice(0, 4); //确保最终只有4个
+        gameState.currentLuggage = this.shuffle(gameState.currentLuggage);
+
+        gameState.userSelection = Array(gameState.currentLuggage.length).fill(false);
+        
+        this.renderItems(false); // 渲染物品，false代表未结束检查
+        
+        // 重置UI
+        DOMElements.feedbackMessage.textContent = "请找出旅客行李中的违禁品";
+        DOMElements.submitButton.classList.remove('hidden');
+        DOMElements.nextButton.classList.add('hidden');
+        DOMElements.itemList.style.pointerEvents = 'auto'; // 允许点击
+      },
+      
+      /**
+       * 渲染行李物品
+       * @param {boolean} roundOver - 本回合是否已经结束
+       */
+      renderItems(roundOver) {
+        DOMElements.itemList.innerHTML = '';
+        gameState.currentLuggage.forEach((item, index) => {
+          const isSelected = gameState.userSelection[index];
+          let borderColor = 'border-gray-200';
+          let resultIcon = '';
+
+          // 如果回合结束，显示正确/错误状态
+          if(roundOver) {
+            if (item.prohibited && isSelected) {
+              borderColor = 'border-green-500'; // 正确找到
+              resultIcon = '✅';
+            } else if (item.prohibited && !isSelected) {
+              borderColor = 'border-red-500';   // 漏掉
+              resultIcon = '❌';
+            } else if (!item.prohibited && isSelected) {
+              borderColor = 'border-yellow-500'; // 错标
+              resultIcon = '⚠️';
+            } else {
+               borderColor = 'border-gray-300'; // 正确忽略
+            }
+          }
+          
+          const div = document.createElement('div');
+          div.className = `item-card flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl shadow-sm border-2 cursor-pointer transition-all ${borderColor} ${isSelected ? 'transform scale-105 bg-blue-100' : ''}`;
+          div.innerHTML = `
+            <div class="text-4xl">${item.emoji}</div>
+            <div class="mt-2 text-base font-semibold text-gray-700">${item.name}</div>
+            <div class="absolute top-2 right-2 text-xl">${resultIcon}</div>
+          `;
+          if (!roundOver) {
+            div.onclick = () => this.toggleSelection(index);
+          }
+          DOMElements.itemList.appendChild(div);
+        });
+      },
+
+      /**
+       * 切换物品的选中状态
+       * @param {number} index - 物品索引
+       */
+      toggleSelection(index) {
+        if (!gameState.gameActive) return;
+        gameState.userSelection[index] = !gameState.userSelection[index];
+        this.renderItems(false); // 重新渲染以更新样式
+      },
+      
+      /**
+       * 提交判断
+       */
+      submitJudgment() {
+        if (!gameState.gameActive) return;
+
+        let roundScore = 0;
+        let correctRemovals = 0;
+        let missedProhibited = 0;
+        let falsePositives = 0;
+        let totalProhibited = 0;
+
+        gameState.currentLuggage.forEach((item, index) => {
+          const marked = gameState.userSelection[index];
+          if (item.prohibited) totalProhibited++;
+
+          if (item.prohibited && marked) {
+            roundScore += config.scoring.correctlyFound;
+            correctRemovals++;
+          } else if (item.prohibited && !marked) {
+            roundScore += config.scoring.missedProhibited;
+            missedProhibited++;
+          } else if (!item.prohibited && marked) {
+            roundScore += config.scoring.wronglyMarked;
+            falsePositives++;
+          } else {
+            roundScore += config.scoring.correctlyIgnored;
+          }
+        });
+
+        // 全对奖励
+        if (correctRemovals > 0 && correctRemovals === totalProhibited && falsePositives === 0) {
+          roundScore += config.scoring.allCorrectBonus;
+          DOMElements.feedbackMessage.textContent = `太棒了！奖励 ${config.scoring.allCorrectBonus} 分！`;
+        } else if (missedProhibited > 0) {
+           DOMElements.feedbackMessage.textContent = `危险！你漏掉了 ${missedProhibited} 个违禁品！`;
+        } else if (falsePositives > 0) {
+           DOMElements.feedbackMessage.textContent = `注意！你错误标记了 ${falsePositives} 个普通物品。`;
+        } else {
+            DOMElements.feedbackMessage.textContent = "检查完成！";
+        }
+
+        gameState.score += roundScore;
+        DOMElements.score.textContent = gameState.score;
+        
+        // 显示结果
+        this.renderItems(true); // true 代表回合结束，显示对错
+        DOMElements.itemList.style.pointerEvents = 'none'; // 禁止再次点击
+        DOMElements.submitButton.classList.add('hidden');
+        DOMElements.nextButton.classList.remove('hidden');
+      },
+
+      /**
+       * 显示旅客信息（代替 alert）
+       */
+      showPassengerInfo() {
+          this.showInfoModal('旅客证件信息', '经核对，该旅客证件齐全，信息无误。✅');
+      },
+
+      showInfoModal(title, text) {
+          DOMElements.infoTitle.textContent = title;
+          DOMElements.infoText.textContent = text;
+          DOMElements.infoModal.classList.remove('hidden');
+          setTimeout(() => {
+              DOMElements.infoContent.classList.remove('scale-95', 'opacity-0');
+          }, 10);
+      },
+      
+      closeInfoModal() {
+          DOMElements.infoContent.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => {
+              DOMElements.infoModal.classList.add('hidden');
+          }, 200);
+      },
+
+      // --- 辅助工具函数 ---
+      shuffle(arr) {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      },
+      
+      getRandomElement(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+    };
+  </script>
+
+</body>
+</html>
