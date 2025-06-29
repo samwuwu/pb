@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 关键的Viewport设置，为移动设备优化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>机场安检大挑战（全新重构版）</title>
+    <title>机场安检大挑战（无敌复活版）</title>
     <style>
         /* 引入一个更适合游戏的字体 */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -120,7 +120,7 @@
         }
         .modal-button:hover { transform: scale(1.05); }
 
-        #start-button, #restart-button { background-color: var(--text-color); color: var(--bg-color); }
+        #start-button, #restart-button, #continue-button { background-color: var(--text-color); color: var(--bg-color); }
         #revival-button { background-color: var(--powerup-color); color: var(--text-color); }
 
         #quiz-question { font-size: 1.2rem; margin-bottom: 20px; min-height: 80px; }
@@ -191,6 +191,15 @@
                 <div id="quiz-options"></div>
             </div>
         </div>
+        
+        <!-- 复活成功弹窗 -->
+        <div id="revival-success-screen" class="modal-overlay hidden">
+             <div class="modal-content">
+                <h1>复活成功!</h1>
+                <p>准备好继续挑战了吗？</p>
+                <button id="continue-button" class="modal-button">继续游戏</button>
+            </div>
+        </div>
     </div>
 
     <!-- 竖屏锁定提示 -->
@@ -213,6 +222,7 @@
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const quizScreen = document.getElementById('quiz-screen');
+        const revivalSuccessScreen = document.getElementById('revival-success-screen');
         const finalScoreValue = document.getElementById('final-score-value');
         const quizQuestionEl = document.getElementById('quiz-question');
         const quizOptionsEl = document.getElementById('quiz-options');
@@ -221,6 +231,7 @@
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const revivalButton = document.getElementById('revival-button');
+        const continueButton = document.getElementById('continue-button');
 
         // --- 2. 核心适配与常量定义 ---
         const GAME_WIDTH = 1600;
@@ -268,62 +279,87 @@
             { emoji: '🪶', type: 'superjump' } // 超级跳
         ];
         const REVIVAL_ITEM = { emoji: '💖', type: ITEM_TYPES.REVIVAL };
+        
         const QUIZ_QUESTIONS = [
-            { q: "飞机上可以随身携带的液体容器，单个容积不能超过多少毫升？", o: ["50ml", "100ml", "150ml", "200ml"], a: 1 },
-            { q: "以下哪样物品必须办理托运，不能随身携带？", o: ["笔记本电脑", "充电宝", "超过160Wh的锂电池", "雨伞"], a: 2 },
-            { q: "在机场过安检时，需要单独拿出来的物品不包括？", o: ["手机", "手提电脑", "外套", "钥匙"], a: 3 },
-            { q: "“充电宝”的正确称呼是什么？", o: ["移动电源", "锂电池", "能量块", "备用电池"], a: 0 }
+            { q: "以下哪种工具是不允许随身携带上飞机的？", o: ["笔记本电脑 💻", "锤子 🔨", "相机 📷", "手机 📱"], a: 1 },
+            { q: "哪类物品属于毒害品？", o: ["腐蚀品 🧪", "杀虫剂 🦟", "易燃液体 🔥", "压缩气体 💨"], a: 1 },
+            { q: "以下哪种物品属于图片中标注的易燃液体？", o: ["瓶装水 💧", "牛奶 🥛", "汽油 ⛽", "果汁 🧃"], a: 2 },
+            { q: "枪支类违禁品包括以下哪一项？", o: ["水枪 💦", "玩具枪 🧸", "手枪 🔫", "泡沫枪 🎯"], a: 2 },
+            { q: "如果不确定物品是否可以携带，应该怎么办？", o: ["藏在行李中 🤫", "主动咨询工作人员 🙋", "快速通过安检 🏃", "请他人代为携带 🤝"], a: 1 },
+            { q: "腐蚀性物品包括以下哪一种？", o: ["食用醋 🍶", "柠檬水 🍋", "强酸强碱 🧪", "肥皂 🧼"], a: 2 },
+            { q: "以下哪种打火用具是禁止携带的？", o: ["电子打火机 🔌", "普通打火机 🔥", "火柴 🔥", "以上都是 ✅"], a: 3 },
+            { q: "管制刀具包括以下哪一种？", o: ["塑料餐刀 🍴", "塑料水果刀 🍎", "匕首 🗡️", "指甲刀 ✂️"], a: 2 },
+            { q: "压缩气体类物品（如发胶喷雾）属于哪类危险品？", o: ["易燃品 🔥", "压缩气体 💨", "腐蚀品 🧪", "毒害品 ☠️"], a: 1 },
+            { q: "烟花爆竹属于哪类危险品？", o: ["易燃固体 🔥", "爆炸品 💥", "压缩气体 💨", "氧化剂 ⭕️"], a: 0 },
+            { q: "为什么磁铁被列为禁止携带物品？", o: ["重量超标 ⚖️", "会干扰导航 🧭", "易碎品 💔", "易燃品 🔥"], a: 1 },
+            { q: "关于大容量充电宝的携带规定是什么？", o: ["可以托运 🧳", "禁止携带 🚫", "随身携带 🎒", "无限制 ✅"], a: 1 },
+            { q: "以下哪种物品属于毒害品？", o: ["清洁剂 🧴", "杀虫剂 🦟", "消毒液 🧪", "香水 🌸"], a: 1 },
+            { q: "以下哪种物品属于腐蚀品？", o: ["洗手液 🧴", "强酸强碱 🧪", "消毒水 💧", "香水 🌸"], a: 1 }
         ];
+        
+        function drawRoundedRect(x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.arcTo(x + width, y, x + width, y + radius, radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+            ctx.lineTo(x + radius, y + height);
+            ctx.arcTo(x, y + height, x, y + height - radius, radius);
+            ctx.lineTo(x, y + radius);
+            ctx.arcTo(x, y, x + radius, y, radius);
+            ctx.closePath();
+            ctx.fill();
+        }
 
         // --- 5. 游戏对象类 (Classes) ---
         class Player {
             constructor() {
-                this.w = 80;
-                this.h = 70;
-                this.x = 150;
-                this.y = GROUND_Y - this.h;
-                this.dy = 0; // 垂直速度
-                this.gravity = 1.5;
-                this.jumpPower = -30;
-                this.isGrounded = true;
-                this.rotation = 0;
-                // Power-up states
-                this.isInvincible = false;
-                this.hasSuperJump = false;
+                this.w = 80; this.h = 70; this.x = 150; this.y = GROUND_Y - this.h;
+                this.dy = 0; this.gravity = 1.5; this.jumpPower = -30;
+                this.isGrounded = true; this.rotation = 0; this.squash = 1;
+                this.isInvincible = false; this.hasSuperJump = false;
             }
             draw() {
                 ctx.save();
                 ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
                 ctx.rotate(this.rotation);
-                // 绘制光环
+                ctx.scale(1, this.squash);
+
                 if (this.isInvincible) {
                     ctx.fillStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(Date.now() / 100) * 0.4})`;
-                    ctx.fillRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20);
+                    drawRoundedRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20, 20);
                 } else if (this.hasSuperJump) {
                      ctx.fillStyle = `rgba(0, 255, 255, ${0.6 + Math.sin(Date.now() / 100) * 0.4})`;
-                    ctx.fillRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20);
+                    drawRoundedRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20, 20);
                 }
-                // 绘制行李箱
+                
                 ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--player-color');
-                ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+                drawRoundedRect(-this.w/2, -this.h/2, this.w, this.h, 10);
+                
                 ctx.fillStyle = '#333';
-                ctx.fillRect(-20, -this.h/2 - 10, 40, 10); // 拉杆
-                ctx.beginPath(); // 轮子
-                ctx.arc(-25, this.h/2, 8, 0, Math.PI * 2);
-                ctx.arc(25, this.h/2, 8, 0, Math.PI * 2);
-                ctx.fill();
+                drawRoundedRect(-20, -this.h/2 - 15, 40, 15, 5);
+                
+                ctx.beginPath(); ctx.arc(-25, this.h/2, 10, 0, Math.PI * 2); ctx.arc(25, this.h/2, 10, 0, Math.PI * 2); ctx.fill();
+                
                 ctx.restore();
             }
             update() {
                 this.dy += this.gravity;
                 this.y += this.dy;
+
+                if (!this.isGrounded) {
+                    this.rotation += 0.1;
+                    this.squash = 0.8;
+                } else {
+                    if(this.squash !== 1) this.squash += (1 - this.squash) * 0.2;
+                }
+
                 if (this.y + this.h >= GROUND_Y) {
-                    this.y = GROUND_Y - this.h;
-                    this.dy = 0;
+                    this.y = GROUND_Y - this.h; this.dy = 0;
+                    if(!this.isGrounded) this.squash = 1.3;
                     this.isGrounded = true;
                     this.rotation = 0;
-                } else {
-                    this.rotation += this.dy * 0.005;
                 }
                 this.draw();
             }
@@ -338,199 +374,124 @@
         
         class GameItem {
             constructor(type, emoji) {
-                this.w = Math.random() * 40 + 60;
-                this.h = this.w;
-                this.x = GAME_WIDTH;
-                this.y = GROUND_Y - this.h;
-                this.type = type;
-                this.emoji = emoji;
+                this.w = Math.random() * 40 + 70; this.h = this.w; this.x = GAME_WIDTH; this.y = GROUND_Y - this.h;
+                this.type = type; this.emoji = emoji;
+                switch(type) {
+                    case ITEM_TYPES.OBSTACLE: this.color = 'var(--obstacle-color)'; break;
+                    case ITEM_TYPES.COLLECTIBLE: this.color = 'var(--collectible-color)'; break;
+                    default: this.color = 'var(--powerup-color)'; break;
+                }
             }
             draw() {
-                ctx.font = `${this.w * 0.8}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.emoji, this.x + this.w / 2, this.y + this.h / 2);
+                ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(this.color);
+                drawRoundedRect(this.x, this.y, this.w, this.h, 15);
+                ctx.font = `${this.w * 0.6}px sans-serif`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, this.x + this.w / 2, this.y + this.h / 2 + 5);
             }
-            update() {
-                this.x -= gameSpeed;
-                this.draw();
-            }
+            update() { this.x -= gameSpeed; this.draw(); }
         }
 
         // --- 6. 核心游戏函数 ---
         function init() {
-            // 重置状态
-            isGameOver = false;
-            isGameRunning = true;
-            score = 0;
-            revivalItemsCount = 0;
-            gameSpeed = 10;
-            spawnInterval = 1500;
-            lastSpawnTime = 0;
-            
-            // 创建对象
-            player = new Player();
-            gameItems = [];
-
-            // 更新UI
-            updateScoreUI();
-            updateRevivalUI();
-            gameOverScreen.classList.add('hidden');
-            quizScreen.classList.add('hidden');
-
-            // 启动游戏循环
+            isGameOver = false; isGameRunning = true; score = 0; revivalItemsCount = 0; gameSpeed = 10;
+            spawnInterval = 1500; lastSpawnTime = 0;
+            player = new Player(); gameItems = [];
+            updateScoreUI(); updateRevivalUI();
+            gameOverScreen.classList.add('hidden'); quizScreen.classList.add('hidden');
+            revivalSuccessScreen.classList.add('hidden');
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animate(0);
         }
         
-        function startGame() {
-            startScreen.classList.add('hidden');
-            requestFullscreenAndLock();
-            init();
-        }
+        function startGame() { startScreen.classList.add('hidden'); requestFullscreenAndLock(); init(); }
 
         function endGame() {
-            isGameOver = true;
-            isGameRunning = false;
+            isGameOver = true; isGameRunning = false;
             cancelAnimationFrame(animationFrameId);
-            
             finalScoreValue.textContent = Math.floor(score);
             revivalButton.style.display = revivalItemsCount > 0 ? 'inline-block' : 'none';
             gameOverScreen.classList.remove('hidden');
         }
+        
+        function resumeGame() {
+            revivalSuccessScreen.classList.add('hidden');
+            isGameRunning = true;
 
-        function handlePlayerInput() {
-            if (isGameRunning && !isGameOver) {
-                player.jump();
-            }
+            // FEATURE UPDATE: Change from slow-motion to a 2-second invincibility shield
+            player.isInvincible = true; // 开启无敌
+
+            setTimeout(() => {
+                // 如果游戏仍在运行，则关闭无敌
+                if (isGameRunning && !isGameOver) {
+                    player.isInvincible = false;
+                }
+            }, 2000); // 2秒后恢复
+
+            animate(performance.now());
         }
+
+        function handlePlayerInput() { if (isGameRunning && !isGameOver) player.jump(); }
         
-        function updateScoreUI() {
-            scoreDisplay.textContent = `🏆 ${Math.floor(score)}`;
-        }
-        
-        function updateRevivalUI() {
-            revivalDisplay.textContent = `💖 ${revivalItemsCount}`;
-            revivalDisplay.style.display = revivalItemsCount > 0 ? 'block' : 'none';
-        }
+        function updateScoreUI() { scoreDisplay.textContent = `🏆 ${Math.floor(score)}`; }
+        function updateRevivalUI() { revivalDisplay.textContent = `💖 ${revivalItemsCount}`; revivalDisplay.style.display = revivalItemsCount > 0 ? 'block' : 'none'; }
 
         // --- 7. 游戏循环 (The Game Loop) ---
         function animate(timestamp) {
+            if (!isGameRunning) return;
             animationFrameId = requestAnimationFrame(animate);
-
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-            // 绘制地面
             ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ground-color');
             ctx.fillRect(0, GROUND_Y, GAME_WIDTH, GAME_HEIGHT - GROUND_Y);
             
-            // 生成新物品
-            if (timestamp - lastSpawnTime > spawnInterval) {
-                lastSpawnTime = timestamp;
-                spawnNewItem();
-            }
+            if (timestamp - lastSpawnTime > spawnInterval) { lastSpawnTime = timestamp; spawnNewItem(); }
             
-            // 更新和绘制所有游戏物品
             for (let i = gameItems.length - 1; i >= 0; i--) {
                 const item = gameItems[i];
                 item.update();
-                
-                // 碰撞检测
-                if (detectCollision(player, item)) {
-                    handleCollision(item, i);
-                }
-                
-                // 移除屏幕外的物品
-                if (item.x + item.w < 0) {
-                    gameItems.splice(i, 1);
-                }
+                if (detectCollision(player, item)) handleCollision(item, i);
+                if (item.x + item.w < 0) gameItems.splice(i, 1);
             }
             
-            // 更新和绘制玩家
             player.update();
-            
-            // 更新分数和游戏速度
-            score += 0.1;
-            gameSpeed += 0.001;
+            score += 0.1; gameSpeed += 0.001;
             if (spawnInterval > 500) spawnInterval -= 0.1;
             updateScoreUI();
         }
 
         // --- 8. 辅助函数 ---
         function spawnNewItem() {
-            const rand = Math.random();
-            let type, emoji;
-
-            if (rand < 0.05) { // 5% 复活
-                type = ITEM_TYPES.REVIVAL;
-                emoji = REVIVAL_ITEM.emoji;
-            } else if (rand < 0.15) { // 10% 道具
-                type = ITEM_TYPES.POWERUP;
-                const powerup = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
-                emoji = powerup.emoji;
-            } else if (rand < 0.5) { // 35% 收集品
-                type = ITEM_TYPES.COLLECTIBLE;
-                emoji = COLLECTIBLES[Math.floor(Math.random() * COLLECTIBLES.length)];
-            } else { // 50% 障碍物
-                type = ITEM_TYPES.OBSTACLE;
-                emoji = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
-            }
-            
+            const rand = Math.random(); let type, emoji;
+            if (rand < 0.05) { type = ITEM_TYPES.REVIVAL; emoji = REVIVAL_ITEM.emoji; } 
+            else if (rand < 0.15) { type = ITEM_TYPES.POWERUP; const powerup = POWERUPS[Math.floor(Math.random() * POWERUPS.length)]; emoji = powerup.emoji; } 
+            else if (rand < 0.5) { type = ITEM_TYPES.COLLECTIBLE; emoji = COLLECTIBLES[Math.floor(Math.random() * COLLECTIBLES.length)]; } 
+            else { type = ITEM_TYPES.OBSTACLE; emoji = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)]; }
             gameItems.push(new GameItem(type, emoji));
         }
 
-        function detectCollision(rect1, rect2) {
-            return rect1.x < rect2.x + rect2.w &&
-                   rect1.x + rect1.w > rect2.x &&
-                   rect1.y < rect2.y + rect2.h &&
-                   rect1.y + rect1.h > rect2.y;
-        }
+        function detectCollision(rect1, rect2) { return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y; }
 
         function handleCollision(item, index) {
             switch(item.type) {
-                case ITEM_TYPES.OBSTACLE:
-                    if (!player.isInvincible) endGame();
-                    break;
-                case ITEM_TYPES.COLLECTIBLE:
-                    score += 100;
-                    gameItems.splice(index, 1);
-                    break;
-                case ITEM_TYPES.REVIVAL:
-                    revivalItemsCount++;
-                    updateRevivalUI();
-                    gameItems.splice(index, 1);
-                    break;
-                case ITEM_TYPES.POWERUP:
-                    activatePowerup(item.emoji);
-                    gameItems.splice(index, 1);
-                    break;
+                case ITEM_TYPES.OBSTACLE: if (!player.isInvincible) endGame(); break;
+                case ITEM_TYPES.COLLECTIBLE: score += 100; gameItems.splice(index, 1); break;
+                case ITEM_TYPES.REVIVAL: revivalItemsCount++; updateRevivalUI(); gameItems.splice(index, 1); break;
+                case ITEM_TYPES.POWERUP: activatePowerup(item.emoji); gameItems.splice(index, 1); break;
             }
         }
         
         function activatePowerup(emoji) {
-            const powerup = POWERUPS.find(p => p.emoji === emoji);
-            if (!powerup) return;
-            
-            if (powerup.type === 'invincible') {
-                player.isInvincible = true;
-                setTimeout(() => player.isInvincible = false, 8000);
-            } else if (powerup.type === 'slowmo') {
-                const oldSpeed = gameSpeed;
-                gameSpeed *= 0.5;
-                setTimeout(() => gameSpeed = oldSpeed, 5000);
-            } else if (powerup.type === 'superjump') {
-                player.hasSuperJump = true;
-            }
+            const powerup = POWERUPS.find(p => p.emoji === emoji); if (!powerup) return;
+            if (powerup.type === 'invincible') { player.isInvincible = true; setTimeout(() => player.isInvincible = false, 8000); } 
+            else if (powerup.type === 'slowmo') { const oldSpeed = gameSpeed; gameSpeed *= 0.5; setTimeout(() => gameSpeed = oldSpeed, 5000); } 
+            else if (powerup.type === 'superjump') { player.hasSuperJump = true; }
         }
         
         function startQuiz() {
-            gameOverScreen.classList.add('hidden');
-            quizScreen.classList.remove('hidden');
-            
+            gameOverScreen.classList.add('hidden'); quizScreen.classList.remove('hidden');
             const q = QUIZ_QUESTIONS[Math.floor(Math.random() * QUIZ_QUESTIONS.length)];
-            quizQuestionEl.textContent = q.q;
-            quizOptionsEl.innerHTML = '';
-            
+            quizQuestionEl.textContent = q.q; quizOptionsEl.innerHTML = '';
             q.o.forEach((optionText, index) => {
                 const button = document.createElement('button');
                 button.className = 'modal-button quiz-option';
@@ -541,55 +502,48 @@
         }
         
         function checkQuizAnswer(isCorrect, button) {
-            // 禁用所有选项
             Array.from(quizOptionsEl.children).forEach(b => b.onclick = null);
-            
             button.classList.add(isCorrect ? 'correct' : 'wrong');
             
             setTimeout(() => {
                 quizScreen.classList.add('hidden');
+                
+                revivalItemsCount--;
+                updateRevivalUI();
+
                 if (isCorrect) {
-                    revivalItemsCount--;
-                    init(); // 简单粗暴地重置游戏继续
+                    revivalSuccessScreen.classList.remove('hidden');
+                    isGameOver = false;
+                    isGameRunning = false; // Pause the game
+                    player.y = GROUND_Y - player.h;
+                    player.dy = 0;
+                    gameItems = gameItems.filter(item => {
+                        return item.type !== ITEM_TYPES.OBSTACLE || item.x > player.x + 300;
+                    });
                 } else {
-                    gameOverScreen.classList.remove('hidden');
-                    revivalButton.style.display = 'none'; // 答错了就不能再复活
+                    if (revivalItemsCount > 0) {
+                        startQuiz();
+                    } else {
+                        gameOverScreen.classList.remove('hidden');
+                        revivalButton.style.display = 'none';
+                    }
                 }
             }, 1500);
         }
 
-        async function requestFullscreenAndLock() {
-            try {
-                if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-                if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-            } catch (err) {
-                console.warn("Fullscreen or orientation lock failed:", err);
-            }
-        }
+        async function requestFullscreenAndLock() { try { if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (err) { console.warn("Fullscreen or orientation lock failed:", err); } }
 
         // --- 9. 事件监听器 ---
         window.addEventListener('resize', resizeGame);
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
         revivalButton.addEventListener('click', startQuiz);
-        
-        // 统一处理点击和触摸
-        document.addEventListener('pointerdown', (e) => {
-            // 防止点击按钮时触发跳跃
-            if (e.target.closest('button')) return;
-            handlePlayerInput();
-        });
-        
-        // 处理键盘输入
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp') {
-                e.preventDefault();
-                handlePlayerInput();
-            }
-        });
+        continueButton.addEventListener('click', resumeGame);
+        document.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; handlePlayerInput(); });
+        document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handlePlayerInput(); } });
         
         // --- 10. 初始启动 ---
-        resizeGame(); // 首次加载时调整尺寸
+        resizeGame();
         
     });
     </script>
