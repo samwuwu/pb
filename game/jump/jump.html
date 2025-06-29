@@ -62,19 +62,30 @@
 
         /* 新增：更完善的横屏适配 */
         @media (orientation: landscape) {
+            html {
+                overflow: hidden;
+            }
+            
             body {
-                padding: 5px;
-                overflow-x: hidden;
+                padding: 0;
+                overflow: hidden;
                 min-height: 100vh;
+                min-height: 100dvh; /* 动态视口高度 */
+                position: fixed;
+                width: 100%;
+                height: 100%;
             }
             
             #game-container {
-                height: 95vh;
+                height: 100vh;
+                height: 100dvh; /* 动态视口高度 */
                 max-height: none;
                 position: fixed;
                 top: 0;
-                left: 50%;
-                transform: translateX(-50%);
+                left: 0;
+                width: 100%;
+                border-radius: 0;
+                border: none;
             }
             
             #score-container {
@@ -103,14 +114,23 @@
         /* 针对小屏幕横屏设备的特殊优化 */
         @media (orientation: landscape) and (max-height: 500px) {
             body {
-                overflow-x: hidden;
+                overflow: hidden;
                 min-height: 100vh;
+                min-height: 100dvh;
+                position: fixed;
+                width: 100%;
+                height: 100%;
             }
             
             #game-container {
-                height: 98vh;
-                border-width: 4px;
+                height: 100vh;
+                height: 100dvh;
+                border-width: 0;
                 position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                border-radius: 0;
             }
             
             #score-container {
