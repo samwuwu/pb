@@ -423,8 +423,25 @@
             border-color: var(--obstacle-color);
         }
 
+        #game-over-modal.show,
+        #quiz-modal.show {
+            display: flex;
+        }
+
+        #bottom-spacer {
+            display: none; /* 默认隐藏 */
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            #bottom-spacer {
+                display: block; /* 在横屏模式下显示 */
+                height: 100vh; /* 提供足够的滚动空间 */
+            }
+        }
+
         /* 横屏提示样式 */
         .orientation-tip {
+            position: absolute;
             background-color: rgba(52, 73, 94, 0.9);
             border-radius: 15px;
             padding: 20px;
@@ -1054,20 +1071,18 @@
         }
 
         // 动态调整底部空白区域高度
+        /*
         function adjustBottomSpacer() {
-            const isLandscape = window.orientation === 90 || window.orientation === -90 || 
-                               (window.innerWidth > window.innerHeight);
-            
-            if (isLandscape) {
-                const bottomSpacer = document.getElementById('bottom-spacer');
-                if (bottomSpacer) {
-                    // 根据屏幕高度动态调整
+            if (window.orientation === 90 || window.orientation === -90) {
+                const spacer = document.getElementById('bottom-spacer');
+                if (spacer) {
                     const screenHeight = window.innerHeight;
-                    const spacerHeight = Math.max(100, screenHeight * 0.2); // 至少100px，最多屏幕高度的20%
-                    bottomSpacer.style.height = spacerHeight + 'px';
+                    spacer.style.height = `${screenHeight}px`;
+                    console.log(`Adjusted bottom spacer height to ${screenHeight}px`);
                 }
             }
         }
+        */
 
         // 更强力的横屏UI隐藏函数
         function scrollToBottomOnLandscape() {
@@ -1292,13 +1307,14 @@
         }, { passive: true });
 
         // 监听页面激活
-        document.addEventListener('pageshow', () => {
+        window.addEventListener('pageshow', function(event) {
             if (window.orientation === 90 || window.orientation === -90) {
-                setTimeout(scrollToBottomOnLandscape, 100);
+                scrollToBottomOnLandscape();
             }
         });
         
         init();
     </script>
+    <div id="bottom-spacer"></div>
 </body>
 </html>
