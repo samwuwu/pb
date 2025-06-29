@@ -456,11 +456,103 @@
         document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') handleJump(); });
         gameContainer.addEventListener('mousedown', (e) => { if (!e.target.closest('button')) handleJump(); });
         gameContainer.addEventListener('touchstart', (e) => { if (!e.target.closest('button')) { e.preventDefault(); handleJump(); } });
+        // 在现有JavaScript中添加全屏功能
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        let isFullscreen = false;
+
+        // 全屏API兼容性处理
+        function requestFullscreen(element) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+
+        function exitFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+
+        // 全屏切换函数
+        function toggleFullscreen() {
+            if (!isFullscreen) {
+                requestFullscreen(gameContainer);
+                gameContainer.classList.add('fullscreen-mode');
+                if (window.orientation === 90 || window.orientation === -90) {
+                    gameContainer.classList.add('fullscreen-landscape');
+                }
+                fullscreenBtn.textContent = '⛶';
+                isFullscreen = true;
+            } else {
+                exitFullscreen();
+                gameContainer.classList.remove('fullscreen-mode', 'fullscreen-landscape');
+                fullscreenBtn.textContent = '⛶';
+                isFullscreen = false;
+            }
+            // 重新调整canvas尺寸
+            setTimeout(resizeCanvas, 100);
+        }
+
+        // 监听全屏状态变化
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+        function handleFullscreenChange() {
+            const isCurrentlyFullscreen = !!(document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement || 
+                document.msFullscreenElement);
+            
+            if (!isCurrentlyFullscreen && isFullscreen) {
+                // 用户通过ESC等方式退出全屏
+                gameContainer.classList.remove('fullscreen-mode', 'fullscreen-landscape');
+                isFullscreen = false;
+                setTimeout(resizeCanvas, 100);
+            }
+        }
+
+        // 横屏自动全屏（可选）
+        function handleOrientationChange() {
+            setTimeout(() => {
+                if (window.orientation === 90 || window.orientation === -90) {
+                    // 横屏时自动进入全屏（可选功能）
+                    if (!isFullscreen) {
+                        toggleFullscreen();
+                    }
+                }
+                resizeCanvas();
+            }, 500);
+        }
+
+        // 绑定事件
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+        window.addEventListener('orientationchange', handleOrientationChange);
+        
+        // 修改现有的resize事件处理
         window.addEventListener('resize', () => {
             if (!gameOver && infoScreen.classList.contains('hidden')) {
-                endGame();
-                messageEl.innerHTML = '屏幕尺寸已改变，<br>请重新开始。';
-            } else { resizeCanvas(); }
+                // 在全屏模式下不强制结束游戏
+                if (!isFullscreen) {
+                    endGame();
+                    messageEl.innerHTML = '屏幕尺寸已改变，<br>请重新开始。';
+                }
+            } else { 
+                resizeCanvas(); 
+            }
         });
 
         init();
