@@ -2,7 +2,11 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#2c3e50">
     <title>机场安检跳跃</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
@@ -60,40 +64,66 @@
             #game-container { height: 90vh; }
         }
 
-        /* 新增：更完善的横屏适配 */
+        /* 更强力的横屏适配 - 完全隐藏浏览器UI */
         @media (orientation: landscape) {
             html {
-                overflow: hidden;
-                height: 100%;
-                height: 100vh;
-                height: 100dvh;
+                overflow: hidden !important;
+                height: 100% !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                position: fixed !important;
+                width: 100% !important;
+                top: 0 !important;
+                left: 0 !important;
             }
             
             body {
-                padding: 0;
-                overflow: hidden;
-                min-height: 100vh;
-                min-height: 100dvh; /* 动态视口高度 */
-                position: fixed;
-                width: 100%;
-                height: 100%;
-                /* 强制隐藏滚动条 */
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+                height: 100% !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                position: fixed !important;
+                width: 100% !important;
+                top: 0 !important;
+                left: 0 !important;
                 -webkit-overflow-scrolling: touch;
                 overscroll-behavior: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+                -webkit-tap-highlight-color: transparent;
             }
             
             #game-container {
-                height: 100vh;
-                height: 100dvh; /* 动态视口高度 */
-                max-height: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                border-radius: 0;
-                border: none;
-                /* 确保游戏容器在最顶层 */
-                z-index: 1000;
+                height: 100% !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                width: 100% !important;
+                max-height: none !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                border-radius: 0 !important;
+                border: none !important;
+                z-index: 9999 !important;
+                overflow: hidden !important;
+                background: var(--bg-color) !important;
+            }
+            
+            /* 隐藏所有可能的滚动条 */
+            ::-webkit-scrollbar {
+                display: none !important;
+                width: 0 !important;
+                height: 0 !important;
+            }
+            
+            /* 防止任何元素超出屏幕 */
+            * {
+                box-sizing: border-box;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+                -webkit-tap-highlight-color: transparent;
             }
             
             #score-container {
@@ -101,6 +131,7 @@
                 left: 10px;
                 font-size: 1.5rem;
                 padding: 6px 15px;
+                z-index: 10000;
             }
             
             #info-screen h1 {
@@ -119,26 +150,28 @@
             }
         }
 
-        /* 针对小屏幕横屏设备的特殊优化 */
-        @media (orientation: landscape) and (max-height: 500px) {
-            body {
-                overflow: hidden;
-                min-height: 100vh;
-                min-height: 100dvh;
-                position: fixed;
-                width: 100%;
-                height: 100%;
+        /* 专门针对小屏幕横屏的强制全屏 */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            html, body {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             
             #game-container {
-                height: 100vh;
-                height: 100dvh;
-                border-width: 0;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                border-radius: 0;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                z-index: 999999 !important;
+                overflow: hidden !important;
             }
             
             #score-container {
@@ -927,83 +960,126 @@
             setTimeout(resizeCanvas, 100);
         }
 
-        // 横屏自动滚动到底部隐藏浏览器UI
+        // 更强力的横屏UI隐藏函数
         function scrollToBottomOnLandscape() {
             if (window.orientation === 90 || window.orientation === -90 || 
                 (window.innerWidth > window.innerHeight)) {
                 
-                // 立即隐藏地址栏
-                document.body.style.height = '100vh';
-                document.documentElement.style.height = '100vh';
+                // 强制设置样式
+                document.documentElement.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    overflow: hidden !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                `;
                 
-                // 强制滚动到底部多次
-                const forceScroll = () => {
-                    window.scrollTo(0, 1);
+                document.body.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    overflow: hidden !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    -webkit-overflow-scrolling: touch;
+                    overscroll-behavior: none;
+                `;
+                
+                gameContainer.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                    z-index: 999999 !important;
+                    overflow: hidden !important;
+                    background: var(--bg-color) !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                `;
+                
+                // 多重滚动策略
+                const forceHideUI = () => {
+                    // 滚动到顶部然后到底部
                     window.scrollTo(0, 0);
-                    window.scrollTo(0, document.body.scrollHeight);
-                    window.scrollTo(0, window.innerHeight);
-                    
-                    // 触发浏览器重新计算视口
                     setTimeout(() => {
-                        window.scrollTo(0, Math.max(
-                            document.body.scrollHeight,
-                            document.documentElement.scrollHeight,
-                            window.innerHeight
-                        ));
-                        
-                        // 再次强制滚动
+                        window.scrollTo(0, 1);
                         setTimeout(() => {
-                            window.scrollTo(0, document.body.scrollHeight + 100);
-                            window.scrollBy(0, 1);
-                            window.scrollBy(0, -1);
+                            window.scrollTo(0, document.body.scrollHeight);
+                            setTimeout(() => {
+                                window.scrollTo(0, window.innerHeight + 100);
+                                // 微调滚动触发浏览器UI隐藏
+                                window.scrollBy(0, 1);
+                                window.scrollBy(0, -1);
+                            }, 50);
                         }, 50);
-                    }, 100);
+                    }, 50);
                 };
                 
-                // 多次执行滚动
-                forceScroll();
-                setTimeout(forceScroll, 200);
-                setTimeout(forceScroll, 500);
-                setTimeout(forceScroll, 1000);
+                // 立即执行
+                forceHideUI();
                 
-                // 设置定时器持续检查
-                const scrollInterval = setInterval(() => {
-                    if (window.pageYOffset < document.body.scrollHeight - window.innerHeight) {
-                        window.scrollTo(0, document.body.scrollHeight);
+                // 延迟执行多次
+                setTimeout(forceHideUI, 100);
+                setTimeout(forceHideUI, 300);
+                setTimeout(forceHideUI, 500);
+                setTimeout(forceHideUI, 1000);
+                
+                // 持续监控并强制隐藏
+                const hideUIInterval = setInterval(() => {
+                    if (window.pageYOffset < window.innerHeight - 50) {
+                        forceHideUI();
                     }
-                }, 100);
+                }, 200);
                 
-                // 10秒后停止检查
-                setTimeout(() => clearInterval(scrollInterval), 10000);
+                // 15秒后停止监控
+                setTimeout(() => clearInterval(hideUIInterval), 15000);
+                
+                // 强制触发全屏
+                if (!isFullscreen) {
+                    setTimeout(() => {
+                        toggleFullscreen();
+                    }, 500);
+                }
             }
         }
 
         function handleOrientationChange() {
             setTimeout(() => {
                 if (window.orientation === 90 || window.orientation === -90) {
-                    // 强制进入全屏模式
-                    if (!isFullscreen) {
-                        toggleFullscreen();
-                    }
-                    
-                    // 设置viewport meta标签
+                    // 立即设置viewport
                     let viewport = document.querySelector('meta[name="viewport"]');
                     if (!viewport) {
                         viewport = document.createElement('meta');
                         viewport.name = 'viewport';
                         document.head.appendChild(viewport);
                     }
-                    viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                    viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, minimal-ui';
+                    
+                    // 添加横屏样式类
+                    document.body.classList.add('landscape-mode');
+                    document.documentElement.classList.add('landscape-mode');
                     
                     // 强制隐藏浏览器UI
                     scrollToBottomOnLandscape();
                     
-                    // 添加横屏样式类
-                    document.body.classList.add('landscape-mode');
+                    // 延迟再次执行
+                    setTimeout(scrollToBottomOnLandscape, 200);
+                    setTimeout(scrollToBottomOnLandscape, 500);
                     
                 } else {
                     window.scrollTo(0, 0);
                     document.body.classList.remove('landscape-mode');
+                    document.documentElement.classList.remove('landscape-mode');
+                    
+                    // 恢复正常样式
+                    document.documentElement.style.cssText = '';
+                    document.body.style.cssText = '';
                 }
                 resizeCanvas();
             }, 100);
@@ -1079,6 +1155,29 @@
         
         // 监听窗口焦点变化
         window.addEventListener('focus', () => {
+            if (window.orientation === 90 || window.orientation === -90) {
+                setTimeout(scrollToBottomOnLandscape, 100);
+            }
+        });
+        
+        // 监听触摸事件
+        document.addEventListener('touchstart', (e) => {
+            if (window.orientation === 90 || window.orientation === -90) {
+                setTimeout(scrollToBottomOnLandscape, 100);
+            }
+        }, { passive: true });
+
+        // 监听滚动事件
+        window.addEventListener('scroll', (e) => {
+            if (window.orientation === 90 || window.orientation === -90) {
+                if (window.pageYOffset < window.innerHeight - 100) {
+                    setTimeout(scrollToBottomOnLandscape, 50);
+                }
+            }
+        }, { passive: true });
+
+        // 监听页面激活
+        document.addEventListener('pageshow', () => {
             if (window.orientation === 90 || window.orientation === -90) {
                 setTimeout(scrollToBottomOnLandscape, 100);
             }
