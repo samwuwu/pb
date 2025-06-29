@@ -296,6 +296,30 @@
         #info-screen h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 15px; }
         #info-screen p { font-size: 1.2rem; margin-bottom: 40px; max-width: 90%; line-height: 1.6; }
 
+        #info-screen .rules ul li .icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        #info-screen .rules ul li .emoji-icon {
+            display: inline-block;
+            font-size: 1.5em;
+            margin: 0 5px;
+            padding: 5px;
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        #info-screen .rules ul li .emoji-icon.powerup {
+            background-color: var(--powerup-color);
+        }
+
+        #info-screen .speed-warning {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
         #start-button {
             padding: 18px 50px;
             font-size: 1.5rem;
@@ -477,6 +501,44 @@
             }
         }
 
+        /* 强制横屏遮罩层 */
+        #orientation-lock {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            z-index: 999999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #orientation-lock-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: rotate-phone 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotate-phone {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(-90deg); }
+        }
+
+        @media (orientation: portrait) {
+            #game-container {
+                display: none;
+            }
+            #orientation-lock {
+                display: flex;
+            }
+        }
+
         /* 横屏提示样式 */
         .orientation-tip {
             position: absolute;
@@ -493,11 +555,6 @@
             font-size: 2rem;
             margin-bottom: 10px;
             animation: rotate-phone 2s ease-in-out infinite;
-        }
-
-        @keyframes rotate-phone {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
         }
 
         .orientation-tip p {
@@ -533,14 +590,27 @@
             <span id="revival-count">0</span>
         </div>
         <div id="info-screen">
-            <h1>🛂 机场安检跳跃</h1>
-            <p id="message">新增"巧思"机制！<br>躲避禁运品，收集物品，巧用道具创高分！<br>收集💖复活道具可在游戏结束时答题复活！</p>
-            <!-- 添加横屏推荐提示 -->
-            <div id="orientation-tip" class="orientation-tip">
-                <div class="tip-icon">📱➡️📱</div>
-                <p><strong>推荐横屏游戏</strong></p>
-                <p>为了更好的游戏体验，建议将设备横向放置</p>
+            <h1>机场🛂安检大挑战</h1>
+            <p>帮助行李箱🧳通过机场安检，收集允许携带的物品，避开禁止携带乘机品！</p>
+            
+            <div class="rules">
+                <h2>游戏规则</h2>
+                <ul>
+                    <li><span class="icon">👆</span><strong>点击屏幕</strong>使行李箱跳跃</li>
+                    <li><span class="icon">🧳</span><strong>避开禁止携带物品:</strong> <span class="emoji-icon">🔪</span><span class="emoji-icon">🔫</span><span class="emoji-icon">✂️</span></li>
+                    <li><span class="icon">✅</span><strong>收集允许携带的物品获得分数:</strong> <span class="emoji-icon">📚</span><span class="emoji-icon">👕</span><span class="emoji-icon">🎧</span></li>
+                    <li><span class="icon">⭐</span><strong>获取特殊道具获得能力:</strong>
+                        <ul>
+                            <li><span class="emoji-icon powerup">⭐</span> (无敌)</li>
+                            <li><span class="emoji-icon powerup">⏰</span> (子弹时间)</li>
+                            <li><span class="emoji-icon powerup">🪶</span> (超级跳跃)</li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
+
+            <p class="speed-warning">游戏速度会逐渐加快，看看你能坚持多久！</p>
+            
             <button id="start-button">开始游戏</button>
         </div>
 
@@ -621,59 +691,36 @@
 
         // 使用用户提供的违禁物品数据
         const prohibitedItems = [
-            // 枪支弹药类
-            { name: "手枪", emoji: "🔫" }, { name: "步枪", emoji: "🔫" },
-            { name: "子弹", emoji: "💣" }, { name: "弹药", emoji: "💥" },
-            { name: "枪支", emoji: "🔫" }, { name: "炸药", emoji: "💣" },
-            
-            // 管制刀具类
-            { name: "刀具", emoji: "🔪" }, { name: "匕首", emoji: "🗡️" },
-            { name: "剪刀", emoji: "✂️" }, { name: "刀片", emoji: "🪒" },
-            { name: "锤子", emoji: "🔨" }, { name: "斧头", emoji: "🪓" },
-            { name: "螺丝刀", emoji: "🪛" }, { name: "扳手", emoji: "🔧" },
-            { name: "钳子", emoji: "🔧" }, { name: "锯子", emoji: "🪚" },
-            
-            // 易燃易爆物品
-            { name: "打火机", emoji: "🔥" }, { name: "火柴", emoji: "🧨" },
-            { name: "烟花", emoji: "🎆" }, { name: "爆竹", emoji: "🧨" },
-            { name: "易燃液体", emoji: "🔥" }, { name: "汽油", emoji: "⛽" },
-            { name: "酒精", emoji: "🍾" }, { name: "压缩气体", emoji: "💨" },
-            { name: "煤气罐", emoji: "🛢️" }, { name: "氧气瓶", emoji: "🫧" },
-            
-            // 腐蚀性物品
-            { name: "腐蚀品", emoji: "🧪" }, { name: "强酸", emoji: "⚗️" },
-            { name: "强碱", emoji: "🧪" }, { name: "消毒液", emoji: "☣️" },
-            { name: "漂白剂", emoji: "🧴" }, { name: "清洁剂", emoji: "🧽" },
-            
-            // 毒害品
-            { name: "杀虫剂", emoji: "☠️" }, { name: "农药", emoji: "🌿" },
-            { name: "毒药", emoji: "☠️" }, { name: "有毒气体", emoji: "☣️" },
-            { name: "老鼠药", emoji: "🐭" }, { name: "除草剂", emoji: "🌱" },
-            
-            // 放射性物品
-            { name: "放射性物品", emoji: "☢️" }, { name: "核材料", emoji: "☢️" },
-            { name: "放射源", emoji: "☢️" }, { name: "同位素", emoji: "⚛️" },
-            
-            // 其他危险品
-            { name: "锂电池", emoji: "🔋" }, { name: "磁铁", emoji: "🧲" },
-            { name: "油漆", emoji: "🎨" }, { name: "胶水", emoji: "🧴" },
-            { name: "指甲油", emoji: "💅" }, { name: "香水", emoji: "🌸" },
-            { name: "发胶", emoji: "💇" }, { name: "摩丝", emoji: "🧴" },
-            
-            // 工具类危险品
-            { name: "电钻", emoji: "🔨" }, { name: "电锯", emoji: "⚡" },
-            { name: "焊枪", emoji: "🔥" }, { name: "喷枪", emoji: "🔫" },
-            
-            // 液体限制品
-            { name: "大瓶洗发水", emoji: "🧴" }, { name: "大瓶化妆品", emoji: "💄" },
-            { name: "饮料大瓶", emoji: "🥤" }, { name: "酱料", emoji: "🍯" }
+            { name: "大容量充电宝", emoji: "🔋" },
+            { name: "锂电池", emoji: "🔋" },
+            { name: "磁铁", emoji: "🧲" },
+            { name: "刀具", emoji: "🔪" },
+            { name: "枪支", emoji: "🔫" },
+            { name: "剪刀", emoji: "✂️" },
+            { name: "锤子", emoji: "🔨" },
+            { name: "电击器", emoji: "⚡" },
+            { name: "烟花爆竹", emoji: "🎆" },
+            { name: "子弹", emoji: "💣" },
+            { name: "氧化剂", emoji: "🔥" },
+            { name: "压缩气体", emoji: "💨" },
+            { name: "易燃液体", emoji: "🔥" },
+            { name: "打火机", emoji: "🔥" },
+            { name: "安全火柴", emoji: "🔥" },
+            { name: "易燃固体", emoji: "🔥" },
+            { name: "腐蚀品", emoji: "🧪" },
+            { name: "毒害品", emoji: "☠️" },
+            { name: "放射性物品", emoji: "☢️" },
+            { name: "传染性物质", emoji: "☣️" },
+            { name: "有机过氧化物", emoji: "☣️" },
+            { name: "杀虫剂", emoji: "☠️" },
+            { name: "喷雾", emoji: "💨" }
         ];
         
         const allowedItems = [
             { name: "书", emoji: "📚" }, { name: "衣服", emoji: "👕" }, 
             { name: "耳机", emoji: "🎧" }, { name: "手机", emoji: "📱" },
             { name: "钱包", emoji: "👛" }, { name: "眼镜", emoji: "👓" },
-            { name: "充电器", emoji: "🔌" }, { name: "护照", emoji: "📘" },
+            { name: "充电器", emoji: "🔌" }, { name: "书本", emoji: "📘" },
             { name: "药品", emoji: "💊" }, { name: "零食", emoji: "🍪" }
         ];
         
@@ -689,63 +736,73 @@
         // 基于违禁物品的答题题库
         const quizQuestions = [
             {
-                question: "以下哪个物品可以带上飞机？",
-                options: ["打火机", "书籍", "刀具", "子弹"],
+                question: "以下哪种工具是不允许随身携带上飞机的？",
+                options: ["笔记本电脑 💻", "锤子 🔨", "相机 📷", "手机 📱"],
                 correct: 1
             },
             {
-                question: "哪个物品属于违禁品？",
-                options: ["手机", "眼镜", "剪刀", "衣服"],
+                question: "哪类物品属于毒害品？",
+                options: ["腐蚀品 🧪", "杀虫剂 🦟", "易燃液体 🔥", "压缩气体 💨"],
+                correct: 1
+            },
+            {
+                question: "以下哪种物品属于图片中标注的易燃液体？",
+                options: ["瓶装水 💧", "牛奶 🥛", "汽油 ⛽", "果汁 🧃"],
                 correct: 2
             },
             {
-                question: "液体物品携带规定是？",
-                options: ["无限制", "100ml以下单件容器", "500ml以下", "完全禁止"],
-                correct: 1
-            },
-            {
-                question: "以下哪个属于易燃易爆物品？",
-                options: ["充电宝", "烟花爆竹", "化妆品", "食品"],
-                correct: 1
-            },
-            {
-                question: "机场安检发现违禁品应该？",
-                options: ["隐藏起来", "主动上交配合检查", "拒绝检查", "强行带走"],
-                correct: 1
-            },
-            {
-                question: "以下哪个不是腐蚀性物品？",
-                options: ["强酸", "强碱", "耳机", "消毒液"],
+                question: "枪支类违禁品包括以下哪一项？",
+                options: ["水枪 💦", "玩具枪 🧸", "手枪 🔫", "泡沫枪 🎯"],
                 correct: 2
             },
             {
-                question: "锂电池携带规定是？",
-                options: ["无限制", "必须随身携带不能托运", "只能托运", "完全禁止"],
+                question: "如果不确定物品是否可以携带，应该怎么办？",
+                options: ["藏在行李中 🤫", "主动咨询工作人员 🙋", "快速通过安检 🏃", "请他人代为携带 🤝"],
                 correct: 1
             },
             {
-                question: "以下哪个属于管制刀具？",
-                options: ["塑料勺子", "水果刀", "钢笔", "钥匙"],
-                correct: 1
-            },
-            {
-                question: "压缩气体罐能否带上飞机？",
-                options: ["可以随身携带", "可以托运", "完全禁止", "需要申报"],
+                question: "腐蚀性物品包括以下哪一种？",
+                options: ["食用醋 🍶", "柠檬水 🍋", "强酸强碱 🧪", "肥皂 🧼"],
                 correct: 2
             },
             {
-                question: "放射性物品的危险标识是？",
-                options: ["🔥", "☠️", "☢️", "⚡"],
+                question: "以下哪种打火用具是禁止携带的？",
+                options: ["电子打火机 🔌", "普通打火机 🔥", "火柴 🔥", "以上都是 ✅"],
+                correct: 3
+            },
+            {
+                question: "管制刀具包括以下哪一种？",
+                options: ["塑料餐刀 🍴", "塑料水果刀 🍎", "匕首 🗡️", "指甲刀 ✂️"],
                 correct: 2
             },
             {
-                question: "机场安检时正确做法是？",
-                options: ["隐藏违禁品", "配合安检人员检查", "拒绝开包检查", "加快通过速度"],
+                question: "压缩气体类物品（如发胶喷雾）属于哪类危险品？",
+                options: ["易燃品 🔥", "压缩气体 💨", "腐蚀品 🧪", "毒害品 ☠️"],
                 correct: 1
             },
             {
-                question: "以下哪个属于毒害品？",
-                options: ["护肤品", "杀虫剂", "维生素", "矿泉水"],
+                question: "烟花爆竹属于哪类危险品？",
+                options: ["易燃固体 🔥", "爆炸品 💥", "压缩气体 💨", "氧化剂 ⭕️"],
+                correct: 0
+            },
+            {
+                question: "为什么磁铁被列为禁止携带物品？",
+                options: ["重量超标 ⚖️", "会干扰导航 🧭", "易碎品 💔", "易燃品 🔥"],
+                correct: 1
+            },
+            {
+                question: "关于大容量充电宝的携带规定是什么？",
+                options: ["可以托运 🧳", "禁止携带 🚫", "随身携带 🎒", "无限制 ✅"],
+                correct: 1
+            },
+            {
+                question: "以下哪种物品属于毒害品？",
+                options: ["清洁剂 🧴", "杀虫剂 🦟", "消毒液 🧪", "香水 🌸"],
+                correct: 1
+            },
+            {
+                question: "以下哪种物品属于腐蚀品？",
+                options: ["洗手液 🧴", "强酸强碱 🧪", "消毒水 💧", "香水 🌸"],
                 correct: 1
             }
         ];
@@ -1316,5 +1373,9 @@
         init();
     </script>
     <div id="bottom-spacer"></div>
+    <div id="orientation-lock">
+        <div id="orientation-lock-icon">📱</div>
+        <p>为了更好的游戏体验，请旋转您的设备</p>
+    </div>
 </body>
 </html>
