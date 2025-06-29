@@ -204,45 +204,6 @@
             }
         }
 
-        /* 专门针对小屏幕横屏的强制全屏 */
-        @media screen and (orientation: landscape) and (max-height: 500px) {
-            html, body {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                overflow: hidden !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            #game-container {
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 75vh !important; /* 限制游戏区域高度为屏幕的75% */
-                bottom: auto !important; /* 确保从顶部定位 */
-                z-index: 999999 !important;
-                overflow: hidden !important;
-            }
-            
-            #score-container {
-                font-size: 1.2rem;
-                padding: 4px 12px;
-            }
-            
-            #info-screen h1 {
-                font-size: 1.8rem;
-            }
-            
-            #info-screen p {
-                font-size: 0.9rem;
-                margin-bottom: 20px;
-            }
-        }
-
         canvas { display: block; width: 100%; height: 100%; }
 
         #score-container {
@@ -292,26 +253,106 @@
             z-index: 20;
         }
 
+        #info-content {
+            max-height: 80vh; /* 限制内容最大高度 */
+            overflow-y: auto; /* 超出部分垂直滚动 */
+            padding: 20px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 15px;
+            margin-bottom: 20px; /* 与开始按钮的间距 */
+        }
+
         #info-screen.hidden { opacity: 0; pointer-events: none; }
         #info-screen h1 { font-size: 2.8rem; font-weight: 700; margin-bottom: 15px; }
-        #info-screen p { font-size: 1.2rem; margin-bottom: 40px; max-width: 90%; line-height: 1.6; }
+        #info-screen p {
+            font-size: 1.2rem;
+            margin-bottom: 20px; /* 调整间距 */
+            max-width: 90%;
+            line-height: 1.6;
+        }
+
+        .rules-container {
+            max-height: 40vh; /* 限制最大高度，避免在横屏上过高 */
+            overflow-y: auto; /* 超出部分垂直滚动 */
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 0 auto 20px; /* 居中并设置底部间距 */
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 自定义滚动条样式 */
+        .rules-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .rules-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        .rules-container::-webkit-scrollbar-thumb {
+            background-color: var(--player-color);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        #info-screen .rules {
+            text-align: left; /* 规则内容左对齐 */
+        }
+
+        #info-screen .rules h2 {
+            text-align: center; /* 标题居中 */
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        #info-screen .rules ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        #info-screen .rules ul li {
+            margin-bottom: 15px; /* 增加列表项间距 */
+            display: flex;
+            align-items: flex-start;
+        }
 
         #info-screen .rules ul li .icon {
-            margin-right: 10px;
-            font-size: 1.2em;
+            margin-right: 15px; /* 调整图标与文字的间距 */
+            font-size: 1.5em;
+            line-height: 1;
+        }
+
+        #info-screen .rules ul li strong {
+            display: block;
+            margin-bottom: 5px; /* 标题和图标列表的间距 */
         }
 
         #info-screen .rules ul li .emoji-icon {
             display: inline-block;
-            font-size: 1.5em;
-            margin: 0 5px;
-            padding: 5px;
+            font-size: 1.8em; /* 增大图标 */
+            margin: 0 4px;
+            padding: 6px;
             border-radius: 8px;
             background-color: rgba(0,0,0,0.2);
         }
 
         #info-screen .rules ul li .emoji-icon.powerup {
             background-color: var(--powerup-color);
+        }
+
+        #info-screen .rules ul ul {
+            padding-left: 20px; /* 内嵌列表缩进 */
+            margin-top: 10px;
+        }
+
+        #info-screen .rules ul ul li {
+            font-size: 0.9em;
+            margin-bottom: 10px;
         }
 
         #info-screen .speed-warning {
@@ -590,25 +631,9 @@
             <span id="revival-count">0</span>
         </div>
         <div id="info-screen">
-            <h1>机场🛂安检大挑战</h1>
-            <p>帮助行李箱🧳通过机场安检，收集允许携带的物品，避开禁止携带乘机品！</p>
+            <h1>机场安检大挑战</h1>
+            <p>化身勇敢的行李箱🧳，在机场传送带上展开一场惊心动魄的大冒险！你的任务是精准跳跃，巧妙躲避安检扫描出的危险品🔪🔫✂️，同时尽可能多地收集旅途必需品📚👕🎧来获得高分。别忘了抓住那些神奇的道具⭐⏰🪶，它们会赋予你意想不到的超能力！遇到危险也不要慌，答对问题就能获得复活机会💖，继续你的精彩冒险！准备好了吗？挑战开始！</p>
             
-            <div class="rules">
-                <h2>游戏规则</h2>
-                <ul>
-                    <li><span class="icon">👆</span><strong>点击屏幕</strong>使行李箱跳跃</li>
-                    <li><span class="icon">🧳</span><strong>避开禁止携带物品:</strong> <span class="emoji-icon">🔪</span><span class="emoji-icon">🔫</span><span class="emoji-icon">✂️</span></li>
-                    <li><span class="icon">✅</span><strong>收集允许携带的物品获得分数:</strong> <span class="emoji-icon">📚</span><span class="emoji-icon">👕</span><span class="emoji-icon">🎧</span></li>
-                    <li><span class="icon">⭐</span><strong>获取特殊道具获得能力:</strong>
-                        <ul>
-                            <li><span class="emoji-icon powerup">⭐</span> (无敌)</li>
-                            <li><span class="emoji-icon powerup">⏰</span> (子弹时间)</li>
-                            <li><span class="emoji-icon powerup">🪶</span> (超级跳跃)</li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-
             <p class="speed-warning">游戏速度会逐渐加快，看看你能坚持多久！</p>
             
             <button id="start-button">开始游戏</button>
