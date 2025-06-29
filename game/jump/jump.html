@@ -443,6 +443,38 @@
                 display: block; /* 在横屏模式下显示 */
                 height: 100vh; /* 提供足够的滚动空间 */
             }
+
+            /* 调整弹窗在横屏下的尺寸 */
+            #game-over-content, #quiz-content {
+                transform: scale(0.8);
+                padding: 20px;
+            }
+
+            #game-over-content h2 {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            #final-score {
+                font-size: 2.5rem;
+                margin: 10px 0;
+            }
+
+            #restart-button, #revival-button {
+                padding: 10px 20px;
+                font-size: 1.1rem;
+            }
+
+            #quiz-question {
+                font-size: 1.2rem;
+                margin-bottom: 15px;
+            }
+
+            .quiz-option {
+                padding: 10px;
+                font-size: 1rem;
+                margin: 8px 0;
+            }
         }
 
         /* 横屏提示样式 */
