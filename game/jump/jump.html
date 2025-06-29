@@ -932,37 +932,81 @@
             if (window.orientation === 90 || window.orientation === -90 || 
                 (window.innerWidth > window.innerHeight)) {
                 
-                setTimeout(() => {
+                // 立即隐藏地址栏
+                document.body.style.height = '100vh';
+                document.documentElement.style.height = '100vh';
+                
+                // 强制滚动到底部多次
+                const forceScroll = () => {
+                    window.scrollTo(0, 1);
+                    window.scrollTo(0, 0);
                     window.scrollTo(0, document.body.scrollHeight);
+                    window.scrollTo(0, window.innerHeight);
                     
-                    setTimeout(() => {
-                        window.scrollTo(0, document.body.scrollHeight);
-                        window.scrollBy(0, 1);
-                        window.scrollBy(0, -1);
-                    }, 100);
-                    
+                    // 触发浏览器重新计算视口
                     setTimeout(() => {
                         window.scrollTo(0, Math.max(
                             document.body.scrollHeight,
-                            document.documentElement.scrollHeight
+                            document.documentElement.scrollHeight,
+                            window.innerHeight
                         ));
-                    }, 300);
-                }, 200);
+                        
+                        // 再次强制滚动
+                        setTimeout(() => {
+                            window.scrollTo(0, document.body.scrollHeight + 100);
+                            window.scrollBy(0, 1);
+                            window.scrollBy(0, -1);
+                        }, 50);
+                    }, 100);
+                };
+                
+                // 多次执行滚动
+                forceScroll();
+                setTimeout(forceScroll, 200);
+                setTimeout(forceScroll, 500);
+                setTimeout(forceScroll, 1000);
+                
+                // 设置定时器持续检查
+                const scrollInterval = setInterval(() => {
+                    if (window.pageYOffset < document.body.scrollHeight - window.innerHeight) {
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }
+                }, 100);
+                
+                // 10秒后停止检查
+                setTimeout(() => clearInterval(scrollInterval), 10000);
             }
         }
 
         function handleOrientationChange() {
             setTimeout(() => {
                 if (window.orientation === 90 || window.orientation === -90) {
-                    scrollToBottomOnLandscape();
+                    // 强制进入全屏模式
                     if (!isFullscreen) {
                         toggleFullscreen();
                     }
+                    
+                    // 设置viewport meta标签
+                    let viewport = document.querySelector('meta[name="viewport"]');
+                    if (!viewport) {
+                        viewport = document.createElement('meta');
+                        viewport.name = 'viewport';
+                        document.head.appendChild(viewport);
+                    }
+                    viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                    
+                    // 强制隐藏浏览器UI
+                    scrollToBottomOnLandscape();
+                    
+                    // 添加横屏样式类
+                    document.body.classList.add('landscape-mode');
+                    
                 } else {
                     window.scrollTo(0, 0);
+                    document.body.classList.remove('landscape-mode');
                 }
                 resizeCanvas();
-            }, 500);
+            }, 100);
         }
 
         function handleFullscreenChange() {
@@ -1012,8 +1056,31 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
+            // 添加viewport meta标签
+            let viewport = document.querySelector('meta[name="viewport"]');
+            if (!viewport) {
+                viewport = document.createElement('meta');
+                viewport.name = 'viewport';
+                viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                document.head.appendChild(viewport);
+            }
+            
             if (window.orientation === 90 || window.orientation === -90) {
                 scrollToBottomOnLandscape();
+            }
+        });
+        
+        // 监听页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && (window.orientation === 90 || window.orientation === -90)) {
+                setTimeout(scrollToBottomOnLandscape, 100);
+            }
+        });
+        
+        // 监听窗口焦点变化
+        window.addEventListener('focus', () => {
+            if (window.orientation === 90 || window.orientation === -90) {
+                setTimeout(scrollToBottomOnLandscape, 100);
             }
         });
         
