@@ -1053,6 +1053,22 @@
             setTimeout(resizeCanvas, 100);
         }
 
+        // 动态调整底部空白区域高度
+        function adjustBottomSpacer() {
+            const isLandscape = window.orientation === 90 || window.orientation === -90 || 
+                               (window.innerWidth > window.innerHeight);
+            
+            if (isLandscape) {
+                const bottomSpacer = document.getElementById('bottom-spacer');
+                if (bottomSpacer) {
+                    // 根据屏幕高度动态调整
+                    const screenHeight = window.innerHeight;
+                    const spacerHeight = Math.max(100, screenHeight * 0.2); // 至少100px，最多屏幕高度的20%
+                    bottomSpacer.style.height = spacerHeight + 'px';
+                }
+            }
+        }
+
         // 更强力的横屏UI隐藏函数
         function scrollToBottomOnLandscape() {
             if (window.orientation === 90 || window.orientation === -90 || 
@@ -1203,7 +1219,13 @@
         gameContainer.addEventListener('mousedown', (e) => { if (!e.target.closest('button')) handleJump(); });
         gameContainer.addEventListener('touchstart', (e) => { if (!e.target.closest('button')) { e.preventDefault(); handleJump(); } });
         
-        window.addEventListener('orientationchange', handleOrientationChange);
+        // 在方向改变时调用
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                adjustBottomSpacer();
+                handleOrientationChange();
+            }, 100);
+        });
         
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
