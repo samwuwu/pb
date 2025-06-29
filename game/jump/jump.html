@@ -42,8 +42,7 @@
             position: relative;
             width: 100%;
             max-width: 900px;
-            height: 100vh; /* 改为100vh确保完整显示 */
-            height: 100dvh; /* 使用动态视口高度 */
+            height: calc(var(--vh, 1vh) * 100); /* 使用自定义视口高度 */
             max-height: none; /* 移除最大高度限制 */
             border-radius: 20px;
             overflow: hidden;
@@ -62,9 +61,7 @@
             transition: background-color 0.3s ease;
         }
 
-        @media (orientation: landscape) and (max-height: 600px) {
-            #game-container { height: 90vh; }
-        }
+
 
         /* 为竖屏模式添加特殊处理 */
         @media (orientation: portrait) {
@@ -73,8 +70,7 @@
             }
             
             #game-container {
-                height: 100vh;
-                height: 100dvh;
+                height: calc(var(--vh, 1vh) * 100);
                 border-radius: 0; /* 竖屏时移除圆角 */
                 border: none; /* 竖屏时移除边框节省空间 */
                 max-width: none;
@@ -85,8 +81,7 @@
         /* 小屏幕竖屏优化 */
         @media (orientation: portrait) and (max-height: 700px) {
             #game-container {
-                height: 100vh !important;
-                height: 100dvh !important;
+                height: calc(var(--vh, 1vh) * 100) !important;
             }
             
             #score-container {
@@ -117,21 +112,25 @@
             html {
                 overflow: hidden !important;
                 height: 100% !important;
+                /* 使用更兼容的视口高度 */
                 height: 100vh !important;
-                height: 100dvh !important;
+                height: -webkit-fill-available !important;
                 position: fixed !important;
                 width: 100% !important;
                 top: 0 !important;
                 left: 0 !important;
+                /* 添加安全区域支持 */
+                padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
             }
             
             body {
                 padding: 0 !important;
                 margin: 0 !important;
                 overflow: hidden !important;
+                /* 使用更可靠的高度计算 */
                 height: 100% !important;
                 height: 100vh !important;
-                height: 100dvh !important;
+                height: -webkit-fill-available !important;
                 position: fixed !important;
                 width: 100% !important;
                 top: 0 !important;
@@ -147,19 +146,24 @@
             }
             
             #game-container {
+                /* 使用更保守的高度设置，避免超出屏幕 */
                 height: 100% !important;
-                height: 100vh !important;
-                height: 100dvh !important;
+                height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+                height: calc(-webkit-fill-available - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
                 width: 100% !important;
+                max-width: none !important; /* 移除最大宽度限制 */
                 max-height: none !important;
                 position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
+                top: env(safe-area-inset-top, 0) !important;
+                left: env(safe-area-inset-left, 0) !important;
+                right: env(safe-area-inset-right, 0) !important;
+                bottom: env(safe-area-inset-bottom, 0) !important;
                 border-radius: 0 !important;
                 border: none !important;
                 z-index: 9999 !important;
                 overflow: hidden !important;
                 background: var(--bg-color) !important;
+                box-sizing: border-box !important;
             }
             
             /* 隐藏所有可能的滚动条 */
@@ -181,26 +185,128 @@
             }
             
             #score-container {
-                top: 10px;
-                left: 10px;
-                font-size: 1.5rem;
-                padding: 6px 15px;
+                /* 考虑安全区域的位置调整 */
+                top: max(10px, env(safe-area-inset-top, 10px)) !important;
+                left: max(10px, env(safe-area-inset-left, 10px)) !important;
+                font-size: 1.3rem; /* 稍微减小字体 */
+                padding: 5px 12px;
                 z-index: 10000;
             }
             
+            #revival-indicator {
+                top: max(10px, env(safe-area-inset-top, 10px)) !important;
+                right: max(10px, env(safe-area-inset-right, 10px)) !important;
+                font-size: 1.2rem;
+                padding: 5px 10px;
+            }
+            
             #info-screen h1 {
-                font-size: 2.2rem;
-                margin-bottom: 10px;
+                font-size: 2rem; /* 减小标题字体 */
+                margin-bottom: 8px;
             }
             
             #info-screen p {
-                font-size: 1rem;
-                margin-bottom: 25px;
+                font-size: 0.9rem; /* 减小段落字体 */
+                margin-bottom: 15px;
+                max-width: 95%; /* 增加文本宽度利用率 */
             }
             
             #start-button {
-                padding: 12px 35px;
-                font-size: 1.2rem;
+                padding: 10px 30px; /* 减小按钮尺寸 */
+                font-size: 1.1rem;
+            }
+        }
+
+        /* 针对极矮的横屏设备进一步优化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #game-container {
+                /* 对于极矮的设备，使用更保守的高度 */
+                height: 98vh !important;
+                height: calc(98vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+            }
+            
+            #score-container {
+                font-size: 1.1rem;
+                padding: 3px 8px;
+                top: 5px !important;
+                left: 5px !important;
+            }
+            
+            #revival-indicator {
+                font-size: 1rem;
+                padding: 3px 6px;
+                top: 5px !important;
+                right: 5px !important;
+            }
+            
+            #info-screen h1 {
+                font-size: 1.6rem;
+                margin-bottom: 5px;
+            }
+            
+            #info-screen p {
+                font-size: 0.8rem;
+                margin-bottom: 10px;
+            }
+            
+            #start-button {
+                padding: 8px 20px;
+                font-size: 1rem;
+            }
+            
+            /* 进一步缩小弹窗 */
+            #game-over-content, #quiz-content {
+                transform: scale(0.65); /* 更小的缩放 */
+                padding: 15px;
+                max-height: 85vh;
+                overflow-y: auto;
+            }
+            
+            #game-over-content h2 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+            
+            #final-score {
+                font-size: 2.2rem;
+                margin: 8px 0;
+            }
+            
+            #restart-button, #revival-button {
+                padding: 8px 16px;
+                font-size: 1rem;
+                margin: 5px;
+            }
+            
+            #quiz-question {
+                font-size: 1.1rem;
+                margin-bottom: 12px;
+            }
+            
+            .quiz-option {
+                padding: 8px;
+                font-size: 0.9rem;
+                margin: 6px 0;
+            }
+        }
+
+        /* 针对超宽屏幕的优化 */
+        @media (orientation: landscape) and (min-aspect-ratio: 16/9) {
+            #game-container {
+                /* 超宽屏幕时，限制游戏区域宽度，居中显示 */
+                max-width: calc(100vh * 16/9) !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+            }
+        }
+
+        /* 保持强制横屏 */
+        @media (orientation: portrait) {
+            #game-container {
+                display: none !important;
+            }
+            #orientation-lock {
+                display: flex !important;
             }
         }
 
@@ -1053,7 +1159,14 @@
             }, 1500);
         }
 
+        function setViewportHeight() {
+            // 获取真实的视口高度
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+
         function init() {
+            setViewportHeight();
             resizeCanvas();
             const playerWidth = 60 * scale;
             const playerHeight = 50 * scale;
@@ -1319,17 +1432,14 @@
         // 在方向改变时调用
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
+                setViewportHeight();
                 adjustBottomSpacer();
                 handleOrientationChange();
             }, 100);
         });
         
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-        
         window.addEventListener('resize', () => {
+            setViewportHeight();
             if (!gameOver && infoScreen.classList.contains('hidden')) {
                 if (!isFullscreen) {
                     const isLandscape = window.orientation === 90 || window.orientation === -90;
@@ -1341,6 +1451,13 @@
                 resizeCanvas(); 
             }
         });
+        
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
+
 
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
