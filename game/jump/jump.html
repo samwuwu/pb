@@ -13,7 +13,7 @@
             --player-color: #e67e22;
             --obstacle-color: #c0392b;
             --collectible-color: #27ae60;
-            --powerup-color: #8e44ad; /* 新增: 巧思物品紫色 */
+            --powerup-color: #8e44ad;
             --text-color: #ecf0f1;
             --score-bg: #34495e;
         }
@@ -178,7 +178,7 @@
         </div>
         <div id="info-screen">
             <h1>安检跳跃</h1>
-            <p id="message">新增“巧思”机制！<br>躲避禁运品，收集物品，巧用道具创高分！</p>
+            <p id="message">新增"巧思"机制！<br>躲避禁运品，收集物品，巧用道具创高分！</p>
             <button id="start-button">开始游戏</button>
         </div>
     </div>
@@ -282,7 +282,7 @@
                     this.isGrounded = false;
                     this.squash = 1.3;
                     if (this.hasSuperJump) {
-                        this.hasSuperJump = false; // Use up super jump
+                        this.hasSuperJump = false;
                     }
                 }
             }
@@ -342,13 +342,13 @@
             const rand = Math.random();
             let itemPool, itemType;
 
-            if (rand < 0.08) { // 8% chance for a power-up
+            if (rand < 0.08) {
                 itemPool = powerUpItems;
                 itemType = 'powerup';
-            } else if (rand < 0.4) { // 32% chance for collectible
+            } else if (rand < 0.4) {
                 itemPool = allowedItems;
                 itemType = 'collectible';
-            } else { // 60% chance for obstacle
+            } else {
                 itemPool = prohibitedItems;
                 itemType = 'obstacle';
             }
@@ -452,15 +452,10 @@
             if (infoScreen.classList.contains('hidden') && !gameOver) player.jump();
         }
 
-        startButton.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
-        document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') handleJump(); });
-        gameContainer.addEventListener('mousedown', (e) => { if (!e.target.closest('button')) handleJump(); });
-        gameContainer.addEventListener('touchstart', (e) => { if (!e.target.closest('button')) { e.preventDefault(); handleJump(); } });
-        // 在现有JavaScript中添加全屏功能
+        // 全屏功能
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         let isFullscreen = false;
 
-        // 全屏API兼容性处理
         function requestFullscreen(element) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
@@ -485,7 +480,6 @@
             }
         }
 
-        // 全屏切换函数
         function toggleFullscreen() {
             if (!isFullscreen) {
                 requestFullscreen(gameContainer);
@@ -501,15 +495,46 @@
                 fullscreenBtn.textContent = '⛶';
                 isFullscreen = false;
             }
-            // 重新调整canvas尺寸
             setTimeout(resizeCanvas, 100);
         }
 
-        // 监听全屏状态变化
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        // 横屏自动滚动到底部隐藏浏览器UI
+        function scrollToBottomOnLandscape() {
+            if (window.orientation === 90 || window.orientation === -90 || 
+                (window.innerWidth > window.innerHeight)) {
+                
+                setTimeout(() => {
+                    window.scrollTo(0, document.body.scrollHeight);
+                    
+                    setTimeout(() => {
+                        window.scrollTo(0, document.body.scrollHeight);
+                        window.scrollBy(0, 1);
+                        window.scrollBy(0, -1);
+                    }, 100);
+                    
+                    setTimeout(() => {
+                        window.scrollTo(0, Math.max(
+                            document.body.scrollHeight,
+                            document.documentElement.scrollHeight
+                        ));
+                    }, 300);
+                }, 200);
+            }
+        }
+
+        function handleOrientationChange() {
+            setTimeout(() => {
+                if (window.orientation === 90 || window.orientation === -90) {
+                    scrollToBottomOnLandscape();
+                    if (!isFullscreen) {
+                        toggleFullscreen();
+                    }
+                } else {
+                    window.scrollTo(0, 0);
+                }
+                resizeCanvas();
+            }, 500);
+        }
 
         function handleFullscreenChange() {
             const isCurrentlyFullscreen = !!(document.fullscreenElement || 
@@ -518,43 +543,47 @@
                 document.msFullscreenElement);
             
             if (!isCurrentlyFullscreen && isFullscreen) {
-                // 用户通过ESC等方式退出全屏
                 gameContainer.classList.remove('fullscreen-mode', 'fullscreen-landscape');
                 isFullscreen = false;
                 setTimeout(resizeCanvas, 100);
             }
         }
 
-        // 横屏自动全屏（可选）
-        function handleOrientationChange() {
-            setTimeout(() => {
-                if (window.orientation === 90 || window.orientation === -90) {
-                    // 横屏时自动进入全屏（可选功能）
-                    if (!isFullscreen) {
-                        toggleFullscreen();
-                    }
-                }
-                resizeCanvas();
-            }, 500);
-        }
-
-        // 绑定事件
+        // 事件监听器
+        startButton.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+        document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') handleJump(); });
+        gameContainer.addEventListener('mousedown', (e) => { if (!e.target.closest('button')) handleJump(); });
+        gameContainer.addEventListener('touchstart', (e) => { if (!e.target.closest('button')) { e.preventDefault(); handleJump(); } });
+        
         fullscreenBtn.addEventListener('click', toggleFullscreen);
         window.addEventListener('orientationchange', handleOrientationChange);
         
-        // 修改现有的resize事件处理
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+        
         window.addEventListener('resize', () => {
             if (!gameOver && infoScreen.classList.contains('hidden')) {
-                // 在全屏模式下不强制结束游戏
                 if (!isFullscreen) {
-                    endGame();
-                    messageEl.innerHTML = '屏幕尺寸已改变，<br>请重新开始。';
+                    const isLandscape = window.orientation === 90 || window.orientation === -90;
+                    if (!isLandscape) {
+                        endGame();
+                        messageEl.innerHTML = '屏幕尺寸已改变，<br>请重新开始。';
+                    }
                 }
             } else { 
                 resizeCanvas(); 
             }
         });
 
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.orientation === 90 || window.orientation === -90) {
+                scrollToBottomOnLandscape();
+            }
+        });
+        
         init();
     </script>
 </body>
