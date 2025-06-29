@@ -139,6 +139,9 @@
                 -webkit-overflow-scrolling: touch;
                 overscroll-behavior: none;
                 -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
                 -webkit-touch-callout: none;
                 -webkit-tap-highlight-color: transparent;
             }
@@ -170,6 +173,9 @@
             * {
                 box-sizing: border-box;
                 -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
                 -webkit-touch-callout: none;
                 -webkit-tap-highlight-color: transparent;
             }
@@ -1119,7 +1125,7 @@
                     top: 0 !important;
                     left: 0 !important;
                     width: 100% !important;
-                    height: 100% !important;
+                    height: 75vh !important; /* 维持75%高度 */
                     z-index: 999999 !important;
                     overflow: hidden !important;
                     background: var(--bg-color) !important;
@@ -1127,48 +1133,10 @@
                     border-radius: 0 !important;
                 `;
                 
-                // 多重滚动策略
-                const forceHideUI = () => {
-                    // 滚动到顶部然后到底部
-                    window.scrollTo(0, 0);
-                    setTimeout(() => {
-                        window.scrollTo(0, 1);
-                        setTimeout(() => {
-                            window.scrollTo(0, document.body.scrollHeight);
-                            setTimeout(() => {
-                                window.scrollTo(0, window.innerHeight + 100);
-                                // 微调滚动触发浏览器UI隐藏
-                                window.scrollBy(0, 1);
-                                window.scrollBy(0, -1);
-                            }, 50);
-                        }, 50);
-                    }, 50);
-                };
-                
-                // 立即执行
-                forceHideUI();
-                
-                // 延迟执行多次
-                setTimeout(forceHideUI, 100);
-                setTimeout(forceHideUI, 300);
-                setTimeout(forceHideUI, 500);
-                setTimeout(forceHideUI, 1000);
-                
-                // 持续监控并强制隐藏
-                const hideUIInterval = setInterval(() => {
-                    if (window.pageYOffset < window.innerHeight - 50) {
-                        forceHideUI();
-                    }
-                }, 200);
-                
-                // 15秒后停止监控
-                setTimeout(() => clearInterval(hideUIInterval), 15000);
-                
-                // 强制触发全屏
-                if (!isFullscreen) {
-                    setTimeout(() => {
-                        toggleFullscreen();
-                    }, 500);
+                // 滚动到底部空白区域
+                const spacer = document.getElementById('bottom-spacer');
+                if (spacer) {
+                    spacer.scrollIntoView({ behavior: 'auto', block: 'end' });
                 }
             }
         }
