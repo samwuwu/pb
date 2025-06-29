@@ -42,12 +42,14 @@
             position: relative;
             width: 100%;
             max-width: 900px;
-            height: 85vh;
-            max-height: 800px;
+            height: 100vh; /* 改为100vh确保完整显示 */
+            height: 100dvh; /* 使用动态视口高度 */
+            max-height: none; /* 移除最大高度限制 */
             border-radius: 20px;
             overflow: hidden;
             background-color: var(--bg-color);
             border: 8px solid var(--score-bg);
+            box-sizing: border-box; /* 确保边框包含在尺寸内 */
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
@@ -62,6 +64,52 @@
 
         @media (orientation: landscape) and (max-height: 600px) {
             #game-container { height: 90vh; }
+        }
+
+        /* 为竖屏模式添加特殊处理 */
+        @media (orientation: portrait) {
+            body {
+                padding: 0; /* 移除padding确保完整显示 */
+            }
+            
+            #game-container {
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0; /* 竖屏时移除圆角 */
+                border: none; /* 竖屏时移除边框节省空间 */
+                max-width: none;
+                width: 100%;
+            }
+        }
+
+        /* 小屏幕竖屏优化 */
+        @media (orientation: portrait) and (max-height: 700px) {
+            #game-container {
+                height: 100vh !important;
+                height: 100dvh !important;
+            }
+            
+            #score-container {
+                top: 5px;
+                left: 5px;
+                font-size: 1.2rem;
+                padding: 4px 10px;
+            }
+            
+            #info-screen h1 {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+            
+            #info-screen p {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+            
+            #start-button {
+                padding: 10px 25px;
+                font-size: 1rem;
+            }
         }
 
         /* 更强力的横屏适配 - 完全隐藏浏览器UI */
@@ -374,6 +422,45 @@
             background-color: var(--obstacle-color);
             border-color: var(--obstacle-color);
         }
+
+        /* 横屏提示样式 */
+        .orientation-tip {
+            background-color: rgba(52, 73, 94, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid var(--collectible-color);
+            max-width: 300px;
+        }
+
+        .tip-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            animation: rotate-phone 2s ease-in-out infinite;
+        }
+
+        @keyframes rotate-phone {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(90deg); }
+        }
+
+        .orientation-tip p {
+            margin: 8px 0;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .orientation-tip strong {
+            color: var(--collectible-color);
+        }
+
+        /* 横屏时隐藏提示 */
+        @media (orientation: landscape) {
+            .orientation-tip {
+                display: none;
+            }
+        }
         
     </style>
 </head>
@@ -391,8 +478,14 @@
             <span id="revival-count">0</span>
         </div>
         <div id="info-screen">
-            <h1>安检跳跃</h1>
+            <h1>🛂 机场安检跳跃</h1>
             <p id="message">新增"巧思"机制！<br>躲避禁运品，收集物品，巧用道具创高分！<br>收集💖复活道具可在游戏结束时答题复活！</p>
+            <!-- 添加横屏推荐提示 -->
+            <div id="orientation-tip" class="orientation-tip">
+                <div class="tip-icon">📱➡️📱</div>
+                <p><strong>推荐横屏游戏</strong></p>
+                <p>为了更好的游戏体验，建议将设备横向放置</p>
+            </div>
             <button id="start-button">开始游戏</button>
         </div>
 
