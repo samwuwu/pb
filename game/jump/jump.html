@@ -412,21 +412,60 @@
 
         // 使用用户提供的违禁物品数据
         const prohibitedItems = [
-            { name: "刀具", emoji: "🔪" }, { name: "枪支", emoji: "🔫" },
-            { name: "剪刀", emoji: "✂️" }, { name: "烟花", emoji: "🎆" },
-            { name: "子弹", emoji: "💣" }, { name: "压缩气体", emoji: "💨" },
-            { name: "易燃液体", emoji: "🔥" }, { name: "打火机", emoji: "🔥" },
-            { name: "火柴", emoji: "🧨" }, { name: "酒精", emoji: "🍾" },
-            { name: "锂电池", emoji: "🔋" }, { name: "消毒液", emoji: "☣️" },
-            { name: "杀虫剂", emoji: "☠️" }, { name: "油漆", emoji: "🎨" },
-            { name: "放射性物品", emoji: "☢️" }, { name: "腐蚀品", emoji: "🧪" },
-            { name: "磁铁", emoji: "🧲" }, { name: "锤子", emoji: "🔨" }
+            // 枪支弹药类
+            { name: "手枪", emoji: "🔫" }, { name: "步枪", emoji: "🔫" },
+            { name: "子弹", emoji: "💣" }, { name: "弹药", emoji: "💥" },
+            { name: "枪支", emoji: "🔫" }, { name: "炸药", emoji: "💣" },
+            
+            // 管制刀具类
+            { name: "刀具", emoji: "🔪" }, { name: "匕首", emoji: "🗡️" },
+            { name: "剪刀", emoji: "✂️" }, { name: "刀片", emoji: "🪒" },
+            { name: "锤子", emoji: "🔨" }, { name: "斧头", emoji: "🪓" },
+            { name: "螺丝刀", emoji: "🪛" }, { name: "扳手", emoji: "🔧" },
+            { name: "钳子", emoji: "🔧" }, { name: "锯子", emoji: "🪚" },
+            
+            // 易燃易爆物品
+            { name: "打火机", emoji: "🔥" }, { name: "火柴", emoji: "🧨" },
+            { name: "烟花", emoji: "🎆" }, { name: "爆竹", emoji: "🧨" },
+            { name: "易燃液体", emoji: "🔥" }, { name: "汽油", emoji: "⛽" },
+            { name: "酒精", emoji: "🍾" }, { name: "压缩气体", emoji: "💨" },
+            { name: "煤气罐", emoji: "🛢️" }, { name: "氧气瓶", emoji: "🫧" },
+            
+            // 腐蚀性物品
+            { name: "腐蚀品", emoji: "🧪" }, { name: "强酸", emoji: "⚗️" },
+            { name: "强碱", emoji: "🧪" }, { name: "消毒液", emoji: "☣️" },
+            { name: "漂白剂", emoji: "🧴" }, { name: "清洁剂", emoji: "🧽" },
+            
+            // 毒害品
+            { name: "杀虫剂", emoji: "☠️" }, { name: "农药", emoji: "🌿" },
+            { name: "毒药", emoji: "☠️" }, { name: "有毒气体", emoji: "☣️" },
+            { name: "老鼠药", emoji: "🐭" }, { name: "除草剂", emoji: "🌱" },
+            
+            // 放射性物品
+            { name: "放射性物品", emoji: "☢️" }, { name: "核材料", emoji: "☢️" },
+            { name: "放射源", emoji: "☢️" }, { name: "同位素", emoji: "⚛️" },
+            
+            // 其他危险品
+            { name: "锂电池", emoji: "🔋" }, { name: "磁铁", emoji: "🧲" },
+            { name: "油漆", emoji: "🎨" }, { name: "胶水", emoji: "🧴" },
+            { name: "指甲油", emoji: "💅" }, { name: "香水", emoji: "🌸" },
+            { name: "发胶", emoji: "💇" }, { name: "摩丝", emoji: "🧴" },
+            
+            // 工具类危险品
+            { name: "电钻", emoji: "🔨" }, { name: "电锯", emoji: "⚡" },
+            { name: "焊枪", emoji: "🔥" }, { name: "喷枪", emoji: "🔫" },
+            
+            // 液体限制品
+            { name: "大瓶洗发水", emoji: "🧴" }, { name: "大瓶化妆品", emoji: "💄" },
+            { name: "饮料大瓶", emoji: "🥤" }, { name: "酱料", emoji: "🍯" }
         ];
         
         const allowedItems = [
             { name: "书", emoji: "📚" }, { name: "衣服", emoji: "👕" }, 
             { name: "耳机", emoji: "🎧" }, { name: "手机", emoji: "📱" },
-            { name: "钱包", emoji: "👛" }, { name: "眼镜", emoji: "👓" }
+            { name: "钱包", emoji: "👛" }, { name: "眼镜", emoji: "👓" },
+            { name: "充电器", emoji: "🔌" }, { name: "护照", emoji: "📘" },
+            { name: "药品", emoji: "💊" }, { name: "零食", emoji: "🍪" }
         ];
         
         const powerUpItems = [
@@ -438,7 +477,7 @@
         // 复活道具
         const revivalItem = { name: "复活之心", emoji: "💖", type: 'revival' };
 
-        // 答题题库
+        // 基于违禁物品的答题题库
         const quizQuestions = [
             {
                 question: "以下哪个物品可以带上飞机？",
@@ -451,19 +490,54 @@
                 correct: 2
             },
             {
-                question: "机场安检时，以下哪个行为是正确的？",
-                options: ["隐藏违禁品", "配合检查", "拒绝开包", "强行通过"],
-                correct: 1
-            },
-            {
                 question: "液体物品携带规定是？",
-                options: ["无限制", "100ml以下", "500ml以下", "完全禁止"],
+                options: ["无限制", "100ml以下单件容器", "500ml以下", "完全禁止"],
                 correct: 1
             },
             {
-                question: "以下哪个不是危险品？",
-                options: ["压缩气体", "腐蚀品", "耳机", "易燃液体"],
+                question: "以下哪个属于易燃易爆物品？",
+                options: ["充电宝", "烟花爆竹", "化妆品", "食品"],
+                correct: 1
+            },
+            {
+                question: "机场安检发现违禁品应该？",
+                options: ["隐藏起来", "主动上交配合检查", "拒绝检查", "强行带走"],
+                correct: 1
+            },
+            {
+                question: "以下哪个不是腐蚀性物品？",
+                options: ["强酸", "强碱", "耳机", "消毒液"],
                 correct: 2
+            },
+            {
+                question: "锂电池携带规定是？",
+                options: ["无限制", "必须随身携带不能托运", "只能托运", "完全禁止"],
+                correct: 1
+            },
+            {
+                question: "以下哪个属于管制刀具？",
+                options: ["塑料勺子", "水果刀", "钢笔", "钥匙"],
+                correct: 1
+            },
+            {
+                question: "压缩气体罐能否带上飞机？",
+                options: ["可以随身携带", "可以托运", "完全禁止", "需要申报"],
+                correct: 2
+            },
+            {
+                question: "放射性物品的危险标识是？",
+                options: ["🔥", "☠️", "☢️", "⚡"],
+                correct: 2
+            },
+            {
+                question: "机场安检时正确做法是？",
+                options: ["隐藏违禁品", "配合安检人员检查", "拒绝开包检查", "加快通过速度"],
+                correct: 1
+            },
+            {
+                question: "以下哪个属于毒害品？",
+                options: ["护肤品", "杀虫剂", "维生素", "矿泉水"],
+                correct: 1
             }
         ];
 
