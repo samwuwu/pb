@@ -77,6 +77,20 @@
             display: none;
         }
 
+        #powerup-timer-display {
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 30px;
+            font-size: 2.5rem;
+            display: none;
+            background: rgba(45, 55, 72, 0.8);
+            backdrop-filter: blur(5px);
+            border: 2px solid var(--powerup-color-light);
+            color: var(--powerup-color-light);
+            transition: opacity 0.3s ease;
+        }
+
         /* --- 弹窗与遮罩层 (动画优化) --- */
         .modal-overlay {
             position: absolute; top: 0; left: 0;
@@ -87,7 +101,7 @@
             text-align: center;
             z-index: 20;
             opacity: 1;
-            transition: opacity 0.3s ease; /* 透明度过渡 */
+            transition: opacity 0.3s ease;
         }
         .modal-overlay.hidden {
             opacity: 0;
@@ -105,11 +119,10 @@
             border: 1px solid #4a5568;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.3);
             transform: scale(1);
-            /* 弹出效果的过渡 */
             transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         }
         .modal-overlay.hidden .modal-content {
-            transform: scale(0.9); /* 隐藏时缩小 */
+            transform: scale(0.9);
         }
 
         .modal-content h1 { font-size: 2rem; margin-bottom: 25px; font-weight: 900; }
@@ -139,20 +152,17 @@
         #start-button, #restart-button, #continue-button { background: linear-gradient(145deg, #55b3a9, #48988f); }
         #revival-button { background: linear-gradient(145deg, var(--powerup-color-light), var(--powerup-color-dark)); }
         
-        /* 列表样式 */
         .intro-list { list-style: none; padding: 0; margin: 0 auto 30px; text-align: left; max-width: 350px; }
         .intro-list li { font-size: 1.1rem; color: #a0aec0; margin-bottom: 15px; padding-left: 15px; border-left: 4px solid var(--player-color-light); line-height: 1.6; }
         .intro-list li strong { color: var(--text-color); font-weight: 900; }
         .cta { font-weight: 700; font-size: 1.2rem; color: var(--player-color-light); margin-bottom: 25px; }
 
-        /* 问答样式 */
         #quiz-question { font-size: 1.2rem; margin-bottom: 20px; min-height: 60px; font-weight: 700; }
         .quiz-option { background: #2d3748; border: 2px solid #4a5568; }
         .quiz-option:active { box-shadow: inset 3px 3px 5px rgba(0,0,0,0.2); }
         .quiz-option.correct { background: var(--collectible-color-dark); border-color: var(--collectible-color-light); }
         .quiz-option.wrong { background: var(--obstacle-color-dark); border-color: var(--obstacle-color-light); }
         
-        /* 屏幕震动动画 */
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
             20%, 80% { transform: translate3d(2px, 0, 0); }
@@ -160,7 +170,6 @@
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
-        /* --- 横屏锁定提示 --- */
         #orientation-lock { display: none; position: fixed; inset:0; z-index: 100; background: var(--bg-color); flex-direction: column; justify-content: center; align-items: center; text-align: center; }
         #orientation-lock-icon { font-size: 5rem; animation: rotate-phone 1.5s ease-in-out infinite; }
         @keyframes rotate-phone { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } }
@@ -173,6 +182,7 @@
         <canvas id="game-canvas"></canvas>
         <div id="score-display" class="ui-element">🏆 0</div>
         <div id="revival-display" class="ui-element">💖 0</div>
+        <div id="powerup-timer-display" class="ui-element"></div>
         <div id="start-screen" class="modal-overlay">
             <div class="modal-content">
                 <h1>安检大挑战 ✈️</h1>
@@ -220,7 +230,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // --- 1. 初始化和获取元素 ---
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
         const wrapper = document.getElementById('game-wrapper');
@@ -237,13 +246,12 @@
         const restartButton = document.getElementById('restart-button');
         const revivalButton = document.getElementById('revival-button');
         const continueButton = document.getElementById('continue-button');
+        const powerupTimerDisplay = document.getElementById('powerup-timer-display');
 
-        // --- 2. 核心适配与常量定义 ---
         const GAME_WIDTH = 1600; const GAME_HEIGHT = 900;
         const ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
         const GROUND_Y = GAME_HEIGHT - 100;
         
-        // 【性能优化】缓存颜色
         const COLORS = {};
         function cacheColors() {
             const style = getComputedStyle(document.documentElement);
@@ -269,16 +277,20 @@
             canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
         }
 
-        // --- 3. 游戏状态变量 ---
         let player, gameItems, particles, floatingTexts;
         let score, revivalItemsCount, gameSpeed, spawnInterval;
         let isGameOver, isGameRunning;
         let lastSpawnTime, animationFrameId;
         let groundStripeOffset = 0; 
         let scoreMilestone = 1000;
-        let shuffledQuizDeck = []; // 【新】洗好的问题牌堆
+        let shuffledQuizDeck = []; 
+        let camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
+        let speedModifier = 1.0; 
+        let targetSpeedModifier = 1.0;
+        
+        let invincibleState = { timeoutId: null, intervalId: null };
+        let slowmoState = { timeoutId: null, intervalId: null };
 
-        // --- 4. 游戏数据 ---
         const ITEM_TYPES = { OBSTACLE: 'obstacle', COLLECTIBLE: 'collectible', POWERUP: 'powerup', REVIVAL: 'revival' };
         const OBSTACLES = ['🔪', '🔫', '✂️', '🔨', '⚡', '🎆', '💣', '🧪', '☠️', '☢️'];
         const COLLECTIBLES = ['📚', '👕', '🎧', '📱', '👛', '👓', '🔌', '💊', '🍪'];
@@ -286,20 +298,23 @@
         const REVIVAL_ITEM = { emoji: '💖', type: ITEM_TYPES.REVIVAL };
         const QUIZ_QUESTIONS = [
             { q: "以下哪种工具是不允许随身携带上飞机的？", o: ["笔记本电脑 💻", "锤子 🔨", "相机 📷", "手机 📱"], a: 1 },
+            { q: "关于随身携带的液体，单个容器容积不能超过多少？", o: ["50毫升", "100毫升", "150毫升", "无限制"], a: 1 },
+            { q: "额定能量超过160Wh的充电宝，应该如何处理？", o: ["随身携带", "办理托运", "禁止携带", "都可以"], a: 2 },
             { q: "哪类物品属于毒害品？", o: ["腐蚀品 🧪", "杀虫剂 🦟", "易燃液体 🔥", "压缩气体 💨"], a: 1 },
             { q: "以下哪种物品属于图片中标注的易燃液体？", o: ["瓶装水 💧", "牛奶 🥛", "汽油 ⛽", "果汁 🧃"], a: 2 },
-            { q: "枪支类违禁品包括以下哪一项？", o: ["水枪 💦", "玩具枪 🧸", "手枪 🔫", "泡沫枪 🎯"], a: 2 },
+            { q: "枪支类违禁品包括以下哪一项？", o: ["水枪 💦", "玩具枪 🧸", "仿真枪 🔫", "泡沫枪 🎯"], a: 2 },
             { q: "如果不确定物品是否可以携带，应该怎么办？", o: ["藏在行李中 🤫", "主动咨询工作人员 🙋", "快速通过安检 🏃", "请他人代为携带 🤝"], a: 1 },
             { q: "腐蚀性物品包括以下哪一种？", o: ["食用醋 🍶", "柠檬水 🍋", "强酸强碱 🧪", "肥皂 🧼"], a: 2 },
             { q: "以下哪种打火用具是禁止携带的？", o: ["电子打火机 🔌", "普通打火机 🔥", "火柴 🔥", "以上都是 ✅"], a: 3 },
             { q: "管制刀具包括以下哪一种？", o: ["塑料餐刀 🍴", "塑料水果刀 🍎", "匕首 🗡️", "指甲刀 ✂️"], a: 2 },
+            { q: "安检时，需要将笔记本电脑从包中取出吗？", o: ["需要", "不需要", "看情况", "看安检员心情"], a: 0 },
+            { q: "锂电池可以放在托运行李中吗？", o: ["可以", "不可以", "小于100Wh可以", "看航空公司"], a: 1 },
+            { q: "棒球棒、球拍等体育用品应该如何携带？", o: ["随身携带", "必须托运", "禁止携带", "都可以"], a: 1 }
         ];
         
-        // --- 工具函数 ---
-        // 【新】Fisher-Yates 洗牌算法
         function shuffle(array) {
             let currentIndex = array.length, randomIndex;
-            const newArray = [...array]; // 创建副本，不修改原数组
+            const newArray = [...array];
             while (currentIndex !== 0) {
                 randomIndex = Math.floor(Math.random() * currentIndex);
                 currentIndex--;
@@ -317,7 +332,6 @@
             ctx.closePath(); ctx.fill();
         }
 
-        // --- 5. 效果类定义 ---
         class Particle {
             constructor(x, y, dx, dy, size, color, life) {
                 this.x = x; this.y = y; this.dx = dx; this.dy = dy;
@@ -333,10 +347,10 @@
                 ctx.fill();
                 ctx.restore();
             }
-            update() {
-                this.x += this.dx;
-                this.y += this.dy;
-                this.dy += 0.2; 
+            update(speed) {
+                this.x += this.dx * speed;
+                this.y += this.dy * speed;
+                this.dy += 0.2 * speed; 
                 this.life--;
                 this.draw();
             }
@@ -361,16 +375,15 @@
                 ctx.fillText(this.text, this.x, this.y);
                 ctx.restore();
             }
-            update() {
-                this.y -= 1.2; 
+            update(speed) {
+                this.y -= 1.2 * speed; 
                 this.life--;
                 this.opacity = Math.sin((this.life / this.initialLife) * Math.PI); 
-                this.size += 0.2;
+                this.size += 0.2 * speed;
                 this.draw();
             }
         }
 
-        // --- 6. 游戏对象类 (Classes) ---
         class Player {
             constructor() {
                 this.w = 80; this.h = 70; this.x = 150; this.y = GROUND_Y - this.h;
@@ -385,6 +398,16 @@
                 ctx.rotate(this.rotation);
                 ctx.scale(1, this.squash);
 
+                // 【新】超级跳跃光环
+                if (this.hasSuperJump) {
+                    ctx.fillStyle = `rgba(237, 242, 247, 0.5)`; // 轻盈的白色光环
+                    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                    ctx.shadowBlur = 15;
+                    drawRoundedRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20, 20);
+                    ctx.shadowColor = 'transparent'; // 重置阴影
+                    ctx.shadowBlur = 0;
+                }
+                
                 if (this.isInvincible) {
                     ctx.fillStyle = `rgba(246, 173, 85, ${0.6 + Math.sin(Date.now() / 100) * 0.4})`;
                     drawRoundedRect(-this.w/2 - 10, -this.h/2 - 10, this.w + 20, this.h + 20, 20);
@@ -401,11 +424,12 @@
                 ctx.beginPath(); ctx.arc(-25, this.h/2, 10, 0, Math.PI * 2); ctx.arc(25, this.h/2, 10, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
             }
-            update() {
-                this.dy += this.gravity; this.y += this.dy;
+            update(speed) {
+                this.dy += this.gravity * speed; 
+                this.y += this.dy * speed;
 
                 if (!this.isGrounded) { 
-                    this.rotation += 0.1; 
+                    this.rotation += 0.1 * speed; 
                     this.squash = 0.9; 
                 } else { 
                     if(this.squash !== 1) this.squash += (1 - this.squash) * 0.2; 
@@ -490,8 +514,8 @@
                 ctx.fillStyle = '#fff';
                 ctx.fillText(this.emoji, this.x + this.w / 2, this.y + this.h / 2 + 3);
             }
-            update() { 
-                this.x -= gameSpeed; 
+            update(speed) { 
+                this.x -= speed; 
                 this.pulseAngle += 0.08; 
 
                 if (this.type !== ITEM_TYPES.OBSTACLE) {
@@ -502,13 +526,18 @@
             }
         }
 
-        // --- 7. 核心游戏函数 ---
         function init() {
             isGameOver = false; isGameRunning = true; score = 0; revivalItemsCount = 0; gameSpeed = 10;
             spawnInterval = 1500; lastSpawnTime = 0;
-            player = new Player(); gameItems = []; particles = []; floatingTexts = [];
+            player = new Player(); 
+            gameItems = []; particles = []; floatingTexts = [];
             scoreMilestone = 1000;
-            shuffledQuizDeck = shuffle(QUIZ_QUESTIONS); // 【新】开局洗牌
+            shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
+            camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
+            speedModifier = 1.0; targetSpeedModifier = 1.0;
+            
+            clearAllTimers();
+
             updateScoreUI(); updateRevivalUI();
             gameOverScreen.classList.add('hidden'); quizScreen.classList.add('hidden');
             revivalSuccessScreen.classList.add('hidden');
@@ -521,6 +550,7 @@
         function endGame() {
             isGameOver = true; isGameRunning = false;
             cancelAnimationFrame(animationFrameId);
+            clearAllTimers();
             finalScoreValue.textContent = Math.floor(score);
             revivalButton.style.display = revivalItemsCount > 0 ? 'inline-block' : 'none';
             gameOverScreen.classList.remove('hidden');
@@ -529,9 +559,20 @@
         
         function resumeGame() {
             revivalSuccessScreen.classList.add('hidden');
+            
+            targetSpeedModifier = 1.0;
+            speedModifier = 1.0;
+            camera.targetZoom = 1.0;
+            camera.zoom = 1.0;
+            clearAllTimers();
+
             isGameRunning = true;
             player.isInvincible = true;
-            setTimeout(() => { if (isGameRunning && !isGameOver) { player.isInvincible = false; }}, 2000);
+            setTimeout(() => { 
+                if (isGameRunning && !isGameOver) { 
+                    player.isInvincible = false; 
+                }
+            }, 2000);
             animate(performance.now());
         }
 
@@ -540,13 +581,21 @@
         function updateScoreUI() { scoreDisplay.textContent = `🏆 ${Math.floor(score)}`; }
         function updateRevivalUI() { revivalDisplay.textContent = `💖 ${revivalItemsCount}`; revivalDisplay.style.display = revivalItemsCount > 0 ? 'block' : 'none'; }
 
-        // --- 8. 游戏循环 (The Game Loop) ---
         function animate(timestamp) {
             if (!isGameRunning) return;
             animationFrameId = requestAnimationFrame(animate);
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-            groundStripeOffset = (groundStripeOffset + gameSpeed * 0.5) % 80;
+            speedModifier += (targetSpeedModifier - speedModifier) * 0.05;
+            const effectiveSpeed = gameSpeed * speedModifier;
+            updateCamera();
+            
+            ctx.save();
+            ctx.translate(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            ctx.scale(camera.zoom, camera.zoom);
+            ctx.translate(-GAME_WIDTH / 2, -GAME_HEIGHT / 2);
+
+            groundStripeOffset = (groundStripeOffset + effectiveSpeed * 0.5) % 80;
             const groundGradient = ctx.createLinearGradient(0, GROUND_Y, 0, GAME_HEIGHT);
             groundGradient.addColorStop(0, COLORS.groundLight);
             groundGradient.addColorStop(1, COLORS.groundDark);
@@ -565,30 +614,34 @@
             ctx.fillStyle = 'rgba(255,255,255,0.1)';
             ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 3);
             
-            if (timestamp - lastSpawnTime > spawnInterval) { lastSpawnTime = timestamp; spawnNewItem(); }
+            if (timestamp - lastSpawnTime > spawnInterval) {
+                const lastItem = gameItems[gameItems.length - 1];
+                const minGap = 450;
+                if (!lastItem || lastItem.x < GAME_WIDTH - minGap) {
+                    lastSpawnTime = timestamp;
+                    spawnNewItem();
+                }
+            }
             
             for (let i = gameItems.length - 1; i >= 0; i--) {
-                const item = gameItems[i];
-                item.update();
-                if (detectCollision(player, item) && !item.isCollected) handleCollision(item, i);
-                if (item.x + item.w < 0) gameItems.splice(i, 1);
+                gameItems[i].update(effectiveSpeed);
+                if (detectCollision(player, gameItems[i]) && !gameItems[i].isCollected) handleCollision(gameItems[i], i);
+                if (gameItems[i].x + gameItems[i].w < 0) gameItems.splice(i, 1);
             }
-
             for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.update();
-                if (p.life <= 0) particles.splice(i, 1);
+                particles[i].update(speedModifier);
+                if (particles[i].life <= 0) particles.splice(i, 1);
             }
-            
-            player.update();
-            
+            player.update(speedModifier);
             for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                const ft = floatingTexts[i];
-                ft.update();
-                if (ft.life <= 0) floatingTexts.splice(i, 1);
+                floatingTexts[i].update(speedModifier);
+                if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
             }
 
-            score += 0.1; gameSpeed += 0.001;
+            ctx.restore();
+
+            score += 0.1 * speedModifier;
+            gameSpeed += 0.001;
             if (spawnInterval > 500) spawnInterval -= 0.1;
             updateScoreUI();
 
@@ -598,7 +651,11 @@
             }
         }
 
-        // --- 9. 辅助与动画函数 ---
+        function updateCamera() {
+            camera.zoom += (camera.targetZoom - camera.zoom) * 0.03;
+            camera.y = 0;
+        }
+
         function spawnNewItem() {
             const rand = Math.random(); let type, emoji;
             if (rand < 0.05) { type = ITEM_TYPES.REVIVAL; emoji = REVIVAL_ITEM.emoji; } 
@@ -612,8 +669,7 @@
 
         function handleCollision(item, index) {
             item.isCollected = true;
-            let particleColor;
-            let textToShow = '';
+            let particleColor, textToShow = '';
 
             switch(item.type) {
                 case ITEM_TYPES.OBSTACLE:
@@ -633,9 +689,10 @@
                     break;
                 case ITEM_TYPES.REVIVAL:
                     revivalItemsCount++; updateRevivalUI();
-                    particleColor = COLORS.powerupLight;
+                    particleColor = COLORS.obstacleLight; // Use a distinct color
                     textToShow = '💖';
-                    createExplosion(item.x + item.w/2, item.y + item.h/2, particleColor, { count: 20 });
+                    // 【新】调用爱心专属粒子效果
+                    createHeartCollectionEffect(item.x + item.w / 2, item.y + item.h / 2);
                     gameItems.splice(index, 1);
                     break;
                 case ITEM_TYPES.POWERUP:
@@ -650,10 +707,62 @@
         }
         
         function activatePowerup(emoji) {
-            const powerup = POWERUPS.find(p => p.emoji === emoji); if (!powerup) return;
-            if (powerup.type === 'invincible') { player.isInvincible = true; setTimeout(() => player.isInvincible = false, 8000); } 
-            else if (powerup.type === 'slowmo') { const oldSpeed = gameSpeed; gameSpeed *= 0.5; setTimeout(() => gameSpeed = oldSpeed, 5000); } 
-            else if (powerup.type === 'superjump') { player.hasSuperJump = true; }
+            const powerup = POWERUPS.find(p => p.emoji === emoji);
+            if (!powerup) return;
+
+            const startTimer = (duration, text, color, state) => {
+                if (invincibleState.intervalId) clearInterval(invincibleState.intervalId);
+                if (slowmoState.intervalId) clearInterval(slowmoState.intervalId);
+                powerupTimerDisplay.style.display = 'none';
+
+                let timeLeft = duration;
+                powerupTimerDisplay.style.color = color;
+                powerupTimerDisplay.style.borderColor = color;
+                powerupTimerDisplay.textContent = `${emoji} ${timeLeft}`;
+                powerupTimerDisplay.style.display = 'block';
+                powerupTimerDisplay.style.opacity = '1';
+
+                state.intervalId = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft > 0) {
+                        powerupTimerDisplay.textContent = `${emoji} ${timeLeft}`;
+                    } else {
+                        powerupTimerDisplay.style.opacity = '0';
+                        clearInterval(state.intervalId);
+                        state.intervalId = null;
+                    }
+                }, 1000);
+            };
+
+            if (powerup.type === 'invincible') {
+                if (invincibleState.timeoutId) clearTimeout(invincibleState.timeoutId);
+                if (invincibleState.intervalId) clearInterval(invincibleState.intervalId);
+                
+                player.isInvincible = true;
+                camera.targetZoom = 0.9;
+                startTimer(8, '⭐', COLORS.playerLight, invincibleState);
+
+                invincibleState.timeoutId = setTimeout(() => {
+                    player.isInvincible = false;
+                    if (!slowmoState.timeoutId) camera.targetZoom = 1.0;
+                    invincibleState.timeoutId = null;
+                }, 8000);
+            } else if (powerup.type === 'slowmo') {
+                if (slowmoState.timeoutId) clearTimeout(slowmoState.timeoutId);
+                if (slowmoState.intervalId) clearInterval(slowmoState.intervalId);
+
+                targetSpeedModifier = 0.5;
+                camera.targetZoom = 1.2;
+                startTimer(5, '⏰', COLORS.powerupLight, slowmoState);
+
+                slowmoState.timeoutId = setTimeout(() => {
+                    targetSpeedModifier = 1.0;
+                    if (!invincibleState.timeoutId) camera.targetZoom = 1.0;
+                    slowmoState.timeoutId = null;
+                }, 5000);
+            } else if (powerup.type === 'superjump') {
+                player.hasSuperJump = true;
+            }
         }
 
         function createExplosion(x, y, color, options = {}) {
@@ -673,6 +782,19 @@
             }
         }
 
+        // 【新】爱心专属粒子效果
+        function createHeartCollectionEffect(x, y) {
+            for (let i = 0; i < 15; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 2 + 1; // 较慢的速度
+                const dx = Math.cos(angle) * speed;
+                const dy = -Math.random() * 3 - 1; // 向上漂浮
+                const size = Math.random() * 5 + 3; // 较大的粒子
+                const life = Math.random() * 80 + 50; // 更长的生命周期
+                particles.push(new Particle(x, y, dx, dy, size, COLORS.obstacleLight, life));
+            }
+        }
+
         function createLandingParticles(x, y) {
             for (let i = 0; i < 10; i++) {
                 const dx = (Math.random() - 0.5) * 4;
@@ -687,17 +809,23 @@
             wrapper.classList.add('shake');
             setTimeout(() => wrapper.classList.remove('shake'), 300);
         }
+
+        function clearAllTimers() {
+            if (invincibleState.timeoutId) clearTimeout(invincibleState.timeoutId);
+            if (invincibleState.intervalId) clearInterval(invincibleState.intervalId);
+            if (slowmoState.timeoutId) clearTimeout(slowmoState.timeoutId);
+            if (slowmoState.intervalId) clearInterval(slowmoState.intervalId);
+            powerupTimerDisplay.style.display = 'none';
+        }
         
-        // --- 问答逻辑 ---
         function startQuiz() {
             gameOverScreen.classList.add('hidden');
             quizScreen.classList.remove('hidden');
             
-            // 【新】从牌堆抽题
             if (shuffledQuizDeck.length === 0) {
-                shuffledQuizDeck = shuffle(QUIZ_QUESTIONS); // 牌堆用完，重新洗牌
+                shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
             }
-            const q = shuffledQuizDeck.pop(); // 从牌堆顶部抽一张
+            const q = shuffledQuizDeck.pop();
             
             quizQuestionEl.textContent = q.q;
             quizOptionsEl.innerHTML = '';
@@ -728,7 +856,6 @@
 
         async function requestFullscreenAndLock() { try { if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (err) { console.warn("Fullscreen or orientation lock failed:", err); } }
 
-        // --- 10. 事件监听器 ---
         window.addEventListener('resize', resizeGame);
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
@@ -737,7 +864,6 @@
         document.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; handlePlayerInput(); });
         document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handlePlayerInput(); } });
         
-        // --- 11. 初始启动 ---
         cacheColors();
         resizeGame();
     });
