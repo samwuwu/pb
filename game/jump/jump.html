@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 关键的Viewport设置，为移动设备优化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>机场安检大挑战（UX强化版）</title>
+    <title>机场安检大挑战（最终挑战版）</title>
     <style>
         /* 引入字体 */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -166,7 +166,7 @@
         .intro-list li strong { color: var(--text-color); font-weight: 900; }
         .cta { font-weight: 700; font-size: 1.2rem; color: var(--player-color-light); margin-bottom: 25px; }
 
-        /* --- 【新增】答题界面专属样式 --- */
+        /* --- 答题界面专属样式 --- */
         #quiz-question { font-size: 1.2rem; margin-bottom: 20px; min-height: 60px; font-weight: 700; }
         .quiz-option { background: #2d3748; border: 2px solid #4a5568; position: relative; }
         .quiz-option:active { box-shadow: inset 3px 3px 5px rgba(0,0,0,0.2); }
@@ -184,7 +184,7 @@
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
         
-        /* --- 【新增】答题反馈动画 --- */
+        /* --- 答题反馈动画 --- */
         @keyframes pulse-animation {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -226,7 +226,7 @@
         </div>
         <div id="game-over-screen" class="modal-overlay hidden">
             <div class="modal-content">
-                <h1>闯关失败 😩</h1>
+                <h1 id="game-over-title">闯关失败 😩</h1>
                 <div id="final-score-value" class="final-score">0</div>
                 <div>
                     <button id="restart-button" class="modal-button">重新开始</button>
@@ -274,6 +274,7 @@
         const revivalButton = document.getElementById('revival-button');
         const continueButton = document.getElementById('continue-button');
         const powerupTimerDisplay = document.getElementById('powerup-timer-display');
+        const gameOverTitle = document.getElementById('game-over-title');
 
         const GAME_WIDTH = 1600; const GAME_HEIGHT = 900;
         const ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
@@ -309,7 +310,6 @@
         let isGameOver, isGameRunning;
         let lastSpawnTime, animationFrameId;
         let groundStripeOffset = 0; 
-        let scoreMilestone = 1000;
         let shuffledQuizDeck = []; 
         let camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
         let speedModifier = 1.0; 
@@ -318,6 +318,9 @@
         let invincibleState = { timeoutId: null, intervalId: null };
         let slowmoState = { timeoutId: null, intervalId: null };
         let isJumping = false;
+        
+        // 【终极生存模式】引入全新的难度管理器
+        let difficultyManager;
 
         const ITEM_TYPES = { OBSTACLE: 'obstacle', COLLECTIBLE: 'collectible', POWERUP: 'powerup', REVIVAL: 'revival' };
         const OBSTACLES = ['🔪', '🔫', '✂️', '🔨', '⚡', '🎆', '💣', '🧪', '☠️', '☢️'];
@@ -504,9 +507,18 @@
         }
         
         class GameItem {
-            constructor(type, emoji) {
-                this.w = Math.random() * 40 + 70; this.h = this.w; this.x = GAME_WIDTH; this.y = GROUND_Y - this.h;
-                this.type = type; this.emoji = emoji;
+            constructor(type, emoji, isTall = false) {
+                this.w = Math.random() * 40 + 70;
+                // 【高位障碍最终版】将高度提升至250px
+                if (isTall) {
+                    this.h = 250;
+                } else {
+                    this.h = this.w;
+                }
+                this.x = GAME_WIDTH; 
+                this.y = GROUND_Y - this.h;
+                this.type = type; 
+                this.emoji = emoji;
                 this.initialY = this.y;
                 this.bobbingAngle = Math.random() * Math.PI * 2; 
                 this.pulseAngle = Math.random() * Math.PI * 2;
@@ -590,18 +602,101 @@
                 this.draw(); 
             }
         }
+        
+        // --- 【终极生存模式】难度管理器 ---
+        function initializeDifficultyManager() {
+            difficultyManager = {
+                // 1. 危险值 (Danger Value)
+                dangerValue: 0,
+                // 2. 强制危险品序列
+                nonObstacleStreak: 0,
+                forceObstacleAfter: 2, 
+                // 3. 基础参数
+                baseSpeed: 12.5,
+                baseInterval: 1200,
+                baseObstacleChance: 0.70,
+
+                reset() {
+                    this.dangerValue = 0;
+                    this.nonObstacleStreak = 0;
+                    this.forceObstacleAfter = 2;
+                },
+
+                update(currentScore) {
+                    // 危险值与分数挂钩，增长更快
+                    this.dangerValue = currentScore / 1500; 
+
+                    // 强制序列规则随危险值变严苛
+                    if (this.dangerValue > 2.0) { // e.g., after 3000 score
+                        this.forceObstacleAfter = 1;
+                    } else {
+                        this.forceObstacleAfter = 2;
+                    }
+                },
+
+                getSpeed(currentScore) {
+                    // 速度与分数直接挂钩，增长更明显
+                    return this.baseSpeed + (currentScore / 350);
+                },
+
+                getInterval() {
+                    // 间隔随危险值缩短
+                    return Math.max(400, this.baseInterval - (this.dangerValue * 150));
+                },
+
+                getObstacleChance() {
+                    // 危险品概率与危险值挂钩
+                    return Math.min(0.95, this.baseObstacleChance + (this.dangerValue * 0.08));
+                },
+
+                decideNextItem() {
+                    let itemType;
+                    let isTall = false;
+
+                    // 强制序列逻辑
+                    if (this.nonObstacleStreak >= this.forceObstacleAfter) {
+                        this.nonObstacleStreak = 0;
+                        itemType = ITEM_TYPES.OBSTACLE;
+                    } else { // 概率逻辑
+                        const chance = this.getObstacleChance();
+                        if (Math.random() < chance) {
+                            this.nonObstacleStreak = 0;
+                            itemType = ITEM_TYPES.OBSTACLE;
+                        } else {
+                            this.nonObstacleStreak++;
+                            const nonObstacleRand = Math.random();
+                            if (nonObstacleRand < 0.10) itemType = ITEM_TYPES.REVIVAL;
+                            else if (nonObstacleRand < 0.40) itemType = ITEM_TYPES.POWERUP;
+                            else itemType = ITEM_TYPES.COLLECTIBLE;
+                        }
+                    }
+
+                    // 【高位障碍】如果确定是障碍物，则有几率生成高位障碍
+                    if (itemType === ITEM_TYPES.OBSTACLE && Math.random() < 0.30) {
+                        isTall = true;
+                    }
+
+                    return { type: itemType, isTall: isTall };
+                }
+            };
+        }
+
 
         function init() {
-            isGameOver = false; isGameRunning = true; score = 0; revivalItemsCount = 0; gameSpeed = 10;
-            spawnInterval = 1500; lastSpawnTime = 0;
+            isGameOver = false; isGameRunning = true; score = 0; revivalItemsCount = 0;
+            lastSpawnTime = 0;
+            
             player = new Player(); 
             gameItems = []; particles = []; floatingTexts = [];
-            scoreMilestone = 1000;
             shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
             camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
             speedModifier = 1.0; targetSpeedModifier = 1.0;
             isJumping = false;
             
+            // 【终极生存模式】初始化新的难度管理器
+            if (!difficultyManager) initializeDifficultyManager();
+            difficultyManager.reset();
+
             clearAllTimers();
 
             updateScoreUI(); updateRevivalUI();
@@ -617,11 +712,24 @@
             isGameOver = true; isGameRunning = false;
             cancelAnimationFrame(animationFrameId);
             clearAllTimers();
-            const highScore = localStorage.getItem('highScore') || 0;
-            if (score > highScore) {
-                localStorage.setItem('highScore', Math.floor(score));
+
+            const finalScore = Math.floor(score);
+            
+            let titleMessage = '';
+            if (finalScore < 1000) {
+                titleMessage = "别灰心，下次会更好！";
+            } else if (finalScore < 3000) {
+                titleMessage = "新手上路，已经很棒了！";
+            } else if (finalScore < 6000) {
+                titleMessage = "安检小能手，就是你！";
+            } else if (finalScore < 10000) {
+                titleMessage = "眼疾手快，无人能及！";
+            } else {
+                titleMessage = "传奇安检员，是你！✈️";
             }
-            finalScoreValue.innerHTML = `<div>本次得分</div>${Math.floor(score)}<div style="font-size: 1.5rem; margin-top: 10px; color: #a0aec0;">最高分: ${Math.floor(highScore)}</div>`;
+            gameOverTitle.textContent = titleMessage;
+            
+            finalScoreValue.innerHTML = `<div>本次得分</div>${finalScore}`;
             revivalButton.style.display = revivalItemsCount > 0 ? 'inline-block' : 'none';
             gameOverScreen.classList.remove('hidden');
             shakeScreen(); 
@@ -655,6 +763,11 @@
             if (!isGameRunning) return;
             animationFrameId = requestAnimationFrame(animate);
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            
+            // 【终极生存模式】直接从难度管理器获取参数
+            difficultyManager.update(score);
+            gameSpeed = difficultyManager.getSpeed(score);
+            spawnInterval = difficultyManager.getInterval();
 
             speedModifier += (targetSpeedModifier - speedModifier) * 0.05;
             const effectiveSpeed = gameSpeed * speedModifier;
@@ -684,9 +797,10 @@
             ctx.fillStyle = 'rgba(255,255,255,0.1)';
             ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 3);
             
+            // 【动态间距调整】让最小间距与游戏速度挂钩
             if (timestamp - lastSpawnTime > spawnInterval) {
                 const lastItem = gameItems[gameItems.length - 1];
-                const minGap = 450;
+                const minGap = 300 + gameSpeed * 15;
                 if (!lastItem || lastItem.x < GAME_WIDTH - minGap) {
                     lastSpawnTime = timestamp;
                     spawnNewItem();
@@ -715,16 +829,11 @@
             }
 
             ctx.restore();
-
-            score += 0.1 * speedModifier;
-            gameSpeed += 0.001;
-            if (spawnInterval > 500) spawnInterval -= 0.1;
+            
+            const scoreGained = 0.1 * speedModifier;
+            score += scoreGained;
+            
             updateScoreUI();
-
-            if (score >= scoreMilestone) {
-                floatingTexts.push(new FloatingText(GAME_WIDTH / 2, GAME_HEIGHT / 2, `✨ ${scoreMilestone} 分! ✨`, COLORS.playerLight, 60));
-                scoreMilestone += 1000;
-            }
         }
 
         function updateCamera() {
@@ -733,12 +842,29 @@
         }
 
         function spawnNewItem() {
-            const rand = Math.random(); let type, emoji;
-            if (rand < 0.05) { type = ITEM_TYPES.REVIVAL; emoji = REVIVAL_ITEM.emoji; } 
-            else if (rand < 0.15) { type = ITEM_TYPES.POWERUP; const powerup = POWERUPS[Math.floor(Math.random() * POWERUPS.length)]; emoji = powerup.emoji; } 
-            else if (rand < 0.5) { type = ITEM_TYPES.COLLECTIBLE; emoji = COLLECTIBLES[Math.floor(Math.random() * COLLECTIBLES.length)]; } 
-            else { type = ITEM_TYPES.OBSTACLE; emoji = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)]; }
-            gameItems.push(new GameItem(type, emoji));
+            // 【高位障碍】使用新的决策逻辑
+            const itemInfo = difficultyManager.decideNextItem();
+            const type = itemInfo.type;
+            const isTall = itemInfo.isTall;
+            let emoji;
+            
+            switch(type) {
+                case ITEM_TYPES.OBSTACLE:
+                    emoji = OBSTACLES[Math.floor(Math.random() * OBSTACLES.length)];
+                    break;
+                case ITEM_TYPES.COLLECTIBLE:
+                    emoji = COLLECTIBLES[Math.floor(Math.random() * COLLECTIBLES.length)];
+                    break;
+                case ITEM_TYPES.POWERUP:
+                    const powerup = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+                    emoji = powerup.emoji;
+                    break;
+                case ITEM_TYPES.REVIVAL:
+                    emoji = REVIVAL_ITEM.emoji;
+                    break;
+            }
+            // 【高位障碍】将 isTall 标志传入
+            gameItems.push(new GameItem(type, emoji, isTall));
         }
 
         function detectCollision(p, i) { return p.x < i.x + i.w && p.x + p.w > i.x && p.y < i.y + i.h && p.y + p.h > i.y; }
@@ -919,7 +1045,6 @@
             gameOverScreen.classList.add('hidden');
             quizScreen.classList.remove('hidden');
             
-            // 【新增】确保每次开始答题时，弹窗没有晃动效果残留
             const quizModalContent = quizScreen.querySelector('.modal-content');
             quizModalContent.classList.remove('shake-horizontal');
 
@@ -939,38 +1064,31 @@
             });
         }
         
-        // 【重大修改】重写答题反馈逻辑
         function checkQuizAnswer(isCorrect, button) {
-            // 1. 锁定所有选项
             const allOptions = Array.from(quizOptionsEl.children);
             allOptions.forEach(b => {
-                b.onclick = null; // 禁用点击
+                b.onclick = null;
                 if (b !== button) {
                     b.classList.add('disabled');
                 }
             });
 
-            // 2. 添加“判断中”的脉冲动画
             button.classList.add('selected');
 
-            // 3. 制造悬念的延迟
             setTimeout(() => {
-                button.classList.remove('selected'); // 停止脉冲动画
+                button.classList.remove('selected');
 
-                // 4. 显示最终结果（颜色和图标）
                 const resultIcon = document.createElement('span');
                 resultIcon.className = 'result-icon';
                 button.classList.add(isCorrect ? 'correct' : 'wrong');
                 resultIcon.textContent = isCorrect ? '✓' : '✗';
                 button.appendChild(resultIcon);
 
-                // 5. 显示结果后的过渡
                 setTimeout(() => {
                     revivalItemsCount--;
                     updateRevivalUI();
 
                     if (isCorrect) {
-                        // 答对的过渡效果
                         createExplosion(GAME_WIDTH / 2, GAME_HEIGHT / 2, COLORS.playerLight, { count: 50, speed: {min: 4, max: 15}, life: {min: 60, max: 100}});
                         quizScreen.classList.add('hidden');
                         revivalSuccessScreen.classList.remove('hidden');
@@ -980,7 +1098,6 @@
                         player.dy = 0;
                         gameItems = gameItems.filter(item => item.type !== ITEM_TYPES.OBSTACLE || item.x > player.x + 300);
                     } else {
-                        // 答错的过渡效果
                         const quizModalContent = quizScreen.querySelector('.modal-content');
                         quizModalContent.classList.add('shake-horizontal');
                         
