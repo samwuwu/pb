@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 关键的Viewport设置，为移动设备优化 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>机场安检大挑战（最终挑战版）</title>
+    <title>机场安检大挑战（最终完美版）</title>
     <style>
         /* 引入字体 */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -75,6 +75,41 @@
             padding: 10px 25px;
             font-size: 2.5rem;
             display: none;
+        }
+        
+        /* 【教学】教学提示UI */
+        #tutorial-display {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 25px;
+            font-size: 1.1rem; /* 缩小字体 */
+            white-space: nowrap; /* 强制不换行 */
+            max-width: 90vw;
+            background: rgba(26, 32, 44, 0.8);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            border: 2px solid var(--player-color-light);
+            color: var(--player-color-light);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-align: center;
+            z-index: 15;
+            pointer-events: none;
+        }
+        #tutorial-display.visible {
+            opacity: 1;
+        }
+
+        /* 【教学】跳过按钮 */
+        #skip-tutorial-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 16;
+            background: #4a5568;
+            padding: 8px 15px;
+            font-size: 0.9rem;
         }
 
         #powerup-timer-display {
@@ -210,6 +245,8 @@
         <div id="score-display" class="ui-element">🏆 0</div>
         <div id="revival-display" class="ui-element">💖 0</div>
         <div id="powerup-timer-display" class="ui-element"></div>
+        <div id="tutorial-display" class="ui-element"></div>
+        <div id="skip-tutorial-button" class="modal-button" style="display: none;">跳过教学</div>
         <div id="start-screen" class="modal-overlay">
             <div class="modal-content">
                 <h1>安检大挑战 ✈️</h1>
@@ -262,6 +299,8 @@
         const wrapper = document.getElementById('game-wrapper');
         const scoreDisplay = document.getElementById('score-display');
         const revivalDisplay = document.getElementById('revival-display');
+        const tutorialDisplay = document.getElementById('tutorial-display');
+        const skipTutorialButton = document.getElementById('skip-tutorial-button');
         const startScreen = document.getElementById('start-screen');
         const gameOverScreen = document.getElementById('game-over-screen');
         const quizScreen = document.getElementById('quiz-screen');
@@ -319,8 +358,9 @@
         let slowmoState = { timeoutId: null, intervalId: null };
         let isJumping = false;
         
-        // 【终极生存模式】引入全新的难度管理器
         let difficultyManager;
+        let tutorialManager;
+        let isTutorialActive = false;
 
         const ITEM_TYPES = { OBSTACLE: 'obstacle', COLLECTIBLE: 'collectible', POWERUP: 'powerup', REVIVAL: 'revival' };
         const OBSTACLES = ['🔪', '🔫', '✂️', '🔨', '⚡', '🎆', '💣', '🧪', '☠️', '☢️'];
@@ -507,16 +547,19 @@
         }
         
         class GameItem {
-            constructor(type, emoji, isTall = false) {
+            constructor(type, emoji, isTall = false, isAerial = false) {
                 this.w = Math.random() * 40 + 70;
-                // 【高位障碍最终版】将高度提升至250px
                 if (isTall) {
                     this.h = 250;
                 } else {
                     this.h = this.w;
                 }
                 this.x = GAME_WIDTH; 
-                this.y = GROUND_Y - this.h;
+                if (isAerial) {
+                    this.y = GROUND_Y - this.h - 120; // 放置在空中
+                } else {
+                    this.y = GROUND_Y - this.h; // 放置在地面
+                }
                 this.type = type; 
                 this.emoji = emoji;
                 this.initialY = this.y;
@@ -603,15 +646,11 @@
             }
         }
         
-        // --- 【终极生存模式】难度管理器 ---
         function initializeDifficultyManager() {
             difficultyManager = {
-                // 1. 危险值 (Danger Value)
                 dangerValue: 0,
-                // 2. 强制危险品序列
                 nonObstacleStreak: 0,
                 forceObstacleAfter: 2, 
-                // 3. 基础参数
                 baseSpeed: 12.5,
                 baseInterval: 1200,
                 baseObstacleChance: 0.70,
@@ -623,11 +662,8 @@
                 },
 
                 update(currentScore) {
-                    // 危险值与分数挂钩，增长更快
                     this.dangerValue = currentScore / 1500; 
-
-                    // 强制序列规则随危险值变严苛
-                    if (this.dangerValue > 2.0) { // e.g., after 3000 score
+                    if (this.dangerValue > 2.0) {
                         this.forceObstacleAfter = 1;
                     } else {
                         this.forceObstacleAfter = 2;
@@ -635,29 +671,26 @@
                 },
 
                 getSpeed(currentScore) {
-                    // 速度与分数直接挂钩，增长更明显
                     return this.baseSpeed + (currentScore / 350);
                 },
 
                 getInterval() {
-                    // 间隔随危险值缩短
                     return Math.max(400, this.baseInterval - (this.dangerValue * 150));
                 },
 
                 getObstacleChance() {
-                    // 危险品概率与危险值挂钩
                     return Math.min(0.95, this.baseObstacleChance + (this.dangerValue * 0.08));
                 },
 
                 decideNextItem() {
                     let itemType;
                     let isTall = false;
+                    let isAerial = false;
 
-                    // 强制序列逻辑
                     if (this.nonObstacleStreak >= this.forceObstacleAfter) {
                         this.nonObstacleStreak = 0;
                         itemType = ITEM_TYPES.OBSTACLE;
-                    } else { // 概率逻辑
+                    } else { 
                         const chance = this.getObstacleChance();
                         if (Math.random() < chance) {
                             this.nonObstacleStreak = 0;
@@ -671,47 +704,182 @@
                         }
                     }
 
-                    // 【高位障碍】如果确定是障碍物，则有几率生成高位障碍
                     if (itemType === ITEM_TYPES.OBSTACLE && Math.random() < 0.30) {
                         isTall = true;
                     }
+                    
+                    if (itemType === ITEM_TYPES.COLLECTIBLE || itemType === ITEM_TYPES.POWERUP) {
+                        if (Math.random() < 0.4) {
+                            isAerial = true;
+                        }
+                    }
 
-                    return { type: itemType, isTall: isTall };
+                    return { type: itemType, isTall: isTall, isAerial: isAerial };
+                }
+            };
+        }
+        
+        // 【教学】教学管理器
+        function initializeTutorialManager() {
+            tutorialManager = {
+                step: 0,
+                isStepComplete: false,
+                steps: [
+                    { text: "轻点屏幕来跳跃", action: "collect", target: ITEM_TYPES.COLLECTIBLE, isAerial: true, speed: 5 },
+                    { text: "躲避危险品！", action: "dodge", target: ITEM_TYPES.OBSTACLE, speed: 8 },
+                    { text: "再次轻点来二段跳，越过高障碍！", action: "dodge", target: ITEM_TYPES.OBSTACLE, isTall: true, speed: 8 },
+                    { text: "获取道具，获得强大能力！", action: "collect_powerup", target: ITEM_TYPES.POWERUP, speed: 5 },
+                    { text: "挑战开始！", duration: 2000 }
+                ],
+                start() {
+                    this.step = 0;
+                    this.isStepComplete = false;
+                    isTutorialActive = true;
+                    skipTutorialButton.style.display = 'block';
+                    if (player) {
+                        player.y = GROUND_Y - player.h;
+                        player.dy = 0;
+                    }
+                    this.showText();
+                    this.spawnItemForStep();
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    animate(0);
+                },
+                showText() {
+                    const currentStep = this.steps[this.step];
+                    if (currentStep && currentStep.text) {
+                        tutorialDisplay.textContent = currentStep.text;
+                        tutorialDisplay.classList.add('visible');
+                    } else {
+                        tutorialDisplay.classList.remove('visible');
+                    }
+                },
+                spawnItemForStep() {
+                    const currentStep = this.steps[this.step];
+                    if (!currentStep || !currentStep.target) return;
+                    
+                    gameItems = []; 
+                    let emoji;
+                    switch(currentStep.target) {
+                        case ITEM_TYPES.COLLECTIBLE: emoji = '🍪'; break;
+                        case ITEM_TYPES.OBSTACLE: emoji = '🔪'; break;
+                        case ITEM_TYPES.POWERUP: emoji = '⭐'; break;
+                    }
+                    const newItem = new GameItem(currentStep.target, emoji, currentStep.isTall, currentStep.isAerial);
+                    newItem.x = GAME_WIDTH / 1.5; 
+                    gameItems.push(newItem);
+                },
+                completeStep() {
+                    if (this.isStepComplete) return;
+                    this.isStepComplete = true;
+                    floatingTexts.push(new FloatingText(GAME_WIDTH / 2, GAME_HEIGHT / 2, '干得漂亮!', COLORS.powerupLight, 50));
+                    setTimeout(() => this.nextStep(), 1500);
+                },
+                retryStep() {
+                    if (this.isStepComplete) return;
+                    this.isStepComplete = true; 
+
+                    floatingTexts.push(new FloatingText(GAME_WIDTH / 2, GAME_HEIGHT / 2, '失败，请重试！', COLORS.obstacleLight, 50));
+                    shakeScreen();
+                    
+                    player.y = GROUND_Y - player.h;
+                    player.dy = 0;
+                    player.jumpsLeft = 2;
+
+                    setTimeout(() => {
+                        this.isStepComplete = false;
+                        this.spawnItemForStep();
+                    }, 1500);
+                },
+                nextStep() {
+                    this.step++;
+                    this.isStepComplete = false;
+                    const currentStep = this.steps[this.step];
+
+                    if (currentStep) {
+                        this.showText();
+                        if (currentStep.target) {
+                            this.spawnItemForStep();
+                        }
+                        if (currentStep.duration) {
+                            setTimeout(() => this.end(), currentStep.duration);
+                        }
+                    } else {
+                        this.end();
+                    }
+                },
+                end() {
+                    isTutorialActive = false;
+                    skipTutorialButton.style.display = 'none';
+                    tutorialDisplay.classList.remove('visible');
+                    localStorage.setItem('hasCompletedAirportTutorial', 'true');
+                    // 【传送带修复】使用setTimeout确保状态转换干净
+                    if (animationFrameId) {
+                        cancelAnimationFrame(animationFrameId);
+                    }
+                    setTimeout(init, 0); 
                 }
             };
         }
 
 
         function init() {
-            isGameOver = false; isGameRunning = true; score = 0; revivalItemsCount = 0;
+            isGameOver = false; 
+            isGameRunning = true; 
+            isTutorialActive = false; 
+            score = 0; 
+            revivalItemsCount = 0;
             lastSpawnTime = 0;
             
             player = new Player(); 
-            gameItems = []; particles = []; floatingTexts = [];
+            gameItems = []; 
+            particles = []; 
+            floatingTexts = [];
             shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
             camera = { x: 0, y: 0, zoom: 1, targetZoom: 1 };
-            speedModifier = 1.0; targetSpeedModifier = 1.0;
+            speedModifier = 1.0; 
+            targetSpeedModifier = 1.0;
             isJumping = false;
             
-            // 【终极生存模式】初始化新的难度管理器
             if (!difficultyManager) initializeDifficultyManager();
             difficultyManager.reset();
+            
+            gameSpeed = difficultyManager.getSpeed(0);
+            spawnInterval = difficultyManager.getInterval();
 
             clearAllTimers();
 
-            updateScoreUI(); updateRevivalUI();
-            gameOverScreen.classList.add('hidden'); quizScreen.classList.add('hidden');
+            updateScoreUI(); 
+            updateRevivalUI();
+            gameOverScreen.classList.add('hidden'); 
+            quizScreen.classList.add('hidden');
             revivalSuccessScreen.classList.add('hidden');
+            
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             animate(0);
         }
         
-        function startGame() { startScreen.classList.add('hidden'); requestFullscreenAndLock(); init(); }
+        function startGame() { 
+            startScreen.classList.add('hidden'); 
+            requestFullscreenAndLock();
+            
+            if (localStorage.getItem('hasCompletedAirportTutorial') !== 'true') {
+                if (!tutorialManager) initializeTutorialManager();
+                player = new Player();
+                particles = [];
+                floatingTexts = [];
+                gameItems = [];
+                tutorialManager.start();
+            } else {
+                init(); 
+            }
+        }
 
         function endGame() {
             isGameOver = true; isGameRunning = false;
             cancelAnimationFrame(animationFrameId);
             clearAllTimers();
+            skipTutorialButton.style.display = 'none';
 
             const finalScore = Math.floor(score);
             
@@ -754,20 +922,42 @@
             animate(performance.now());
         }
 
-        function handlePlayerInput() { if (isGameRunning && !isGameOver) player.jump(); }
+        function handlePlayerInput() { 
+            if (!player) return;
+
+            if (isTutorialActive || (isGameRunning && !isGameOver)) {
+                player.jump();
+            }
+        }
         
         function updateScoreUI() { scoreDisplay.textContent = `🏆 ${Math.floor(score)}`; }
         function updateRevivalUI() { revivalDisplay.textContent = `💖 ${revivalItemsCount}`; revivalDisplay.style.display = revivalItemsCount > 0 ? 'block' : 'none'; }
 
         function animate(timestamp) {
-            if (!isGameRunning) return;
+            if (!isGameRunning && !isTutorialActive) return;
             animationFrameId = requestAnimationFrame(animate);
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             
-            // 【终极生存模式】直接从难度管理器获取参数
-            difficultyManager.update(score);
-            gameSpeed = difficultyManager.getSpeed(score);
-            spawnInterval = difficultyManager.getInterval();
+            if (isTutorialActive) {
+                const currentStep = tutorialManager.steps[tutorialManager.step];
+                gameSpeed = currentStep ? currentStep.speed : 5; 
+                spawnInterval = 99999; 
+                if (currentStep && gameItems.length > 0) {
+                    if (currentStep.action === 'dodge') {
+                        if (gameItems[0].x + gameItems[0].w < player.x) {
+                            tutorialManager.completeStep();
+                        }
+                    } else if (currentStep.action === 'collect' || currentStep.action === 'collect_powerup') {
+                        if (gameItems[0].x + gameItems[0].w < 0) {
+                            tutorialManager.spawnItemForStep(); 
+                        }
+                    }
+                }
+            } else {
+                difficultyManager.update(score);
+                gameSpeed = difficultyManager.getSpeed(score);
+                spawnInterval = difficultyManager.getInterval();
+            }
 
             speedModifier += (targetSpeedModifier - speedModifier) * 0.05;
             const effectiveSpeed = gameSpeed * speedModifier;
@@ -797,8 +987,7 @@
             ctx.fillStyle = 'rgba(255,255,255,0.1)';
             ctx.fillRect(0, GROUND_Y, GAME_WIDTH, 3);
             
-            // 【动态间距调整】让最小间距与游戏速度挂钩
-            if (timestamp - lastSpawnTime > spawnInterval) {
+            if (!isTutorialActive && timestamp - lastSpawnTime > spawnInterval) {
                 const lastItem = gameItems[gameItems.length - 1];
                 const minGap = 300 + gameSpeed * 15;
                 if (!lastItem || lastItem.x < GAME_WIDTH - minGap) {
@@ -814,7 +1003,7 @@
                     handleCollision(item, i);
                 }
                 
-                if (item.x + item.w < 0 || item.y > GAME_HEIGHT + 200 || item.x > GAME_WIDTH + item.w) {
+                if (item.x + item.w < 0 && item.y > GAME_HEIGHT + 200 || item.x > GAME_WIDTH + item.w) {
                     gameItems.splice(i, 1);
                 }
             }
@@ -830,10 +1019,11 @@
 
             ctx.restore();
             
-            const scoreGained = 0.1 * speedModifier;
-            score += scoreGained;
-            
-            updateScoreUI();
+            if (!isTutorialActive) {
+                const scoreGained = 0.1 * speedModifier;
+                score += scoreGained;
+                updateScoreUI();
+            }
         }
 
         function updateCamera() {
@@ -842,10 +1032,10 @@
         }
 
         function spawnNewItem() {
-            // 【高位障碍】使用新的决策逻辑
             const itemInfo = difficultyManager.decideNextItem();
             const type = itemInfo.type;
             const isTall = itemInfo.isTall;
+            const isAerial = itemInfo.isAerial;
             let emoji;
             
             switch(type) {
@@ -863,13 +1053,54 @@
                     emoji = REVIVAL_ITEM.emoji;
                     break;
             }
-            // 【高位障碍】将 isTall 标志传入
-            gameItems.push(new GameItem(type, emoji, isTall));
+            gameItems.push(new GameItem(type, emoji, isTall, isAerial));
         }
 
         function detectCollision(p, i) { return p.x < i.x + i.w && p.x + p.w > i.x && p.y < i.y + i.h && p.y + p.h > i.y; }
 
         function handleCollision(item, index) {
+            if (isTutorialActive) {
+                const currentStep = tutorialManager.steps[tutorialManager.step];
+
+                if (player.isInvincible && item.type === ITEM_TYPES.OBSTACLE) {
+                    if (!item.isKnockedAway) {
+                        item.isCollected = true;
+                        item.isKnockedAway = true;
+                        item.dx = 6 + Math.random() * 6;
+                        item.dy = -15 - Math.random() * 10;
+                        item.rotationSpeed = (Math.random() - 0.5) * 0.4;
+                        
+                        createExplosion(item.x + item.w/2, item.y + item.h/2, COLORS.obstacleLight, { count: 25 });
+                        floatingTexts.push(new FloatingText(item.x + item.w / 2, item.y, '摧毁!', COLORS.playerLight, 40));
+                    }
+                    if (currentStep.action === 'collect_powerup') {
+                        tutorialManager.completeStep();
+                    }
+                    return;
+                }
+
+                if (item.type === currentStep.target) {
+                    if (currentStep.action === 'collect' || currentStep.action === 'collect_powerup') {
+                        item.isCollected = true;
+                        gameItems.splice(index, 1);
+                        if(item.type === ITEM_TYPES.POWERUP) {
+                            activatePowerup(item.emoji);
+                            setTimeout(() => {
+                                const newObstacle = new GameItem(ITEM_TYPES.OBSTACLE, '💣', false, false);
+                                newObstacle.x = GAME_WIDTH / 1.5;
+                                gameItems.push(newObstacle);
+                            }, 500);
+                        } else {
+                           tutorialManager.completeStep();
+                        }
+                    } 
+                    else if (currentStep.action === 'dodge') {
+                        tutorialManager.retryStep();
+                    }
+                }
+                return;
+            }
+
             switch(item.type) {
                 case ITEM_TYPES.OBSTACLE:
                     if (!player.isInvincible) {
@@ -954,7 +1185,7 @@
                 
                 player.isInvincible = true;
                 camera.targetZoom = 0.9;
-                startTimer(8, '⭐', COLORS.playerLight, invincibleState);
+                if(!isTutorialActive) startTimer(8, '⭐', COLORS.playerLight, invincibleState);
 
                 invincibleState.timeoutId = setTimeout(() => {
                     player.isInvincible = false;
@@ -1120,9 +1351,10 @@
 
         window.addEventListener('resize', resizeGame);
         startButton.addEventListener('click', startGame);
-        restartButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame); 
         revivalButton.addEventListener('click', startQuiz);
         continueButton.addEventListener('click', resumeGame);
+        skipTutorialButton.addEventListener('click', () => tutorialManager.end());
         document.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; handlePlayerInput(); });
         document.addEventListener('keydown', (e) => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handlePlayerInput(); } });
         
