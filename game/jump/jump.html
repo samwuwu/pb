@@ -129,7 +129,6 @@
         .modal-content h3 { font-weight: 900; margin-bottom: 15px; font-size: 1.5rem;}
         .modal-content p { font-size: 1.1rem; line-height: 1.8; margin-bottom: 25px; color: #a0aec0; }
         .modal-content .final-score { 
-            /* 【修改】减小字体大小和下边距以适应移动端屏幕 */
             font-size: 3rem; 
             color: var(--player-color-light); 
             margin-bottom: 15px; 
@@ -167,17 +166,35 @@
         .intro-list li strong { color: var(--text-color); font-weight: 900; }
         .cta { font-weight: 700; font-size: 1.2rem; color: var(--player-color-light); margin-bottom: 25px; }
 
+        /* --- 【新增】答题界面专属样式 --- */
         #quiz-question { font-size: 1.2rem; margin-bottom: 20px; min-height: 60px; font-weight: 700; }
-        .quiz-option { background: #2d3748; border: 2px solid #4a5568; }
+        .quiz-option { background: #2d3748; border: 2px solid #4a5568; position: relative; }
         .quiz-option:active { box-shadow: inset 3px 3px 5px rgba(0,0,0,0.2); }
         .quiz-option.correct { background: var(--collectible-color-dark); border-color: var(--collectible-color-light); }
         .quiz-option.wrong { background: var(--obstacle-color-dark); border-color: var(--obstacle-color-light); }
-        
+        .quiz-option.disabled { opacity: 0.5; pointer-events: none; }
+        .quiz-option.selected { animation: pulse-animation 0.8s infinite; }
+        .quiz-option .result-icon { font-size: 1.5rem; margin-left: 10px; }
+        #quiz-screen .modal-content.shake-horizontal { animation: shake-horizontal 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
             20%, 80% { transform: translate3d(2px, 0, 0); }
             30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
             40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        /* --- 【新增】答题反馈动画 --- */
+        @keyframes pulse-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake-horizontal {
+          10%, 90% { transform: translate3d(-2px, 0, 0); }
+          20%, 80% { transform: translate3d(4px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+          40%, 60% { transform: translate3d(6px, 0, 0); }
         }
 
         #orientation-lock { display: none; position: fixed; inset:0; z-index: 100; background: var(--bg-color); flex-direction: column; justify-content: center; align-items: center; text-align: center; }
@@ -902,6 +919,10 @@
             gameOverScreen.classList.add('hidden');
             quizScreen.classList.remove('hidden');
             
+            // 【新增】确保每次开始答题时，弹窗没有晃动效果残留
+            const quizModalContent = quizScreen.querySelector('.modal-content');
+            quizModalContent.classList.remove('shake-horizontal');
+
             if (shuffledQuizDeck.length === 0) {
                 shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
             }
@@ -918,20 +939,64 @@
             });
         }
         
+        // 【重大修改】重写答题反馈逻辑
         function checkQuizAnswer(isCorrect, button) {
-            Array.from(quizOptionsEl.children).forEach(b => b.onclick = null);
-            button.classList.add(isCorrect ? 'correct' : 'wrong');
-            setTimeout(() => {
-                quizScreen.classList.add('hidden'); revivalItemsCount--; updateRevivalUI();
-                if (isCorrect) {
-                    revivalSuccessScreen.classList.remove('hidden'); isGameOver = false; isGameRunning = false;
-                    player.y = GROUND_Y - player.h; player.dy = 0;
-                    gameItems = gameItems.filter(item => item.type !== ITEM_TYPES.OBSTACLE || item.x > player.x + 300);
-                } else {
-                    if (revivalItemsCount > 0) { startQuiz(); } 
-                    else { gameOverScreen.classList.remove('hidden'); revivalButton.style.display = 'none'; }
+            // 1. 锁定所有选项
+            const allOptions = Array.from(quizOptionsEl.children);
+            allOptions.forEach(b => {
+                b.onclick = null; // 禁用点击
+                if (b !== button) {
+                    b.classList.add('disabled');
                 }
-            }, 1500);
+            });
+
+            // 2. 添加“判断中”的脉冲动画
+            button.classList.add('selected');
+
+            // 3. 制造悬念的延迟
+            setTimeout(() => {
+                button.classList.remove('selected'); // 停止脉冲动画
+
+                // 4. 显示最终结果（颜色和图标）
+                const resultIcon = document.createElement('span');
+                resultIcon.className = 'result-icon';
+                button.classList.add(isCorrect ? 'correct' : 'wrong');
+                resultIcon.textContent = isCorrect ? '✓' : '✗';
+                button.appendChild(resultIcon);
+
+                // 5. 显示结果后的过渡
+                setTimeout(() => {
+                    revivalItemsCount--;
+                    updateRevivalUI();
+
+                    if (isCorrect) {
+                        // 答对的过渡效果
+                        createExplosion(GAME_WIDTH / 2, GAME_HEIGHT / 2, COLORS.playerLight, { count: 50, speed: {min: 4, max: 15}, life: {min: 60, max: 100}});
+                        quizScreen.classList.add('hidden');
+                        revivalSuccessScreen.classList.remove('hidden');
+                        isGameOver = false;
+                        isGameRunning = false;
+                        player.y = GROUND_Y - player.h;
+                        player.dy = 0;
+                        gameItems = gameItems.filter(item => item.type !== ITEM_TYPES.OBSTACLE || item.x > player.x + 300);
+                    } else {
+                        // 答错的过渡效果
+                        const quizModalContent = quizScreen.querySelector('.modal-content');
+                        quizModalContent.classList.add('shake-horizontal');
+                        
+                        setTimeout(() => {
+                            quizScreen.classList.add('hidden');
+                            if (revivalItemsCount > 0) {
+                                startQuiz();
+                            } else {
+                                gameOverScreen.classList.remove('hidden');
+                                revivalButton.style.display = 'none';
+                            }
+                        }, 600);
+                    }
+                }, 1200);
+
+            }, 800);
         }
 
         async function requestFullscreenAndLock() { try { if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (err) { console.warn("Fullscreen or orientation lock failed:", err); } }
