@@ -128,7 +128,13 @@
         .modal-content h1 { font-size: 2rem; margin-bottom: 25px; font-weight: 900; }
         .modal-content h3 { font-weight: 900; margin-bottom: 15px; font-size: 1.5rem;}
         .modal-content p { font-size: 1.1rem; line-height: 1.8; margin-bottom: 25px; color: #a0aec0; }
-        .modal-content .final-score { font-size: 4rem; color: var(--player-color-light); margin-bottom: 20px; font-weight: 900; }
+        .modal-content .final-score { 
+            /* 【修改】减小字体大小和下边距以适应移动端屏幕 */
+            font-size: 3rem; 
+            color: var(--player-color-light); 
+            margin-bottom: 15px; 
+            font-weight: 900; 
+        }
 
         .modal-button {
             padding: 15px 25px;
@@ -489,7 +495,6 @@
                 this.pulseAngle = Math.random() * Math.PI * 2;
                 this.isCollected = false;
                 this.scale = 1;
-                // 【新增】用于撞飞效果的物理属性
                 this.isKnockedAway = false;
                 this.dx = 0;
                 this.dy = 0;
@@ -516,7 +521,7 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-                ctx.rotate(this.rotation); // 【修改】应用旋转
+                ctx.rotate(this.rotation);
                 ctx.scale(this.scale, this.scale);
                 ctx.translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
 
@@ -550,11 +555,10 @@
                 ctx.restore();
             }
             update(speed) { 
-                // 【新增】处理被撞飞的状态
                 if (this.isKnockedAway) {
-                    this.x += this.dx; // 被撞飞后不受游戏速度影响，使用自身速度
+                    this.x += this.dx;
                     this.y += this.dy;
-                    this.dy += 0.8; // 应用重力
+                    this.dy += 0.8;
                     this.rotation += this.rotationSpeed;
                 } else {
                     this.x -= speed; 
@@ -679,7 +683,6 @@
                     handleCollision(item, i);
                 }
                 
-                // 【修改】增强的移除逻辑，处理飞出屏幕的物体
                 if (item.x + item.w < 0 || item.y > GAME_HEIGHT + 200 || item.x > GAME_WIDTH + item.w) {
                     gameItems.splice(i, 1);
                 }
@@ -732,12 +735,11 @@
                         shakeScreen();
                         endGame();
                     } else {
-                        // 【新增】无敌状态下撞飞障碍物
-                        if (!item.isKnockedAway) { // 确保只触发一次
-                            item.isCollected = true; // 标记为已处理，防止重复碰撞
+                        if (!item.isKnockedAway) {
+                            item.isCollected = true;
                             item.isKnockedAway = true;
-                            item.dx = 6 + Math.random() * 6; // 向右飞的速度
-                            item.dy = -15 - Math.random() * 10; // 向上飞的初速度
+                            item.dx = 6 + Math.random() * 6;
+                            item.dy = -15 - Math.random() * 10;
                             item.rotationSpeed = (Math.random() - 0.5) * 0.4;
                             
                             score += 50;
@@ -745,7 +747,6 @@
                             floatingTexts.push(new FloatingText(item.x + item.w / 2, item.y, '+50', COLORS.playerLight, 40));
                         }
                     }
-                    // 注意：这里不使用 splice，被撞飞的物体会在飞出屏幕后被移除
                     return;
                 case ITEM_TYPES.COLLECTIBLE:
                     item.isCollected = true;
