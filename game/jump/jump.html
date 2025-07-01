@@ -79,12 +79,12 @@
         
         /* 【教学】教学提示UI */
         #tutorial-display {
-            bottom: 30px;
+            bottom: 60%; 
             left: 50%;
             transform: translateX(-50%);
             padding: 10px 25px;
-            font-size: 1.1rem; /* 缩小字体 */
-            white-space: nowrap; /* 强制不换行 */
+            font-size: 1.1rem; 
+            white-space: nowrap; 
             max-width: 90vw;
             background: rgba(26, 32, 44, 0.8);
             backdrop-filter: blur(5px);
@@ -145,7 +145,7 @@
 
         .modal-content {
             background: var(--bg-color);
-            padding: 30px;
+            padding: 20px;
             border-radius: 20px;
             width: 90vw;
             max-width: 550px;
@@ -160,9 +160,9 @@
             transform: scale(0.9);
         }
 
-        .modal-content h1 { font-size: 2rem; margin-bottom: 25px; font-weight: 900; }
-        .modal-content h3 { font-weight: 900; margin-bottom: 15px; font-size: 1.5rem;}
-        .modal-content p { font-size: 1.1rem; line-height: 1.8; margin-bottom: 25px; color: #a0aec0; }
+        .modal-content h1 { font-size: 2rem; margin-bottom: 15px; font-weight: 900; }
+        .modal-content h3 { font-size: 1.2rem; margin-bottom: 10px; font-weight: 900; }
+        .modal-content p { font-size: 1.0rem; line-height: 1.8; margin-bottom: 15px; color: #a0aec0; }
         .modal-content .final-score { 
             font-size: 3rem; 
             color: var(--player-color-light); 
@@ -196,14 +196,11 @@
         #start-button, #restart-button, #continue-button { background: linear-gradient(145deg, #55b3a9, #48988f); }
         #revival-button { background: linear-gradient(145deg, var(--powerup-color-light), var(--powerup-color-dark)); }
         
-        .intro-list { list-style: none; padding: 0; margin: 0 auto 30px; text-align: left; max-width: 350px; }
-        .intro-list li { font-size: 1.1rem; color: #a0aec0; margin-bottom: 15px; padding-left: 15px; border-left: 4px solid var(--player-color-light); line-height: 1.6; }
-        .intro-list li strong { color: var(--text-color); font-weight: 900; }
-        .cta { font-weight: 700; font-size: 1.2rem; color: var(--player-color-light); margin-bottom: 25px; }
+        .cta { font-weight: 700; font-size: 1.2rem; color: var(--player-color-light); margin-top: 20px; }
 
         /* --- 答题界面专属样式 --- */
-        #quiz-question { font-size: 1.2rem; margin-bottom: 20px; min-height: 60px; font-weight: 700; }
-        .quiz-option { background: #2d3748; border: 2px solid #4a5568; position: relative; }
+        #quiz-question { font-size: 1.0rem; margin-bottom: 15px; min-height: 50px; font-weight: 700; }
+        .quiz-option { background: #2d3748; border: 2px solid #4a5568; position: relative; font-size: 0.9rem; padding: 12px 20px; }
         .quiz-option:active { box-shadow: inset 3px 3px 5px rgba(0,0,0,0.2); }
         .quiz-option.correct { background: var(--collectible-color-dark); border-color: var(--collectible-color-light); }
         .quiz-option.wrong { background: var(--obstacle-color-dark); border-color: var(--obstacle-color-light); }
@@ -250,15 +247,12 @@
         <div id="start-screen" class="modal-overlay">
             <div class="modal-content">
                 <h1>安检大挑战 ✈️</h1>
-                <ul class="intro-list">
-                    <li>化身一个<strong>聪明的行李箱</strong> 🧳</li>
-                    <li>👆 轻点屏幕完成<strong>跳跃 & 二段跳</strong></li>
-                    <li>☠️ 躲避所有<strong>危险品</strong></li>
-                    <li>⭐ 收集旅行好物，冲击<strong>排行榜</strong>！</li>
-                    <li>...传送带上还有<strong>惊喜</strong>！</li>
-                </ul>
-                <p class="cta">准备好挑战了吗？</p>
-                <button id="start-button" class="modal-button">开始游戏</button>
+                <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
+                    <strong style="color: var(--obstacle-color-light);">躲开危险品 ☠️</strong><br>
+                    <strong style="color: var(--collectible-color-light);">收集旅行好物 ✅</strong>
+                </p>
+                <p class="cta">准备好了吗？</p>
+                <button id="start-button" class="modal-button">开始挑战</button>
             </div>
         </div>
         <div id="game-over-screen" class="modal-overlay hidden">
@@ -813,7 +807,6 @@
                     skipTutorialButton.style.display = 'none';
                     tutorialDisplay.classList.remove('visible');
                     localStorage.setItem('hasCompletedAirportTutorial', 'true');
-                    // 【传送带修复】使用setTimeout确保状态转换干净
                     if (animationFrameId) {
                         cancelAnimationFrame(animationFrameId);
                     }
