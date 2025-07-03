@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>机场安检大挑战 (摧毁音效升级版)</title>
+    <title>机场安检大挑战 (最终修复版)</title>
     <!-- 引入 Tone.js 用于程序化音频 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
@@ -28,7 +28,7 @@
             --text-dark: #1a202c;
             --modal-bg: #4a5568;
             --font-main: 'Inter', 'Noto Sans SC', sans-serif;
-            --focus-ring-color: #63b3ed; /* 新增：用于聚焦状态的颜色 */
+            --focus-ring-color: #63b3ed;
         }
 
         /* --- 基础布局 --- */
@@ -310,6 +310,7 @@
         const GAME_CONFIG = {
             WIDTH: 1600, HEIGHT: 900, GROUND_Y: 800,
             ASPECT_RATIO: 1600 / 900, SCORE_PER_TICK: 0.1,
+            SCORE_MILESTONE_INTERVAL: 1000,
         };
         const PLAYER_CONFIG = {
             JUMP_POWER: -30, SUPER_JUMP_MULTIPLIER: 1.4,
@@ -317,6 +318,7 @@
         };
         const SCORE_VALUES = { COLLECTIBLE: 100, DESTROY_OBSTACLE: 50 };
         const PARTICLE_POOL_SIZE = 200;
+        const MILESTONE_MESSAGES = ["太棒了!", "无人能挡!", "高手!", "难以置信!"];
 
         const COLORS = {};
         function cacheColors() {
@@ -356,7 +358,6 @@
             const hitSynth = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 8, envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 0.8 } }).connect(masterLimiter);
             hitSynth.volume.value = -3;
 
-            // 【音效升级】创建分层的、更刺激的摧毁音效
             const destroyImpact = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 6, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.5 } }).connect(masterLimiter);
             destroyImpact.volume.value = -3;
             const destroySizzle = new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 } }).connect(new Tone.BitCrusher(4).connect(masterLimiter));
@@ -370,6 +371,9 @@
             const tutorialSynth = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 } }).connect(masterLimiter);
             tutorialSynth.volume.value = -8;
             
+            const milestoneSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "fatsawtooth" }, envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.4 } }).connect(masterLimiter);
+            milestoneSynth.volume.value = -4;
+
             const revivalSequence = new Tone.Sequence((time, note) => { new Tone.Synth({oscillator: {type: 'triangle8'}}).toDestination().triggerAttackRelease(note, "8n", time); }, ["A4", "C#5", "E5", "A5"], "16n");
             revivalSequence.loop = false;
 
@@ -396,6 +400,7 @@
                 playQuizWrong() { if(this.isReady) quizSynth.triggerAttackRelease(["C3", "D#3", "F#3"], "4n"); },
                 playRevivalSuccess() { if(this.isReady) revivalSequence.start(); },
                 playTutorialStep() { if(this.isReady) tutorialSynth.triggerAttackRelease('A5', '16n'); },
+                playMilestone() { if(this.isReady) milestoneSynth.triggerAttackRelease(["C5", "G5", "C6"], "4n"); },
                 
                 start() {
                     if (this.isReady || (Tone.context && Tone.context.state === 'running')) return;
@@ -420,7 +425,7 @@
         }
 
         let player, gameItems, activeParticles, floatingTexts;
-        let score, revivalItemsCount, gameSpeed, spawnInterval;
+        let score, revivalItemsCount, gameSpeed, spawnInterval, scoreMilestone;
         let isGameOver, isGameRunning;
         let lastSpawnTime, animationFrameId;
         let groundStripeOffset = 0; 
@@ -608,6 +613,7 @@
                 this.bobbingAngle = Math.random() * Math.PI * 2; this.pulseAngle = Math.random() * Math.PI * 2;
                 this.isCollected = false; this.scale = 1; this.isKnockedAway = false;
                 this.dx = 0; this.dy = 0; this.rotation = 0; this.rotationSpeed = 0;
+                this.isAerial = isAerial;
                 const gradient = ctx.createRadialGradient(this.w/2, this.h/2, 5, this.w/2, this.h/2, this.w/2);
                 switch(type) {
                     case ITEM_TYPES.OBSTACLE: gradient.addColorStop(0, COLORS.obstacleLight); gradient.addColorStop(1, COLORS.obstacleDark); break;
@@ -618,6 +624,13 @@
             }
             draw() {
                 ctx.save();
+                if (this.isAerial) {
+                    ctx.beginPath();
+                    ctx.ellipse(this.x + this.w / 2, GAME_CONFIG.GROUND_Y + 5, this.w * 0.4, 6, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                    ctx.fill();
+                }
+
                 ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
                 ctx.rotate(this.rotation); ctx.scale(this.scale, this.scale);
                 ctx.translate(-(this.x + this.w / 2), -(this.y + this.h / 2));
@@ -659,10 +672,19 @@
             difficultyManager = {
                 dangerValue: 0, nonObstacleStreak: 0, forceObstacleAfter: 2, 
                 baseSpeed: 12.5, baseInterval: 1200, baseObstacleChance: 0.70,
-                reset() { this.dangerValue = 0; this.nonObstacleStreak = 0; this.forceObstacleAfter = 2; },
+                aerialObstaclesUnlocked: false,
+                lastItemWasTallGround: false,
+
+                reset() { 
+                    this.dangerValue = 0; this.nonObstacleStreak = 0; this.forceObstacleAfter = 2; 
+                    this.aerialObstaclesUnlocked = false; this.lastItemWasTallGround = false;
+                },
                 update(currentScore) {
                     this.dangerValue = currentScore / 1500; 
                     this.forceObstacleAfter = (this.dangerValue > 2.0) ? 1 : 2;
+                    if (currentScore > 1500) {
+                        this.aerialObstaclesUnlocked = true;
+                    }
                 },
                 getSpeed(currentScore) { return this.baseSpeed + (currentScore / 350); },
                 getInterval() { return Math.max(400, this.baseInterval - (this.dangerValue * 150)); },
@@ -678,8 +700,22 @@
                         else if (rand < 0.40) itemType = ITEM_TYPES.POWERUP;
                         else itemType = ITEM_TYPES.COLLECTIBLE;
                     }
-                    if (itemType === ITEM_TYPES.OBSTACLE && Math.random() < 0.30) isTall = true;
-                    if ((itemType === ITEM_TYPES.COLLECTIBLE || itemType === ITEM_TYPES.POWERUP) && Math.random() < 0.4) isAerial = true;
+
+                    if (itemType === ITEM_TYPES.OBSTACLE) {
+                        if (this.aerialObstaclesUnlocked && Math.random() < 0.3) {
+                            if (!this.lastItemWasTallGround) {
+                                isAerial = true;
+                            }
+                        }
+                        if (!isAerial && Math.random() < 0.30) {
+                            isTall = true;
+                        }
+                    } else {
+                         if (Math.random() < 0.4) isAerial = true;
+                    }
+                    
+                    this.lastItemWasTallGround = (itemType === ITEM_TYPES.OBSTACLE && isTall && !isAerial);
+
                     return { type: itemType, isTall: isTall, isAerial: isAerial };
                 }
             };
@@ -769,6 +805,7 @@
         function init() {
             isGameOver = false; isGameRunning = true; isTutorialActive = false; 
             score = 0; revivalItemsCount = 0; lastSpawnTime = 0;
+            scoreMilestone = GAME_CONFIG.SCORE_MILESTONE_INTERVAL;
             player = new Player(); 
             gameItems = []; activeParticles = []; floatingTexts = [];
             shuffledQuizDeck = shuffle(QUIZ_QUESTIONS);
@@ -824,7 +861,11 @@
             clearAllTimers();
             isGameRunning = true;
             player.isInvincible = true;
-            setTimeout(() => { if (isGameRunning && !isGameOver) player.isInvincible = false; }, 2000);
+            const revivalInvincibility = setTimeout(() => { 
+                if (!invincibleState.timeoutId) {
+                    player.isInvincible = false; 
+                }
+            }, 2000);
             animate(performance.now());
         }
 
@@ -935,6 +976,13 @@
             if (!isTutorialActive) {
                 score += GAME_CONFIG.SCORE_PER_TICK * speedModifier;
                 updateScoreUI();
+                if (score >= scoreMilestone) {
+                    const message = MILESTONE_MESSAGES[Math.floor(Math.random() * MILESTONE_MESSAGES.length)];
+                    floatingTexts.push(new FloatingText(GAME_CONFIG.WIDTH / 2, GAME_CONFIG.HEIGHT / 2, message, COLORS.playerLight, 80));
+                    createExplosion(GAME_CONFIG.WIDTH / 2, GAME_CONFIG.HEIGHT / 2, COLORS.playerLight, { count: 50, speed: {min: 4, max: 15}, life: {min: 60, max: 100}});
+                    sfx.playMilestone();
+                    scoreMilestone += GAME_CONFIG.SCORE_MILESTONE_INTERVAL;
+                }
             }
         }
 
