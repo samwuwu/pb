@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>航空安全打鼹鼠</title>
+    <!-- html2canvas for screenshot functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka One for headings/buttons, Inter for body text -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS Variables Definition --- */
+        :root {
+            --primary-pink: #FF85A2;
+            --secondary-pink: #FFB3C6;
+            --light-blue: #D0F4FF;
+            --dark-blue: #87CEEB;
+            --share-blue: #54a0ff; /* New color for Share button */
+            --share-blue-dark: #2e86de;
+            --green: #7ED957;
+            --dark-green: #5CB85C;
+            --gold: #FFD700;
+            --bomb-red: #ff4757;
+            --text-dark: #4A4A4A;
+            --background-light: #FFFBF0;
+            --background-dark: #FFDDAA;
+            --mole-body: #A0856C;
+            --mole-belly: #C2A88D;
+            --mole-ear: #8A6D55;
+            --score-positive: var(--green);
+            --score-negative: var(--primary-pink);
+        }
+
+        /* --- Global Styles Reset and Base Settings --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--secondary-pink) 0%, var(--light-blue) 50%, #D9FFF8 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        body::before, body::after {
+            content: '☁️';
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            animation: float 20s infinite linear;
+        }
+        
+        body::before {
+            top: 10%;
+            left: -50px;
+            animation-delay: -5s;
+        }
+        
+        body::after {
+            bottom: 10%;
+            right: -50px;
+            animation-delay: -10s;
+        }
+        
+        @keyframes float {
+            from { transform: translateX(0); }
+            to { transform: translateX(calc(100vw + 100px)); }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            height: 100%; /* Fill the viewport height */
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(255,107,157,0.2);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .container.shake {
+            animation: screenShake 0.4s ease-in-out;
+        }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px) rotate(-1deg); }
+            40% { transform: translateX(8px) rotate(1deg); }
+            60% { transform: translateX(-5px) rotate(-0.5deg); }
+            80% { transform: translateX(5px) rotate(0.5deg); }
+        }
+
+        .container::before {
+            content: '✨';
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 2rem;
+            animation: sparkle 2s infinite;
+            z-index: 1;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.5; transform: rotate(0deg) scale(1); }
+            50% { opacity: 1; transform: rotate(180deg) scale(1.2); }
+        }
+        
+        /* --- Rule Page Styles --- */
+        #rulePage {
+            padding: 20px 10px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around; /* Better spacing for content */
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        
+        .page-title h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary-pink), var(--secondary-pink), var(--dark-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            font-family: 'Fredoka One', cursive;
+            letter-spacing: 1px;
+        }
+        
+        .page-title .icon {
+            font-size: 4rem;
+            display: block;
+            margin: 15px auto;
+            color: var(--primary-pink);
+            animation: bounce 2s infinite;
+        }
+
+        .high-score-display {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            background: rgba(255, 215, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 2px solid var(--gold);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .rules {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            flex-grow: 1; /* Allow rules to take up available space */
+            overflow-y: auto;
+            width: 100%;
+            border: 2px dashed var(--primary-pink);
+        }
+        
+        .rules::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .rules::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, var(--secondary-pink), var(--primary-pink));
+            border-radius: 3px;
+        }
+        
+        .rules h3 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: var(--primary-pink);
+            text-align: center;
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .rules ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .rules li {
+            margin-bottom: 8px;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-dark);
+        }
+        
+        .btn-start {
+            background: linear-gradient(45deg, var(--secondary-pink), var(--primary-pink), var(--dark-blue));
+            border: none;
+            padding: 16px 32px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255,107,157,0.4);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            letter-spacing: 1px;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 300px;
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .btn-start:hover {
+            transform: scale(1.05) rotate(-2deg);
+            box-shadow: 0 8px 25px rgba(255,107,157,0.6);
+        }
+        
+        /* --- Game Page Styles --- */
+        #gamePage {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin-bottom: 10px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .help-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, var(--secondary-pink), var(--primary-pink));
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,107,157,0.3);
+            transition: transform 0.3s;
+        }
+        
+        .help-btn:hover {
+            transform: translate(-50%, -50%) scale(1.1) rotate(15deg);
+        }
+        
+        .score, .time {
+            background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            min-width: 90px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .score i, .time i {
+            margin-right: 8px;
+            font-size: 1rem;
+        }
+        
+        .score i {
+            color: var(--primary-pink);
+        }
+        
+        .time {
+            background: linear-gradient(135deg, rgba(255,107,157,0.8), rgba(255,107,157,0.6));
+            color: white;
+        }
+
+        .combo-counter {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            font-family: 'Fredoka One', cursive;
+            color: var(--gold);
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .combo-counter.active {
+            opacity: 1;
+            animation: comboPulse 0.5s ease-out;
+        }
+
+        @keyframes comboPulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.3); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        .game-board {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            padding: 10px;
+            width: 100%;
+            margin: auto 0; /* Center vertically */
+            aspect-ratio: 1 / 1;
+            max-width: 100vw;
+        }
+        
+        .hole {
+            position: relative;
+            background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9J2hvbGVHcmFkJz48c3RvcCBvZmZzZXQ9JzAlJyBzdG9wLWNvbG9yPSclMjNGRkY1RTElMjcvPjxzdG9wIG9mZnNldD0nMTAwJScgc3RvcC1jb2xvcj0nJTIzRkZDQzgwJTI3Lz48L2RlZnM+PGVsbGlwc2UgY3g9JzUwJyBjeT0nNjAnIHJ4PSc0NScgcnk9JzM1JyBmaWxsPSd1cmwoJTIjaG9sZUdyYWQlMjknLz48ZWxsaXBzZSBjeD0nNTAnIGN5PSc1NScgcng9JzM1JyByeT0nMjUnIGZpbGw9JyUyM0ExODg3RiUyNy8+PC9zdmc+") center/cover;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .hole:hover {
+            transform: scale(1.05);
+        }
+        
+        .mole {
+            position: absolute;
+            bottom: -45%;
+            transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        @keyframes popUp {
+            0% { transform: translateY(100%) scale(0.5); opacity: 0; }
+            50% { transform: translateY(-10%) scale(1.1); opacity: 1; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        
+        .mole.active {
+            bottom: 5%;
+            animation: popUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.3) rotate(-5deg); }
+            50% { transform: scale(1.5) rotate(5deg); }
+            75% { transform: scale(1.2) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .mole.correct-hit {
+            animation: celebrate 0.6s ease-out;
+            filter: drop-shadow(0 0 15px var(--green));
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .mole.wrong-hit {
+            animation: shake 0.5s ease-out;
+            filter: drop-shadow(0 0 15px var(--primary-pink));
+        }
+        
+        .item-indicator {
+            position: absolute;
+            top: -30%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--background-light), var(--background-dark));
+            border: 3px solid var(--primary-pink);
+            border-radius: 20px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            white-space: nowrap;
+            color: var(--text-dark);
+            max-width: 95%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mole[data-type="bonus"] .item-indicator {
+            border-color: var(--gold);
+            animation: goldShine 1.5s infinite;
+        }
+        .mole[data-type="bomb"] .item-indicator {
+            border-color: var(--bomb-red);
+            animation: bombPulse 1s infinite;
+        }
+
+        @keyframes goldShine {
+            0%, 100% { box-shadow: 0 0 15px var(--gold); }
+            50% { box-shadow: 0 0 5px var(--gold); }
+        }
+
+        @keyframes bombPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .mole-icon {
+            width: 80%;
+            height: auto;
+            position: relative;
+            z-index: 15;
+        }
+
+        .score-float {
+            position: absolute;
+            font-size: 1.6rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 150;
+            opacity: 1;
+            text-shadow: 0 0 5px white;
+            white-space: nowrap;
+            font-family: 'Fredoka One', cursive;
+            animation: floatUpFadeOut 1s forwards;
+        }
+        
+        .score-float.positive {
+            color: var(--score-positive);
+        }
+        
+        .score-float.negative {
+            color: var(--score-negative);
+        }
+
+        @keyframes floatUpFadeOut {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, -50px); opacity: 0; }
+        }
+        
+        /* --- Game End Page Styles --- */
+        .game-end {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 30px;
+        }
+        
+        .game-end h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--primary-pink);
+            text-align: center;
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .game-end .final-score-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .game-end .final-score {
+            font-size: 4rem;
+            color: var(--dark-blue);
+            text-shadow: 0 0 20px rgba(166,193,238,0.8);
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .new-high-score {
+            font-size: 1.2rem;
+            color: var(--gold);
+            font-family: 'Fredoka One', cursive;
+            animation: newHighScoreGlow 1.5s infinite;
+        }
+
+        @keyframes newHighScoreGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        .game-end-comment {
+            font-size: 1.6rem;
+            color: var(--green);
+            margin-bottom: 20px;
+            text-align: center;
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .items-info {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 90%;
+            margin: 0 auto 20px;
+            max-height: 30vh;
+            overflow-y: auto;
+            border: 2px dashed var(--green);
+            width: 100%;
+        }
+        
+        .items-info h4 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--primary-pink);
+            font-size: 1.2rem;
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .item-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            padding: 5px;
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        
+        .item-info:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .item-info span:first-child {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .danger-info {
+            color: var(--primary-pink);
+            font-weight: bold;
+        }
+        
+        .safe-info {
+            color: var(--green);
+            font-weight: bold;
+        }
+        
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 0 15px;
+            max-width: 90%;
+        }
+        
+        .btn-restart, .btn-home, .btn-share {
+            background: linear-gradient(45deg, var(--secondary-pink), var(--primary-pink), var(--dark-blue));
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(254,180,123,0.4);
+            margin: 8px;
+            width: 100%;
+            max-width: 250px;
+            font-family: 'Fredoka One', cursive;
+            transition: all 0.3s;
+        }
+        
+        .btn-restart:hover, .btn-home:hover, .btn-share:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(254,180,123,0.6);
+        }
+        
+        .btn-home {
+            background: linear-gradient(45deg, var(--green), var(--dark-green));
+        }
+        
+        .btn-home:hover {
+            box-shadow: 0 8px 20px rgba(78,205,196,0.6);
+        }
+
+        .btn-share {
+            background: linear-gradient(45deg, var(--share-blue), var(--share-blue-dark));
+        }
+
+        .btn-share:hover {
+            box-shadow: 0 8px 20px rgba(84, 160, 255, 0.6);
+        }
+        
+        /* --- Help Modal Styles --- */
+        .help-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            padding: 20px;
+            border-radius: 30px;
+        }
+        
+        .help-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            color: var(--primary-pink);
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.3s;
+        }
+        
+        .help-close:hover {
+            transform: rotate(90deg) scale(1.2);
+        }
+        
+        .help-content {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 25px;
+            padding: 25px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            border: 3px solid var(--primary-pink);
+            width: 100%;
+        }
+        
+        .help-content h3 {
+            color: var(--primary-pink);
+            font-family: 'Fredoka One', cursive;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+        
+        .help-content h4 {
+            color: var(--green);
+            font-family: 'Fredoka One', cursive;
+            margin: 15px 0 10px 0;
+            font-size: 1.2rem;
+        }
+        
+        .help-content ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .help-content li {
+            margin-bottom: 5px;
+            color: var(--text-dark);
+        }
+
+        /* --- Screenshot Modal Styles --- */
+        .screenshot-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            padding: 20px;
+        }
+
+        .screenshot-modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .screenshot-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            color: #888;
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .screenshot-modal p {
+            font-family: 'Fredoka One', cursive;
+            color: var(--text-dark);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        #screenshotImage {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 15px;
+            border: 3px solid var(--dark-blue);
+            margin-bottom: 20px;
+        }
+
+        .btn-download {
+            background: linear-gradient(45deg, var(--green), var(--dark-green));
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-family: 'Fredoka One', cursive;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        /* --- Share Card for Screenshot --- */
+        .share-card {
+            position: absolute;
+            left: -9999px; /* Keep it off-screen */
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(160deg, #87CEEB 0%, #FF85A2 100%);
+            color: white;
+            font-family: 'Fredoka One', cursive;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .share-card h1 {
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+            margin-bottom: 10px;
+        }
+        .share-card .share-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        .share-card .share-score {
+            font-size: 6.5rem; /* Adjusted for space */
+            font-weight: bold;
+            line-height: 1;
+            color: var(--gold);
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2), 0 0 25px var(--gold);
+            margin-bottom: 15px;
+        }
+        .share-card .share-combo {
+            font-size: 1.8rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.15);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+        .share-card .share-combo i {
+            color: var(--gold);
+            margin-right: 8px;
+        }
+        .share-card .share-comment {
+            font-size: 2rem;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .share-card .share-footer {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* --- Responsive Optimization --- */
+        @media (max-width: 600px) and (orientation: portrait) {
+            .container {
+                border-radius: 0;
+                padding: 15px;
+            }
+            
+            .page-title h1 {
+                font-size: 2rem;
+            }
+            
+            .rules {
+                font-size: 0.9rem;
+                padding: 15px;
+            }
+            
+            .rules h3 {
+                font-size: 1.3rem;
+            }
+            
+            .btn-start {
+                padding: 14px 25px;
+                font-size: 1.1rem;
+                max-width: 280px;
+            }
+            
+            .game-board {
+                gap: 8px;
+                max-width: 95vw;
+            }
+            
+            .item-indicator {
+                font-size: 0.85rem;
+                padding: 4px 8px;
+                height: 28px;
+                top: -35%;
+            }
+            
+            .game-end h2 {
+                font-size: 1.7rem;
+            }
+            
+            .game-end .final-score {
+                font-size: 3.5rem;
+            }
+            
+            .game-end-comment {
+                font-size: 1.4rem;
+            }
+            
+            .btn-restart, .btn-home, .btn-share {
+                max-width: 220px;
+                font-size: 1rem;
+                padding: 12px 20px;
+            }
+        }
+        
+        @media (max-height: 700px) {
+            .rules {
+                max-height: 35vh;
+            }
+            
+            .game-end h2 {
+                font-size: 1.5rem;
+            }
+            
+            .game-end .final-score {
+                font-size: 3rem;
+            }
+            
+            .game-end-comment {
+                font-size: 1.2rem;
+            }
+            
+            .items-info {
+                max-height: 25vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Rule Page -->
+        <div id="rulePage">
+            <div class="page-title">
+                <h1>航空安全打鼹鼠</h1>
+                <i class="fas fa-plane icon"></i>
+                <p>识别违禁品，守护蓝天安全！</p>
+            </div>
+            
+            <div class="high-score-display">
+                <i class="fas fa-crown"></i> 最高分: <span id="highScoreDisplay">0</span>
+            </div>
+
+            <div class="rules">
+                <h3>游戏规则</h3>
+                <ul>
+                    <li>在60秒内，点击鼹鼠头上的<strong class="danger">不能托运的物品</strong></li>
+                    <li>不要点击<strong class="safe">可以托运的物品</strong></li>
+                    <li><strong><span style="color: var(--bomb-red);">炸弹鼹鼠</span></strong>：千万别点！会扣很多分并清空连击！</li>
+                    <li><strong><span style="color: var(--gold);">奖励鼹鼠</span></strong>：快点它！会奖励额外分数和时间！</li>
+                    <li>游戏目标：挑战最高分！</li>
+                </ul>
+                
+                <h3>计分规则</h3>
+                <ul>
+                    <li>击中不能托运的物品：<span class="danger">+10分</span></li>
+                    <li>连续击中可获得<strong>连击（Combo）</strong>加成！</li>
+                    <li>错误击中可托运物品：<span class="danger">-5分</span>，连击中断</li>
+                    <li>漏掉不能托运的物品：<span class="danger">-3分</span>，连击中断</li>
+                    <li>空击（未击中物品）：<span class="danger">-3分</span>，连击中断</li>
+                </ul>
+            </div>
+            
+            <button id="startGame" class="btn-start">
+                开始游戏 <i class="fas fa-play-circle"></i>
+            </button>
+        </div>
+        
+        <!-- Game Page -->
+        <div id="gamePage">
+            <div class="game-header">
+                <div class="score">
+                    <i class="fas fa-star"></i>
+                    <span id="scoreDisplay">0</span>
+                </div>
+                <div class="help-btn">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+                <div class="time">
+                    <i class="fas fa-clock"></i>
+                    <span id="timeDisplay">60</span>
+                </div>
+            </div>
+
+            <div class="combo-counter" id="comboCounter"></div>
+            
+            <div class="game-board" id="gameBoard">
+                <!-- 9 holes will be generated by JS -->
+            </div>
+            
+            <div id="gameEnd" class="game-end">
+                <h2 id="endMessage">游戏结束</h2>
+                <div class="final-score-container">
+                    <div class="final-score" id="finalScore">0</div>
+                    <div class="new-high-score" id="newHighScore" style="display: none;">新纪录! 🎉</div>
+                </div>
+                <div class="game-end-comment"></div>
+                
+                <div class="items-info">
+                    <h4>物品分类说明</h4>
+                    <div id="itemsInfoList"></div>
+                </div>
+                
+                <div class="buttons-container">
+                    <button class="btn-restart">再玩一次</button>
+                    <button class="btn-share"><i class="fas fa-camera-retro"></i> 分享战绩图</button>
+                    <button class="btn-home">返回首页</button>
+                </div>
+            </div>
+            
+            <div class="help-modal" id="helpModal">
+                <span class="help-close"><i class="fas fa-times"></i></span>
+                <div class="help-content">
+                    <h3>游戏帮助</h3>
+                    <p>找出不能托运的物品，确保航空安全！</p>
+                    
+                    <h4>不能托运的物品（危险品）</h4>
+                    <ul id="dangerItemsList"></ul>
+                    
+                    <h4>可以托运的物品（安全品）</h4>
+                    <ul id="safeItemsList"></ul>
+
+                    <h4>特殊物品</h4>
+                    <ul id="specialItemsList"></ul>
+                    
+                    <p style="text-align: center; margin-top: 15px; color: var(--text-dark);">
+                        注意：不同航空公司可能有特殊规定，请以实际情况为准。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screenshot Modal -->
+    <div id="screenshotModal" class="screenshot-modal">
+        <div class="screenshot-modal-content">
+            <span id="screenshotClose" class="screenshot-close">&times;</span>
+            <p>长按或右键保存图片分享吧！</p>
+            <img id="screenshotImage" src="" alt="游戏战绩截图"/>
+            <a id="downloadLink" class="btn-download" download="航空安全打鼹鼠-战绩.png">下载图片</a>
+        </div>
+    </div>
+
+    <!-- Share Card (Hidden by default, for screenshotting) -->
+    <div id="shareCard" class="share-card">
+        <h1>我的战绩</h1>
+        <i class="fas fa-plane-departure share-icon"></i>
+        <div class="share-score" id="shareScore">0</div>
+        <div class="share-combo">
+            <i class="fas fa-bolt"></i> 最高连击: <span id="shareMaxCombo">0</span>
+        </div>
+        <div class="share-comment" id="shareComment">干得不错！</div>
+        <p class="share-footer">航空安全打鼹鼠</p>
+    </div>
+    
+    <audio id="correctSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="wrongSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="gameStartSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-game-show-suspense-waiting-667.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="gameEndSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-sad-game-over-trombone-471.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="comboSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-bonus-extra-in-a-video-game-2064.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bombSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-in-battle-2809.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        (function() {
+            // --- Game Configuration ---
+            const gameConfig = {
+                moleSpeed: {min: 1200, max: 2200}, // 增加出现间隔，让游戏更慢
+                moleUpTime: {min: 1200, max: 2000}, // 增加显示时间，让玩家有更多时间反应
+                dangerProbability: 0.45,
+                specialMoleProbability: 0.15,
+                scores: {
+                    hitDanger: 10,
+                    hitSafe: -5,
+                    missDanger: -3,
+                    missEmpty: -3,
+                    hitBomb: -25,
+                    hitBonus: 20,
+                },
+                gameDuration: 60,
+                comboBonus: 2,
+                bonusTime: 5,
+            };
+
+            // --- Item Configuration ---
+            const items = [
+                { type: "danger", symbol: "🔥", name: "打火机", reason: "易燃物品，禁止托运" },
+                { type: "danger", symbol: "🧨", name: "火柴", reason: "易燃物品，禁止托运" },
+                { type: "danger", symbol: "🔋", name: "锂电池", reason: "有起火风险，禁止托运" },
+                { type: "danger", symbol: "🔌", name: "充电宝", reason: "含锂电池，禁止托运" },
+                { type: "danger", symbol: "📶", name: "移动WiFi", reason: "含锂电池，禁止托运" },
+                { type: "safe", symbol: "👕", name: "衣服", reason: "普通衣物，可托运" },
+                { type: "safe", symbol: "📚", name: "书籍", reason: "普通物品，可托运" },
+                { type: "safe", symbol: "🧴", name: "洗漱品", reason: "普通化妆品，可托运" },
+                { type: "safe", symbol: "🧸", name: "玩具", reason: "普通玩具，可托运" },
+                { type: "bomb", symbol: "💣", name: "炸弹", reason: "危险！点击会扣分！" },
+                { type: "bonus", symbol: "⭐", name: "奖励星", reason: "奖励！点击加分加时间！" },
+            ];
+            
+            // --- DOM Element Caching ---
+            const DOM = {
+                container: document.querySelector('.container'),
+                rulePage: document.getElementById('rulePage'),
+                gamePage: document.getElementById('gamePage'),
+                startBtn: document.getElementById('startGame'),
+                gameBoard: document.getElementById('gameBoard'),
+                scoreDisplay: document.getElementById('scoreDisplay'),
+                timeDisplay: document.getElementById('timeDisplay'),
+                gameEnd: document.getElementById('gameEnd'),
+                finalScore: document.getElementById('finalScore'),
+                endMessage: document.getElementById('endMessage'),
+                restartBtn: document.querySelector('.btn-restart'),
+                homeBtn: document.querySelector('.btn-home'),
+                btnShare: document.querySelector('.btn-share'),
+                helpBtn: document.querySelector('.help-btn'),
+                helpModal: document.getElementById('helpModal'),
+                helpClose: document.querySelector('.help-close'),
+                dangerItemsList: document.getElementById('dangerItemsList'),
+                safeItemsList: document.getElementById('safeItemsList'),
+                specialItemsList: document.getElementById('specialItemsList'),
+                itemsInfoList: document.getElementById('itemsInfoList'),
+                gameEndComment: document.querySelector('.game-end-comment'),
+                highScoreDisplay: document.getElementById('highScoreDisplay'),
+                newHighScore: document.getElementById('newHighScore'),
+                comboCounter: document.getElementById('comboCounter'),
+                screenshotModal: document.getElementById('screenshotModal'),
+                screenshotImage: document.getElementById('screenshotImage'),
+                screenshotClose: document.getElementById('screenshotClose'),
+                downloadLink: document.getElementById('downloadLink'),
+                shareCard: document.getElementById('shareCard'),
+                shareScore: document.getElementById('shareScore'),
+                shareComment: document.getElementById('shareComment'),
+                shareMaxCombo: document.getElementById('shareMaxCombo'),
+            };
+            
+            // Audio elements
+            const audioElements = {
+                correct: document.getElementById('correctSound'),
+                wrong: document.getElementById('wrongSound'),
+                gameStart: document.getElementById('gameStartSound'),
+                gameEnd: document.getElementById('gameEndSound'),
+                combo: document.getElementById('comboSound'),
+                bomb: document.getElementById('bombSound'),
+            };
+
+            function playSound(audioElement) {
+                if (audioElement) {
+                    try {
+                        const clone = audioElement.cloneNode();
+                        clone.volume = 0.5;
+                        clone.play().catch(e => console.warn("Audio play failed:", e));
+                        clone.addEventListener('ended', () => clone.remove());
+                    } catch (e) {
+                        console.warn("Error playing sound:", e);
+                    }
+                }
+            }
+            
+            // --- Game Variables ---
+            let score = 0;
+            let timeLeft = gameConfig.gameDuration;
+            let gameActive = false;
+            let gameTimer = null;
+            let moleTimer = null;
+            let currentMoles = [];
+            let highScore = 0;
+            let combo = 0;
+            let maxCombo = 0; // Variable to track max combo
+            
+            function initGameBoard() {
+                DOM.gameBoard.innerHTML = '';
+                for (let i = 0; i < 9; i++) {
+                    const hole = document.createElement('div');
+                    hole.className = 'hole';
+                    hole.dataset.id = i;
+                    DOM.gameBoard.appendChild(hole);
+                }
+            }
+            
+            function initItemsInfo() {
+                DOM.dangerItemsList.innerHTML = '';
+                DOM.safeItemsList.innerHTML = '';
+                DOM.specialItemsList.innerHTML = '';
+                
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span style="font-size: 1.4rem;">${item.symbol}</span> ${item.name} - ${item.reason}`;
+                    if (item.type === 'danger') DOM.dangerItemsList.appendChild(li);
+                    else if (item.type === 'safe') DOM.safeItemsList.appendChild(li);
+                    else DOM.specialItemsList.appendChild(li);
+                });
+            }
+            
+            function startGame() {
+                DOM.rulePage.style.display = 'none';
+                DOM.gamePage.style.display = 'flex';
+                
+                score = 0;
+                timeLeft = gameConfig.gameDuration;
+                gameActive = true;
+                currentMoles = [];
+                combo = 0;
+                maxCombo = 0; // Reset max combo at the start of the game
+                
+                updateScore();
+                updateTime();
+                updateComboDisplay();
+                
+                DOM.gameEnd.style.display = 'none';
+                DOM.newHighScore.style.display = 'none';
+                
+                initGameBoard();
+                createMoles();
+                
+                clearInterval(gameTimer);
+                gameTimer = setInterval(() => {
+                    if (gameActive) {
+                        timeLeft--;
+                        updateTime();
+                        if (timeLeft <= 0) {
+                            endGame('时间到！');
+                        }
+                    }
+                }, 1000);
+                
+                playSound(audioElements.gameStart);
+            }
+            
+            function updateScore() { if (DOM.scoreDisplay) DOM.scoreDisplay.textContent = score; }
+            function updateTime() { if (DOM.timeDisplay) DOM.timeDisplay.textContent = timeLeft; }
+            
+            function updateComboDisplay() {
+                if (combo > maxCombo) {
+                    maxCombo = combo; // Update max combo
+                }
+                if (combo > 1) {
+                    DOM.comboCounter.textContent = `x${combo} Combo!`;
+                    DOM.comboCounter.classList.add('active');
+                } else {
+                    DOM.comboCounter.classList.remove('active');
+                }
+            }
+
+            function resetCombo() {
+                combo = 0;
+                updateComboDisplay();
+            }
+
+            function createMoles() {
+                if (!gameActive) {
+                    clearTimeout(moleTimer);
+                    return;
+                }
+                clearTimeout(moleTimer);
+                
+                if (currentMoles.length >= 3) {
+                    moleTimer = setTimeout(createMoles, 200);
+                    return;
+                }
+                
+                const availableHoles = Array.from(document.querySelectorAll('.hole')).filter(hole => !hole.querySelector('.mole'));
+                if (availableHoles.length === 0) {
+                    moleTimer = setTimeout(createMoles, 300);
+                    return;
+                }
+                
+                const randomIndex = Math.floor(Math.random() * availableHoles.length);
+                const hole = availableHoles[randomIndex];
+                
+                const rand = Math.random();
+            let itemType;
+            if (rand < gameConfig.specialMoleProbability) {
+                itemType = Math.random() < 0.5 ? 'bomb' : 'bonus';
+            } else {
+                itemType = Math.random() < gameConfig.dangerProbability ? 'danger' : 'safe';
+            }
+
+            // 修改这里：从同类型物品中随机选择一个
+            const itemsOfType = items.filter(item => item.type === itemType);
+            const randomItem = itemsOfType[Math.floor(Math.random() * itemsOfType.length)];
+                
+                const mole = document.createElement('div');
+                mole.className = 'mole';
+                mole.dataset.id = hole.dataset.id;
+                mole.dataset.type = randomItem.type;
+                mole.dataset.name = randomItem.name;
+                
+                mole.innerHTML = `
+                    <div class="item-indicator">
+                        <span>${randomItem.symbol} ${randomItem.name}</span>
+                    </div>
+                    <svg class="mole-icon" viewBox="0 0 100 120" preserveAspectRatio="xMidYMax meet">
+                        <ellipse cx="50" cy="100" rx="35" ry="30" fill="var(--mole-body)"/>
+                        <ellipse cx="50" cy="105" rx="25" ry="20" fill="var(--mole-belly)"/>
+                        <circle cx="50" cy="70" r="25" fill="var(--mole-body)"/>
+                        <circle cx="35" cy="55" r="8" fill="var(--mole-ear)"/>
+                        <circle cx="65" cy="55" r="8" fill="var(--mole-ear)"/>
+                        <circle cx="42" cy="65" r="5" fill="white"/><circle cx="58" cy="65" r="5" fill="white"/>
+                        <circle cx="44" cy="63" r="2" fill="black"/><circle cx="60" cy="63" r="2" fill="black"/>
+                        <ellipse cx="50" cy="72" rx="4" ry="3" fill="var(--primary-pink)"/>
+                        <path d="M 40 78 Q 50 85 60 78" stroke="var(--text-dark)" stroke-width="2" fill="none"/>
+                    </svg>
+                `;
+                hole.appendChild(mole);
+                
+                setTimeout(() => mole.classList.add('active'), 10);
+                
+                const speedFactor = 1 - (score / 500);
+                const upTimeFactor = Math.max(0.5, speedFactor);
+                const moleUpTime = (gameConfig.moleUpTime.min + Math.random() * (gameConfig.moleUpTime.max - gameConfig.moleUpTime.min)) * upTimeFactor;
+                
+                const moleTimeout = setTimeout(() => {
+                    if (hole.contains(mole)) mole.remove();
+                    const index = currentMoles.findIndex(m => m.mole === mole);
+                    if (index !== -1) currentMoles.splice(index, 1);
+                    
+                    if (randomItem.type === 'danger' && gameActive) {
+                        updateScoreValue(gameConfig.scores.missDanger, mole.querySelector('.item-indicator'), `漏掉${randomItem.name}`);
+                        resetCombo();
+                    }
+                }, moleUpTime);
+
+                currentMoles.push({ id: hole.dataset.id, mole, hole, type: randomItem.type, item: randomItem, timer: moleTimeout });
+                
+                const nextMoleInterval = (gameConfig.moleSpeed.min + Math.random() * (gameConfig.moleSpeed.max - gameConfig.moleSpeed.min)) * Math.max(0.4, speedFactor);
+                moleTimer = setTimeout(createMoles, nextMoleInterval);
+            }
+            
+            function updateScoreValue(delta, element, feedbackText = '') {
+                if(!gameActive || !DOM.scoreDisplay) return;
+
+                score += delta;
+                if (score < 0) score = 0;
+                updateScore();
+                
+                if(delta > 0) playSound(audioElements.correct);
+                else if(delta < 0) playSound(audioElements.wrong);
+                
+                if (element) {
+                    const scoreFloat = document.createElement('div');
+                    scoreFloat.textContent = `${delta > 0 ? '+' : ''}${delta} ${feedbackText}`.trim();
+                    scoreFloat.className = `score-float ${delta >= 0 ? 'positive' : 'negative'}`;
+                    
+                    const rect = element.getBoundingClientRect();
+                    const gameRect = DOM.gamePage.getBoundingClientRect();
+                    
+                    scoreFloat.style.left = `${rect.left - gameRect.left + rect.width / 2}px`;
+                    scoreFloat.style.top = `${rect.top - gameRect.top}px`;
+                    
+                    DOM.gamePage.appendChild(scoreFloat);
+                    scoreFloat.addEventListener('animationend', () => scoreFloat.remove());
+                }
+            }
+            
+            function handleGameClick(e) {
+                if (!gameActive) return;
+                
+                const target = e.target.closest('.mole') || e.target.closest('.hole');
+                if (!target) return;
+                
+                if (target.classList.contains('mole')) {
+                    const moleElement = target;
+                    const moleType = moleElement.dataset.type;
+                    const moleName = moleElement.dataset.name;
+                    const holeId = moleElement.dataset.id;
+                    const moleIndex = currentMoles.findIndex(m => m.id === holeId);
+                    if (moleIndex === -1) return;
+                    
+                    // Instantly make the mole unclickable to prevent double hits
+                    moleElement.style.pointerEvents = 'none';
+
+                    const indicator = moleElement.querySelector('.item-indicator');
+                    
+                    if (moleType === 'danger') {
+                        combo++;
+                        const comboBonus = (combo > 1) ? (combo - 1) * gameConfig.comboBonus : 0;
+                        updateScoreValue(gameConfig.scores.hitDanger + comboBonus, indicator, `击中${moleName}`);
+                        if (combo > 1) playSound(audioElements.combo);
+                        moleElement.classList.add('correct-hit');
+                    } else if (moleType === 'safe') {
+                        updateScoreValue(gameConfig.scores.hitSafe, indicator, `错误点击${moleName}`);
+                        resetCombo();
+                        moleElement.classList.add('wrong-hit');
+                    } else if (moleType === 'bomb') {
+                        updateScoreValue(gameConfig.scores.hitBomb, indicator, `击中${moleName}`);
+                        resetCombo();
+                        playSound(audioElements.bomb);
+                        DOM.container.classList.add('shake');
+                        setTimeout(() => DOM.container.classList.remove('shake'), 400);
+                        moleElement.classList.add('wrong-hit');
+                    } else if (moleType === 'bonus') {
+                        combo++; // Hitting a bonus also increases combo
+                        updateScoreValue(gameConfig.scores.hitBonus, indicator, `奖励！`);
+                        timeLeft += gameConfig.bonusTime;
+                        updateTime();
+                        playSound(audioElements.combo);
+                        moleElement.classList.add('correct-hit');
+                    }
+
+                    updateComboDisplay();
+                    moleElement.addEventListener('animationend', function handler() {
+                        moleElement.classList.remove('correct-hit', 'wrong-hit');
+                        moleElement.removeEventListener('animationend', handler);
+                    });
+                    
+                    clearTimeout(currentMoles[moleIndex].timer);
+                    currentMoles[moleIndex].mole.remove();
+                    currentMoles.splice(moleIndex, 1);
+
+                } else if (target.classList.contains('hole')) {
+                    updateScoreValue(gameConfig.scores.missEmpty, target, "空击");
+                    resetCombo();
+                }
+            }
+            
+            function endGame(message) {
+                gameActive = false;
+                clearInterval(gameTimer);
+                clearTimeout(moleTimer);
+                
+                currentMoles.forEach(moleInfo => {
+                    clearTimeout(moleInfo.timer);
+                    if (moleInfo.mole && moleInfo.mole.parentNode) moleInfo.mole.remove();
+                });
+                currentMoles = [];
+                
+                document.querySelectorAll('.score-float').forEach(el => el.remove());
+                
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('whackAMoleHighScore', highScore);
+                    DOM.newHighScore.style.display = 'block';
+                }
+
+                if (DOM.finalScore) DOM.finalScore.textContent = score;
+                if (DOM.endMessage) DOM.endMessage.textContent = message;
+                
+                let commentText = '';
+                if (score >= 250) commentText = '🏆 你是航空安全之神！';
+                else if (score >= 150) commentText = '🌟 安全专家，太棒了！';
+                else if (score >= 100) commentText = '👍 干得不错，再接再厉！';
+                else if (score >= 50) commentText = '💪 继续努力，安全从我做起！';
+                else commentText = '😊 没关系，多练习几次会更好的！';
+                
+                if (DOM.gameEndComment) DOM.gameEndComment.textContent = commentText;
+                
+                if (DOM.itemsInfoList) {
+                    DOM.itemsInfoList.innerHTML = '';
+                    items.forEach(item => {
+                        const itemElement = document.createElement('div');
+                        itemElement.className = 'item-info';
+                        itemElement.innerHTML = `<span class="${item.type}-info">${item.symbol}</span><span class="${item.type}-info">${item.name}：${item.reason}</span>`;
+                        DOM.itemsInfoList.appendChild(itemElement);
+                    });
+                }
+                
+                if (DOM.gameEnd) DOM.gameEnd.style.display = 'flex';
+                playSound(audioElements.gameEnd);
+            }
+            
+            function returnHome() {
+                DOM.gameEnd.style.display = 'none';
+                DOM.gamePage.style.display = 'none';
+                DOM.rulePage.style.display = 'flex';
+                
+                gameActive = false;
+                clearInterval(gameTimer);
+                clearTimeout(moleTimer);
+                currentMoles = [];
+                
+                document.querySelectorAll('.mole, .score-float').forEach(el => el.remove());
+                loadHighScore();
+            }
+            
+            function toggleHelpModal() {
+                if (DOM.helpModal) {
+                    DOM.helpModal.style.display = DOM.helpModal.style.display === 'flex' ? 'none' : 'flex';
+                }
+            }
+
+            function loadHighScore() {
+                highScore = localStorage.getItem('whackAMoleHighScore') || 0;
+                DOM.highScoreDisplay.textContent = highScore;
+            }
+
+            function displayImageForManualSave(dataUrl) {
+                DOM.screenshotImage.src = dataUrl;
+                DOM.downloadLink.href = dataUrl;
+                DOM.screenshotModal.style.display = 'flex';
+            }
+
+            async function shareResultAsImage() {
+                const shareButton = DOM.btnShare;
+                const originalButtonHTML = shareButton.innerHTML;
+                shareButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                shareButton.disabled = true;
+
+                // Populate the hidden share card with the current results
+                DOM.shareScore.textContent = score;
+                DOM.shareComment.textContent = DOM.gameEndComment.textContent;
+                DOM.shareMaxCombo.textContent = maxCombo; // Update max combo on share card
+
+                try {
+                    const canvas = await html2canvas(DOM.shareCard, {
+                        useCORS: true,
+                        backgroundColor: null // Use the element's background
+                    });
+
+                    const imageFileName = `航空安全打鼹鼠-战绩.png`;
+                    
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) {
+                            console.error("Canvas to Blob conversion failed.");
+                            displayImageForManualSave(canvas.toDataURL('image/png'));
+                            return;
+                        }
+
+                        const file = new File([blob], imageFileName, { type: 'image/png' });
+                        const shareData = {
+                            files: [file],
+                            title: '快来玩航空安全打鼹鼠！',
+                            text: `我在这款游戏中获得了 ${score} 分，最高连击 ${maxCombo} 次！你也来挑战一下吧！`,
+                        };
+
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            try {
+                                await navigator.share(shareData);
+                            } catch (err) {
+                                if (err.name !== 'AbortError') {
+                                    console.error('Share failed:', err);
+                                    displayImageForManualSave(canvas.toDataURL('image/png'));
+                                }
+                            }
+                        } else {
+                            displayImageForManualSave(canvas.toDataURL('image/png'));
+                        }
+                    }, 'image/png');
+
+                } catch (error) {
+                    console.error('Error generating canvas:', error);
+                } finally {
+                    shareButton.innerHTML = originalButtonHTML;
+                    shareButton.disabled = false;
+                }
+            }
+
+            function debounce(func, delay) {
+                let timeout;
+                return function(...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), delay);
+                };
+            }
+            
+            const adjustGamePageHeight = debounce(() => {
+                if (DOM.container && DOM.gamePage) {
+                    const containerHeight = DOM.container.clientHeight;
+                    DOM.gamePage.style.height = `${containerHeight - 40}px`;
+                }
+            }, 100);
+
+            // --- Event Listeners ---
+            if (DOM.startBtn) DOM.startBtn.addEventListener('click', startGame);
+            if (DOM.restartBtn) DOM.restartBtn.addEventListener('click', startGame);
+            if (DOM.homeBtn) DOM.homeBtn.addEventListener('click', returnHome);
+            if (DOM.btnShare) DOM.btnShare.addEventListener('click', shareResultAsImage);
+            
+            if (DOM.gamePage) {
+                DOM.gamePage.addEventListener('click', handleGameClick);
+            }
+            
+            if (DOM.helpBtn) DOM.helpBtn.addEventListener('click', toggleHelpModal);
+            if (DOM.helpClose) DOM.helpClose.addEventListener('click', toggleHelpModal);
+            if (DOM.helpModal) {
+                DOM.helpModal.addEventListener('click', (e) => {
+                    if(e.target === DOM.helpModal) toggleHelpModal();
+                });
+            }
+            if (DOM.screenshotClose) {
+                DOM.screenshotClose.addEventListener('click', () => {
+                    DOM.screenshotModal.style.display = 'none';
+                });
+            }
+            
+            window.addEventListener('load', function() {
+                initGameBoard();
+                initItemsInfo();
+                adjustGamePageHeight();
+                loadHighScore();
+            });
+            
+            window.addEventListener('resize', adjustGamePageHeight);
+
+        })();
+    </script>
+</body>
+</html>
