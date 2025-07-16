@@ -1391,7 +1391,6 @@
                         setTimeout(() => DOM.container.classList.remove('shake'), 400);
                         moleElement.classList.add('wrong-hit');
                     } else if (moleType === 'bonus') {
-                        combo++; // Hitting a bonus also increases combo
                         updateScoreValue(gameConfig.scores.hitBonus, indicator, `奖励！`);
                         timeLeft += gameConfig.bonusTime;
                         updateTime();
@@ -1500,12 +1499,12 @@
                 // Populate the hidden share card with the current results
                 DOM.shareScore.textContent = score;
                 DOM.shareComment.textContent = DOM.gameEndComment.textContent;
-                DOM.shareMaxCombo.textContent = maxCombo; // Update max combo on share card
+                DOM.shareMaxCombo.textContent = maxCombo;
 
                 try {
                     const canvas = await html2canvas(DOM.shareCard, {
                         useCORS: true,
-                        backgroundColor: null // Use the element's background
+                        backgroundColor: null
                     });
 
                     const imageFileName = `航空安全打鼹鼠-战绩.png`;
@@ -1524,22 +1523,28 @@
                             text: `我在这款游戏中获得了 ${score} 分，最高连击 ${maxCombo} 次！你也来挑战一下吧！`,
                         };
 
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        // 优先尝试原生分享，不依赖 canShare 检测
+                        if (navigator.share) {
                             try {
                                 await navigator.share(shareData);
+                                return; // 分享成功，直接返回
                             } catch (err) {
-                                if (err.name !== 'AbortError') {
-                                    console.error('Share failed:', err);
-                                    displayImageForManualSave(canvas.toDataURL('image/png'));
+                                if (err.name === 'AbortError') {
+                                    return; // 用户取消分享，正常情况
                                 }
+                                console.log('原生分享失败，尝试备用方案:', err);
+                                // 继续执行下面的备用方案
                             }
-                        } else {
-                            displayImageForManualSave(canvas.toDataURL('image/png'));
                         }
+                        
+                        // 备用方案：显示图片让用户手动保存
+                        displayImageForManualSave(canvas.toDataURL('image/png'));
+                        
                     }, 'image/png');
 
                 } catch (error) {
                     console.error('Error generating canvas:', error);
+                    alert('生成分享图片失败，请重试');
                 } finally {
                     shareButton.innerHTML = originalButtonHTML;
                     shareButton.disabled = false;
