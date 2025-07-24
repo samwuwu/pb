@@ -97,7 +97,7 @@
         const config = {
             width: 414,
             height: 896,
-            playerSpeed: 5, // Player speed for keyboard/joystick
+            playerSpeed: 5, // Player speed for keyboard
             bulletSpeed: 10,
             enemySpeed: 2.5,
             bonusSpeed: 2,
@@ -109,8 +109,6 @@
             maxBonuses: 4,
             bulletCooldown: 150,
             pixelRatio: window.devicePixelRatio || 1,
-            joystickRadius: 60,
-            joystickKnobRadius: 25,
         };
 
         // --- DOM & Style Caching ---
@@ -134,16 +132,13 @@
             buttons: [],
             lastEnemySpawn: 0, lastBonusSpawn: 0, lastTimeUpdate: 0, lastBulletTime: 0,
             legendTimer: 5, legendInterval: null,
-            // **JOYSTICK & KEYBOARD UPDATE**
+            // **DRAG & DROP UPDATE**
             input: {
-                joystickActive: false,
-                joystickBase: { x: 0, y: 0 },
-                joystickKnob: { x: 0, y: 0 },
-                touchId: null,
+                dragTouchId: null, // ID of the touch dragging the player
+                dragOffset: { x: 0, y: 0 },
                 isShooting: false,
                 pressedButton: null,
                 keys: new Set(), // For keyboard input
-                velocity: { x: 0, y: 0 }, // Player velocity
             }
         };
 
@@ -247,7 +242,7 @@
             bgMusic.pause();
             gameOverSound.play().catch(() => {});
             
-            Object.assign(gameState.input, { isShooting: false, joystickActive: false, touchId: null, pressedButton: null, keys: new Set(), velocity: {x: 0, y: 0} });
+            Object.assign(gameState.input, { isShooting: false, dragTouchId: null, pressedButton: null, keys: new Set() });
 
             switchScreen('gameOver');
         }
@@ -275,32 +270,20 @@
         }
 
         function updatePlayerPosition() {
-            // Keyboard movement
+            // Keyboard movement is the only velocity-based movement now
             const keys = gameState.input.keys;
-            gameState.input.velocity.x = 0;
-            gameState.input.velocity.y = 0;
+            let vx = 0;
+            let vy = 0;
 
-            if (keys.has('a') || keys.has('arrowleft')) gameState.input.velocity.x = -1;
-            if (keys.has('d') || keys.has('arrowright')) gameState.input.velocity.x = 1;
-            if (keys.has('w') || keys.has('arrowup')) gameState.input.velocity.y = -1;
-            if (keys.has('s') || keys.has('arrowdown')) gameState.input.velocity.y = 1;
-
-            // Joystick movement (overrides keyboard if active)
-            if (gameState.input.joystickActive) {
-                const dx = gameState.input.joystickKnob.x - gameState.input.joystickBase.x;
-                const dy = gameState.input.joystickKnob.y - gameState.input.joystickBase.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance > 0) {
-                    gameState.input.velocity.x = dx / distance;
-                    gameState.input.velocity.y = dy / distance;
-                }
-            }
-
-            // Normalize diagonal speed
-            const mag = Math.sqrt(gameState.input.velocity.x**2 + gameState.input.velocity.y**2);
+            if (keys.has('a') || keys.has('arrowleft')) vx = -1;
+            if (keys.has('d') || keys.has('arrowright')) vx = 1;
+            if (keys.has('w') || keys.has('arrowup')) vy = -1;
+            if (keys.has('s') || keys.has('arrowdown')) vy = 1;
+            
+            const mag = Math.sqrt(vx**2 + vy**2);
             if (mag > 0) {
-                player.x += (gameState.input.velocity.x / mag) * config.playerSpeed;
-                player.y += (gameState.input.velocity.y / mag) * config.playerSpeed;
+                player.x += (vx / mag) * config.playerSpeed;
+                player.y += (vy / mag) * config.playerSpeed;
             }
 
             // Clamp player position to screen bounds
@@ -412,7 +395,7 @@
             switch (gameState.currentScreen) {
                 case 'start': drawStartScreen(); break;
                 case 'legend': drawLegendScreen(); break;
-                case 'playing': drawHUD(); drawVirtualJoystick(); break;
+                case 'playing': drawHUD(); break;
                 case 'gameOver': drawGameOverScreen(); break;
             }
         }
@@ -445,22 +428,6 @@
             ctx.fillText(timeText, config.width - 20, 40);
             ctx.restore();
         }
-
-        function drawVirtualJoystick() {
-            if (!gameState.input.joystickActive) return;
-            ctx.save();
-            // Draw base
-            ctx.beginPath();
-            ctx.arc(gameState.input.joystickBase.x, gameState.input.joystickBase.y, config.joystickRadius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.fill();
-            // Draw knob
-            ctx.beginPath();
-            ctx.arc(gameState.input.joystickKnob.x, gameState.input.joystickKnob.y, config.joystickKnobRadius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fill();
-            ctx.restore();
-        }
         
         function drawStartScreen() {
             drawTitle("星尘远征");
@@ -486,7 +453,7 @@
                 { emoji: '🛡️', text: '护盾碎片 - 恢复护盾' },
                 { emoji: '⭐', text: '星尘能量 - 获得分数' },
                 { emoji: '⌨️', text: 'WASD/方向键移动' },
-                { emoji: '👆', text: '左侧摇杆移动，右侧射击' }
+                { emoji: '👆', text: '拖拽飞机移动，右侧射击' }
             ];
             ctx.font = `18px ${FONT_FAMILY}`;
             ctx.fillStyle = '#fff';
@@ -593,17 +560,14 @@
         // --- Controls ---
         
         function setupInputControls() {
-            // Mouse (for desktop)
             canvas.addEventListener('mousedown', handleMouseDown, { passive: false });
             canvas.addEventListener('mouseup', handleMouseUp, { passive: false });
             canvas.addEventListener('mouseleave', handleMouseUp, { passive: false });
             canvas.addEventListener('mousemove', handleMouseMove, { passive: false });
-            // Touch
             canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
             canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
             canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
             canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-            // Keyboard
             window.addEventListener('keydown', handleKeyDown);
             window.addEventListener('keyup', handleKeyUp);
         }
@@ -617,12 +581,20 @@
                 y: (e.clientY - rect.top) * scaleY
             };
         }
+        
+        function isTouchOnPlayer(coords) {
+            const margin = 20; // Make it easier to touch the player
+            return coords.x > player.x - margin &&
+                   coords.x < player.x + player.width + margin &&
+                   coords.y > player.y - margin &&
+                   coords.y < player.y + player.height + margin;
+        }
 
         function handleKeyDown(e) {
             if (gameState.currentScreen !== 'playing') return;
             const key = e.key.toLowerCase();
             gameState.input.keys.add(key);
-            if (key === ' ') { // Spacebar for shooting
+            if (key === ' ') {
                 gameState.input.isShooting = true;
             }
         }
@@ -639,12 +611,11 @@
             e.preventDefault();
             const coords = getCanvasCoords(e);
             if (gameState.currentScreen === 'playing') {
-                if (coords.x < config.width / 2) {
-                    gameState.input.joystickActive = true;
-                    gameState.input.joystickBase = { ...coords };
-                    gameState.input.joystickKnob = { ...coords };
-                    gameState.input.touchId = 'mouse';
-                } else {
+                if (isTouchOnPlayer(coords)) {
+                    gameState.input.dragTouchId = 'mouse';
+                    gameState.input.dragOffset.x = coords.x - player.x;
+                    gameState.input.dragOffset.y = coords.y - player.y;
+                } else if (coords.x > config.width / 2) {
                     gameState.input.isShooting = true;
                 }
                 return;
@@ -659,10 +630,7 @@
         function handleMouseUp(e) {
             e.preventDefault();
             gameState.input.isShooting = false;
-            if (gameState.input.touchId === 'mouse') {
-                gameState.input.joystickActive = false;
-                gameState.input.touchId = null;
-            }
+            gameState.input.dragTouchId = null;
 
             if (gameState.currentScreen === 'playing') return;
             const coords = getCanvasCoords(e);
@@ -674,19 +642,10 @@
         }
         
         function handleMouseMove(e) {
-            if (gameState.currentScreen !== 'playing' || gameState.input.touchId !== 'mouse') return;
+            if (gameState.currentScreen !== 'playing' || gameState.input.dragTouchId !== 'mouse') return;
             const coords = getCanvasCoords(e);
-            
-            const dx = coords.x - gameState.input.joystickBase.x;
-            const dy = coords.y - gameState.input.joystickBase.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance > config.joystickRadius) {
-                gameState.input.joystickKnob.x = gameState.input.joystickBase.x + (dx / distance) * config.joystickRadius;
-                gameState.input.joystickKnob.y = gameState.input.joystickBase.y + (dy / distance) * config.joystickRadius;
-            } else {
-                gameState.input.joystickKnob = { ...coords };
-            }
+            player.x = coords.x - gameState.input.dragOffset.x;
+            player.y = coords.y - gameState.input.dragOffset.y;
         }
 
 
@@ -698,14 +657,11 @@
                 const coords = getCanvasCoords(touch);
 
                 if (gameState.currentScreen === 'playing') {
-                    if (touch.clientX < window.innerWidth / 2) {
-                        if (gameState.input.touchId === null) {
-                            gameState.input.touchId = touch.identifier;
-                            gameState.input.joystickActive = true;
-                            gameState.input.joystickBase = { ...coords };
-                            gameState.input.joystickKnob = { ...coords };
-                        }
-                    } else {
+                    if (isTouchOnPlayer(coords) && gameState.input.dragTouchId === null) {
+                        gameState.input.dragTouchId = touch.identifier;
+                        gameState.input.dragOffset.x = coords.x - player.x;
+                        gameState.input.dragOffset.y = coords.y - player.y;
+                    } else if (coords.x > config.width / 2) {
                         gameState.input.isShooting = true;
                     }
                 } else {
@@ -720,21 +676,13 @@
         
         function handleTouchMove(e) {
             e.preventDefault();
-            if (gameState.currentScreen !== 'playing' || gameState.input.touchId === null) return;
+            if (gameState.currentScreen !== 'playing' || gameState.input.dragTouchId === null) return;
              for (let i = 0; i < e.changedTouches.length; i++) {
                 const touch = e.changedTouches[i];
-                if (touch.identifier === gameState.input.touchId) {
+                if (touch.identifier === gameState.input.dragTouchId) {
                     const coords = getCanvasCoords(touch);
-                    const dx = coords.x - gameState.input.joystickBase.x;
-                    const dy = coords.y - gameState.input.joystickBase.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance > config.joystickRadius) {
-                        gameState.input.joystickKnob.x = gameState.input.joystickBase.x + (dx / distance) * config.joystickRadius;
-                        gameState.input.joystickKnob.y = gameState.input.joystickBase.y + (dy / distance) * config.joystickRadius;
-                    } else {
-                        gameState.input.joystickKnob = { ...coords };
-                    }
+                    player.x = coords.x - gameState.input.dragOffset.x;
+                    player.y = coords.y - gameState.input.dragOffset.y;
                 }
             }
         }
@@ -747,9 +695,8 @@
                 const coords = getCanvasCoords(touch);
 
                 if (gameState.currentScreen === 'playing') {
-                    if (touch.identifier === gameState.input.touchId) {
-                        gameState.input.touchId = null;
-                        gameState.input.joystickActive = false;
+                    if (touch.identifier === gameState.input.dragTouchId) {
+                        gameState.input.dragTouchId = null;
                     }
                     let rightSideTouchActive = Array.from(e.touches).some(t => t.clientX >= window.innerWidth / 2);
                     if (!rightSideTouchActive) {
@@ -772,7 +719,7 @@
             setupCanvas();
             switchScreen('start');
             gameLoop();
-            console.log('纯Canvas响应式游戏引擎已启动 (虚拟摇杆已实装)。');
+            console.log('纯Canvas响应式游戏引擎已启动 (拖拽移动已实装)。');
         }
 
         window.addEventListener('resize', setupCanvas);
