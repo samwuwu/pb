@@ -1288,25 +1288,20 @@
         // 初始化游戏
         function initGame() {
             setupCanvas();
-            setupJoystickControls();
-            setupShootButton();
+            
+            // 使用触摸屏幕直接控制替代摇杆
+            setupDirectTouchControl();
+            setupImprovedShootButton();
+            
             setupKeyboardControls();
             setupOrientationChange();
             preventDefaults();
             setupPerformanceOptimization();
-            
-            // 为游戏按钮添加触摸事件监听器
             setupGameButtons();
             
-            // 初始化奖励生成时间
             gameState.lastBonusSpawn = Date.now();
             
-            console.log('🎮 卡通安全卫士小飞侠 - 手机版已加载完成!');
-            console.log('设备信息:', {
-                isTouch: mobileConfig.isTouch,
-                pixelRatio: mobileConfig.pixelRatio,
-                userAgent: navigator.userAgent
-            });
+            console.log('🎮 卡通安全卫士小飞侠 - 触摸直控版本已加载完成!');
         }
         
         // 设置游戏按钮的触摸事件
