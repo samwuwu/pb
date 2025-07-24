@@ -1295,6 +1295,9 @@
             preventDefaults();
             setupPerformanceOptimization();
             
+            // 为游戏按钮添加触摸事件监听器
+            setupGameButtons();
+            
             // 初始化奖励生成时间
             gameState.lastBonusSpawn = Date.now();
             
@@ -1303,6 +1306,30 @@
                 isTouch: mobileConfig.isTouch,
                 pixelRatio: mobileConfig.pixelRatio,
                 userAgent: navigator.userAgent
+            });
+        }
+        
+        // 设置游戏按钮的触摸事件
+        function setupGameButtons() {
+            // 获取所有游戏按钮
+            const gameButtons = document.querySelectorAll('.game-button');
+            
+            gameButtons.forEach(button => {
+                // 为每个按钮添加触摸事件监听器
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    // 触发点击事件
+                    this.click();
+                }, { passive: false });
+                
+                // 添加触摸反馈效果
+                button.addEventListener('touchstart', function() {
+                    this.style.transform = 'scale(0.95)';
+                });
+                
+                button.addEventListener('touchend', function() {
+                    this.style.transform = 'scale(1)';
+                });
             });
         }
         
