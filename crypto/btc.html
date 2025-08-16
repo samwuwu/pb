@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>加密货币实时交易 + AI智能分析面板</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <style>
+        :root {
+            --bg: #0b0f14;
+            --panel: #111824;
+            --panel-light: #1a2230;
+            --muted: #94a3b8;
+            --text: #e2e8f0;
+            --accent: #60a5fa;
+            --buy: #22c55e;
+            --sell: #ef4444;
+            --info: #38bdf8;
+            --warn: #facc15;
+            --shadow: 0 6px 24px rgba(0, 0, 0, .25);
+        }
+
+        * { box-sizing: border-box }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(180deg, #0b0f14, #0f172a);
+            color: var(--text);
+            font: 14px/1.5 system-ui, -apple-system, Segoe UI, Inter, Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .wrap { max-width: 1320px; margin: 20px auto; padding: 0 16px }
+        header { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px }
+        .title-container { display: flex; align-items: center; gap: 12px; }
+        .title { font-weight: 800; font-size: 18px; }
+        .status-indicator { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease; }
+        .status-connected { background-color: var(--buy); box-shadow: 0 0 8px var(--buy); }
+        .status-connecting { background-color: var(--warn); box-shadow: 0 0 8px var(--warn); animation: pulse 1.5s infinite; }
+        .status-disconnected { background-color: var(--sell); box-shadow: 0 0 8px var(--sell); }
+
+        .panel { background: var(--panel); border: 1px solid #1f2937; border-radius: 14px; box-shadow: var(--shadow) }
+        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 10px 12px }
+        .toolbar label { color: var(--muted); font-weight: 600 }
+        input, select, button { background: #0b1220; border: 1px solid #1f2937; color: var(--text); padding: 8px 10px; border-radius: 10px; transition: all 0.2s ease; }
+        select:hover, button:hover:not(:disabled) { border-color: var(--accent); }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+
+        .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-top: 16px; }
+        .left-column { display: flex; flex-direction: column; gap: 16px; }
+        .right-column { display: flex; flex-direction: column; gap: 16px; }
+
+        .statbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 12px }
+        .stat { background: var(--panel-light); border: 1px solid #2a3447; border-radius: 12px; padding: 12px; transition: all 0.3s ease; }
+        .stat .k { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+        .stat .v { font-size: 18px; font-weight: 800; }
+
+        .chart-container { position: relative; padding: 12px; border-radius: 14px; border: 1px solid #1f2937; background: linear-gradient(180deg, #0b1220, #0b0f14); min-height: 280px; display: flex; flex-direction: column; }
+        .chart-container h3 { margin: 0 0 8px 4px; font-weight: 700; color: var(--muted); font-size: 13px; flex-shrink: 0; }
+        .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; border: 1px solid #263144; background: #0b1220; color: var(--muted) }
+        .buy { color: var(--buy) }
+        .sell { color: var(--sell) }
+
+        /* AI Panel Styles */
+        .ai-panel-header { padding: 16px; background: linear-gradient(135deg, rgba(96, 165, 250, 0.1), transparent); border-bottom: 1px solid #1f2937; }
+        .ai-panel-header h3 { margin: 0; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .ai-summary { padding: 16px; background: var(--panel-light); text-align: center; }
+        .ai-summary-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+        .ai-summary-text { font-size: 18px; font-weight: 800; line-height: 1.4; min-height: 50px; }
+        
+        .ai-compass { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .compass-container { position: relative; width: 150px; height: 75px; overflow: hidden; }
+        .compass-bg { width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(from -90deg, var(--sell) 0%, var(--warn) 50%, var(--buy) 100%); position: absolute; top: 0; }
+        .compass-mask { position: absolute; width: 130px; height: 130px; background: var(--panel); border-radius: 50%; top: 10px; left: 10px; }
+        .compass-needle { position: absolute; width: 2px; height: 65px; background: var(--text); bottom: 10px; left: 74px; transform-origin: bottom; transition: transform 0.5s ease-out; }
+        .compass-center { position: absolute; width: 10px; height: 10px; background: var(--text); border-radius: 50%; bottom: 5px; left: 70px; }
+        .compass-score { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 24px; font-weight: 900; }
+        .compass-label { font-size: 12px; color: var(--muted); }
+
+        .ai-breakdown { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+        .indicator-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .indicator-name { font-weight: 600; color: var(--muted); }
+        .indicator-signal { padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; }
+        .indicator-signal.buy { background: rgba(34, 197, 94, 0.2); color: var(--buy); }
+        .indicator-signal.sell { background: rgba(239, 68, 68, 0.2); color: var(--sell); }
+        .indicator-signal.neutral { background: rgba(148, 163, 184, 0.2); color: var(--muted); }
+        
+        .metrics-grid { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .gemini-prediction { padding: 16px; border-top: 1px solid #1f2937; }
+        .gemini-prediction .k { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+        .gemini-prediction .v { font-size: 14px; color: var(--text); }
+
+        /* On-chain Intel Panel */
+        .onchain-intel-grid { padding: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .intel-stat { display: flex; align-items: flex-start; gap: 12px; }
+        .intel-icon { font-size: 24px; margin-top: 4px; }
+        .intel-value { font-size: 16px; font-weight: 700; }
+        .intel-label { font-size: 12px; color: var(--muted); }
+        .intel-trend { font-weight: 600; font-size: 14px; }
+        
+        /* News Panel */
+        .news-list { padding: 16px; max-height: 250px; overflow-y: auto; }
+        .news-item { margin-bottom: 12px; }
+        .news-title { font-weight: 600; color: var(--text); text-decoration: none; display: block; margin-bottom: 4px; }
+        .news-title:hover { color: var(--accent); }
+        .news-source { font-size: 12px; color: var(--muted); }
+
+        /* Loader & Error Styles */
+        .loader-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(11, 15, 20, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 14px; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .loader-overlay.visible { opacity: 1; visibility: visible; }
+        .loader { width: 48px; height: 48px; border: 3px solid var(--accent); border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        .loader-text { color: var(--muted); margin-top: 10px; font-size: 12px; }
+        .error-message { color: var(--sell); text-align: center; font-weight: 600; padding: 20px; margin: auto; }
+
+        .gemini-button-container { padding: 0 16px 16px; }
+        .gemini-button {
+            width: 100%;
+            padding: 10px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), var(--info));
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
+        .gemini-button:disabled { background: var(--panel-light); color: var(--muted); }
+
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
+        
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .right-column { display: grid; grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 768px) {
+            .right-column { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header>
+            <div class="title-container">
+                <div class="title">📊 加密货币AI智能分析面板</div>
+                <div id="statusIndicator" class="status-indicator" title="数据流连接状态"></div>
+            </div>
+            <div class="legend">
+                <span class="badge">VWAP</span>
+                <span class="badge" style="color: var(--buy)">买</span>
+                <span class="badge" style="color: var(--sell)">卖</span>
+            </div>
+        </header>
+
+        <div class="panel toolbar">
+            <div><label>📈 交易对</label><select id="symbol"></select></div>
+            <div><label>📊 成交聚合</label><select id="bucket"></select></div>
+            <div><label>🕐 K线周期</label><select id="kInterval"></select></div>
+            <div style="flex:1"></div>
+            <div>
+                <button id="pauseBtn" title="暂停数据更新">⏯️ 暂停</button>
+                <button id="resetBtn" title="重新连接数据源">🔄 重连</button>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="left-column">
+                <div class="panel statbar">
+                    <div class="stat"><div class="k">最新价</div><div class="v" id="lastPrice">-</div></div>
+                    <div class="stat"><div class="k">24h 涨跌幅</div><div class="v" id="change24h">-</div></div>
+                    <div class="stat"><div class="k">周期主动买量</div><div class="v buy" id="buyNow">-</div></div>
+                    <div class="stat"><div class="k">周期主动卖量</div><div class="v sell" id="sellNow">-</div></div>
+                    <div class="stat"><div class="k">周期净值</div><div class="v" id="netNow">-</div></div>
+                </div>
+                <div class="chart-container">
+                    <h3 id="klineTitle">价格 K 线</h3>
+                    <div id="kchart" style="flex-grow: 1;"></div>
+                    <div class="loader-overlay" id="kchartLoader"><span class="loader"></span></div>
+                </div>
+                 <div class="chart-container">
+                    <h3>主动买/卖 & 净主动体量</h3>
+                    <div id="flowNetContainer" style="height: 220px; position: relative; flex-grow: 1;">
+                        <canvas id="flowNetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="right-column">
+                <div class="panel">
+                    <div class="ai-panel-header"><h3>🧠 AI 智能分析引擎</h3></div>
+                    <div id="aiAnalysisContainer"></div>
+                    <div class="ai-breakdown" id="aiBreakdownContainer"></div>
+                    <div class="gemini-button-container">
+                        <button id="gemini-analysis-btn" class="gemini-button">✨ 生成AI深度分析</button>
+                    </div>
+                    <div class="loader-overlay" id="predictionLoader">
+                        <div><span class="loader"></span><div class="loader-text">AI 分析中...</div></div>
+                    </div>
+                </div>
+                <div class="panel" id="aiMetricsPanel">
+                    <div class="ai-panel-header"><h3>🎯 AI 关键指标与预测</h3></div>
+                    <div class="metrics-grid" id="aiMetricsContainer"></div>
+                    <div id="geminiPredictionContainer"></div>
+                </div>
+                <div class="panel">
+                     <div class="ai-panel-header"><h3>🔗 链上情报 (DefiLlama)</h3></div>
+                     <div class="onchain-intel-grid" id="onchainIntelGrid"></div>
+                </div>
+                <div class="panel">
+                     <div class="ai-panel-header"><h3>📰 市场前沿资讯</h3></div>
+                     <div class="news-list" id="newsListContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lightweight-charts@4.1.2/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // --- 1. CONFIGURATION & STATE ---
+            const CONFIG = {
+                api: {
+                    binanceRest: 'https://api.binance.com/api/v3',
+                    binanceWs: 'wss://stream.binance.com:9443/stream',
+                    defiLlama: 'https://stablecoins.llama.fi/stablecoincharts/all',
+                    cryptoCompare: 'https://min-api.cryptocompare.com/data/v2/news/'
+                },
+                symbols: { 'BTCUSDT': { name: 'BTC/USDT', icon: '₿' }, 'ETHUSDT': { name: 'ETH/USDT', icon: 'Ξ' }, 'SOLUSDT': { name: 'SOL/USDT', icon: '☀️' }, 'DOGEUSDT': { name: 'DOGE/USDT', icon: 'Ð' }, 'TAOUSDT': { name: 'TAO/USDT', icon: '🧠' } },
+                buckets: { '1分钟': 60000, '5分钟': 300000, '15分钟': 900000 },
+                klineIntervals: { '1m': '1分钟', '5m': '5分钟', '15m': '15分钟', '30m': '30分钟', '1h': '1小时', '4h': '4小时', '1d': '1日' },
+                defaults: { symbol: 'BTCUSDT', bucketMs: 60000, kInterval: '15m' },
+                charts: { maxDataPoints: 300, updateThrottleMs: 250 }
+            };
+
+            const STATE = {
+                symbol: CONFIG.defaults.symbol,
+                bucketMs: CONFIG.defaults.bucketMs,
+                kInterval: CONFIG.defaults.kInterval,
+                ws: null, isPaused: false, reconnectTimer: null,
+                klineHistory: [], buckets: new Map(),
+                isRafPending: false, predictionUpdateInterval: null,
+                onchainIntel: { stablecoinNetflow: 0 },
+                lastAnalysis: {},
+                news: []
+            };
+
+            // --- 2. DOM ELEMENTS & UI HELPER ---
+            const $ = (id) => document.getElementById(id);
+            const DOM = {
+                symbol: $('symbol'), bucket: $('bucket'), kInterval: $('kInterval'),
+                pauseBtn: $('pauseBtn'), resetBtn: $('resetBtn'),
+                lastPrice: $('lastPrice'), change24h: $('change24h'), buyNow: $('buyNow'), sellNow: $('sellNow'), netNow: $('netNow'),
+                statusIndicator: $('statusIndicator'),
+                klineTitle: $('klineTitle'),
+                kchartContainer: $('kchart'),
+                kchartLoader: $('kchartLoader'), predictionLoader: $('predictionLoader'),
+                aiAnalysisContainer: $('aiAnalysisContainer'), aiBreakdownContainer: $('aiBreakdownContainer'),
+                aiMetricsContainer: $('aiMetricsContainer'),
+                geminiPredictionContainer: $('geminiPredictionContainer'),
+                onchainIntelGrid: $('onchainIntelGrid'),
+                newsListContainer: $('newsListContainer'),
+                geminiBtn: $('gemini-analysis-btn')
+            };
+
+            const UI = {
+                toggleLoader: (loader, show) => loader.classList.toggle('visible', show),
+                updateStatus: (status) => {
+                    DOM.statusIndicator.className = `status-indicator status-${status}`;
+                    DOM.statusIndicator.title = `数据流: ${status}`;
+                },
+                populateSelects: () => {
+                    const createOptions = (data, selected) => Object.entries(data).map(([v, t]) => `<option value="${v}" ${v==selected?'selected':''}>${t}</option>`).join('');
+                    const symbolOpts = Object.entries(CONFIG.symbols).map(([v, {name, icon}]) => `<option value="${v}" ${v==STATE.symbol?'selected':''}>${icon} ${name}</option>`).join('');
+                    DOM.symbol.innerHTML = symbolOpts;
+                    DOM.bucket.innerHTML = createOptions(CONFIG.buckets, STATE.bucketMs);
+                    DOM.kInterval.innerHTML = createOptions(CONFIG.klineIntervals, STATE.kInterval);
+                },
+                updateTitles: () => {
+                    const { name, icon } = CONFIG.symbols[STATE.symbol];
+                    document.title = `${icon} ${name} AI智能分析面板`;
+                    DOM.klineTitle.textContent = `${icon} ${name} 价格 K 线 (Binance)`;
+                    document.querySelector('.title').textContent = `📊 ${name} AI智能分析面板`;
+                },
+                renderAiAnalysis: (score, summary) => {
+                    const scoreText = score !== null ? score : '...';
+                    const needleRotation = score !== null ? (score / 100) * 180 - 90 : 0;
+                    DOM.aiAnalysisContainer.innerHTML = `
+                        <div class="ai-summary">
+                            <div class="ai-summary-title">AI 核心观点</div>
+                            <div class="ai-summary-text" id="ai-summary-text">${summary}</div>
+                        </div>
+                        <div class="ai-compass">
+                            <div class="compass-container">
+                                <div class="compass-bg"></div>
+                                <div class="compass-mask"></div>
+                                <div class="compass-needle" style="transform: rotate(${needleRotation}deg);"></div>
+                                <div class="compass-center"></div>
+                                <div class="compass-score">${scoreText}</div>
+                            </div>
+                            <div class="compass-label">AI 综合分析罗盘</div>
+                        </div>`;
+                },
+                renderAiBreakdown: (breakdown) => {
+                    const signalMap = { buy: '看涨', sell: '看跌', neutral: '中性' };
+                    DOM.aiBreakdownContainer.innerHTML = Object.entries(breakdown).map(([key, { signal, reason }]) => `
+                        <div class="indicator-row" title="${reason}">
+                            <span class="indicator-name">${key.toUpperCase()}</span>
+                            <span class="indicator-signal ${signal}">${signalMap[signal]}</span>
+                        </div>`).join('');
+                },
+                 renderAiMetrics: (metrics) => {
+                    const formatPrice = (price) => price ? `$${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})}` : '-';
+                    const trendInfo = { bullish: '🚀 看涨', bearish: '📉 看跌', neutral: '➡️ 震荡' };
+                    const riskInfo = { low: '🟢 低', medium: '🟡 中', high: '🔴 高' };
+                    
+                    DOM.aiMetricsContainer.innerHTML = `
+                        <div class="stat"><div class="k">📈 建议买入价</div><div class="v buy">${formatPrice(metrics.buyPrice)}</div></div>
+                        <div class="stat"><div class="k">📉 建议卖出价</div><div class="v sell">${formatPrice(metrics.sellPrice)}</div></div>
+                        <div class="stat"><div class="k">🛡️ 支撑位</div><div class="v">${formatPrice(metrics.support)}</div></div>
+                        <div class="stat"><div class="k">⚡ 阻力位</div><div class="v">${formatPrice(metrics.resistance)}</div></div>
+                        <div class="stat"><div class="k">📊 趋势信号</div><div class="v">${trendInfo[metrics.trend] || '-'}</div></div>
+                        <div class="stat"><div class="k">⚠️ 风险等级</div><div class="v">${riskInfo[metrics.risk] || '-'}</div></div>
+                        <div class="stat" colspan="2"><div class="k">😱 贪婪恐惧指数</div><div class="v">${metrics.fearGreedIndex ?? '-'}</div></div>
+                    `;
+                },
+                renderGeminiPrediction: (prediction) => {
+                    DOM.geminiPredictionContainer.innerHTML = `
+                        <div class="gemini-prediction">
+                            <div class="k">🔮 Gemini 价格预测</div>
+                            <div class="v">${prediction.pricePrediction || '暂无预测'} (信心: ${prediction.confidence || 'N/A'})</div>
+                            <div class="k" style="margin-top: 10px;">💡 策略建议</div>
+                            <div class="v">${prediction.strategySuggestion || '暂无建议'}</div>
+                        </div>
+                    `;
+                },
+                renderOnchainIntel: (intel) => {
+                    const formatNumber = (num, unit) => (num / 1e6).toFixed(2) + unit;
+                    const trendArrow = (val) => val > 0 ? '🔼' : '🔽';
+                    const trendColor = (val) => val > 0 ? 'var(--buy)' : 'var(--sell)';
+                    
+                    DOM.onchainIntelGrid.innerHTML = `
+                        <div class="intel-stat">
+                            <div class="intel-icon">💵</div>
+                            <div>
+                                <div class="intel-value">${formatNumber(intel.stablecoinNetflow, 'M')} <span class="intel-trend" style="color:${trendColor(intel.stablecoinNetflow)}">${trendArrow(intel.stablecoinNetflow)}</span></div>
+                                <div class="intel-label">24h 稳定币净流入 (USD)</div>
+                            </div>
+                        </div>`;
+                },
+                 renderNews: (news) => {
+                    if (!news || news.length === 0) {
+                        DOM.newsListContainer.innerHTML = `<div class="error-message" style="padding: 10px;">暂无新闻</div>`;
+                        return;
+                    }
+                    DOM.newsListContainer.innerHTML = news.map(item => `
+                        <div class="news-item">
+                            <a href="${item.url}" target="_blank" class="news-title">${item.title}</a>
+                            <div class="news-source">${item.source}</div>
+                        </div>
+                    `).join('');
+                },
+                showError: (container, message) => {
+                    container.innerHTML = `<div class="error-message">${message}</div>`;
+                 }
+            };
+
+            // --- 3. CHARTING SETUP ---
+            let kChart, candleSeries, vwapSeries, flowNetChart;
+            function setupCharts() {
+                kChart = LightweightCharts.createChart(DOM.kchartContainer, {
+                    layout: { background: { type: 'solid', color: '#0b1220' }, textColor: '#cbd5e1' },
+                    rightPriceScale: { borderColor: '#1f2937' }, timeScale: { borderColor: '#1f2937' },
+                    grid: { vertLines: { color: '#1f2937' }, horzLines: { color: '#1f2937' } }
+                });
+                candleSeries = kChart.addCandlestickSeries({ upColor: '#22c55e', downColor: '#ef4444', borderVisible: false, wickUpColor: '#22c55e', wickDownColor: '#ef4444' });
+                vwapSeries = kChart.addLineSeries({ color: '#eab308', lineWidth: 2, priceLineVisible: false });
+                new ResizeObserver(() => kChart.timeScale().fitContent()).observe(DOM.kchartContainer);
+
+                flowNetChart = new Chart($('flowNetChart'), {
+                    type: 'bar',
+                    data: { labels: [], datasets: [
+                        { label: '主动买', data: [], backgroundColor: 'rgba(34, 197, 94, 0.7)', order: 2 },
+                        { label: '主动卖', data: [], backgroundColor: 'rgba(239, 68, 68, 0.7)', order: 2 },
+                        { type: 'line', label: '净主动量', data: [], borderColor: '#60a5fa', borderWidth: 2, tension: 0.4, yAxisID: 'y1', order: 1 }
+                    ]},
+                    options: {
+                        responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+                        scales: {
+                            x: { type: 'time', time: { unit: 'minute' }, grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' } },
+                            y: { beginAtZero: true, grid: { color: '#1f2937' }, ticks: { color: '#94a3b8' }, stacked: true },
+                            y1: { position: 'right', grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } }
+                    }
+                });
+            }
+
+            // --- 4. DATA & API ---
+            async function fetchData(url, errorMsg) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return await res.json();
+                } catch (e) { console.error(errorMsg, e); throw e; }
+            }
+            async function fetchKlines() {
+                const url = `${CONFIG.api.binanceRest}/klines?symbol=${STATE.symbol}&interval=${STATE.kInterval}&limit=500`;
+                const data = await fetchData(url, 'K-lines fetch failed');
+                return data.map(k => ({ time: k[0]/1000, open: +k[1], high: +k[2], low: +k[3], close: +k[4], volume: +k[5] }));
+            }
+            async function fetch24hStats() {
+                const url = `${CONFIG.api.binanceRest}/ticker/24hr?symbol=${STATE.symbol}`;
+                try {
+                    const d = await fetchData(url, 'Failed to fetch 24h stats');
+                    const chg = (+d.priceChangePercent).toFixed(2);
+                    DOM.lastPrice.textContent = (+d.lastPrice).toLocaleString(undefined, { maximumFractionDigits: 2 });
+                    DOM.change24h.textContent = `${chg > 0 ? '+' : ''}${chg}%`;
+                    DOM.change24h.style.color = chg >= 0 ? 'var(--buy)' : 'var(--sell)';
+                } catch {
+                    DOM.lastPrice.textContent = '-';
+                    DOM.change24h.textContent = '-';
+                }
+            }
+            
+            async function fetchStablecoinFlows() {
+                try {
+                    const data = await fetchData(CONFIG.api.defiLlama, 'DefiLlama API fetch failed');
+                    if (!Array.isArray(data)) {
+                        throw new Error("Invalid data format from DefiLlama");
+                    }
+                    const usdtData = data.find(s => s.id === "2");
+                    const usdcData = data.find(s => s.id === "1");
+                    
+                    let usdtChange = 0;
+                    let usdcChange = 0;
+
+                    const get24hChange = (chartData) => {
+                        if (!chartData || chartData.length < 2) return 0;
+                        const latest = chartData[chartData.length - 1]?.totalCirculatingUSD?.peggedUSD;
+                        const previous = chartData[chartData.length - 2]?.totalCirculatingUSD?.peggedUSD;
+                        if (latest === undefined || previous === undefined) return 0;
+                        return latest - previous;
+                    };
+                    
+                    if (usdtData) {
+                        usdtChange = get24hChange(usdtData.chart);
+                    } else {
+                        console.warn("USDT data not found in DefiLlama response.");
+                    }
+
+                    if (usdcData) {
+                        usdcChange = get24hChange(usdcData.chart);
+                    } else {
+                        console.warn("USDC data not found in DefiLlama response.");
+                    }
+                    
+                    STATE.onchainIntel.stablecoinNetflow = usdtChange + usdcChange;
+                    UI.renderOnchainIntel(STATE.onchainIntel);
+                } catch (error) {
+                    console.error("Failed to process stablecoin data:", error);
+                    UI.showError(DOM.onchainIntelGrid, '稳定币数据加载失败');
+                    STATE.onchainIntel.stablecoinNetflow = 0; // Reset to 0 on failure
+                }
+            }
+
+            async function fetchNews(symbol) {
+                DOM.newsListContainer.innerHTML = `<div class="loader-text" style="text-align:center; padding: 20px;">加载新闻中...</div>`;
+                const coin = symbol.replace('USDT', '');
+                const url = `${CONFIG.api.cryptoCompare}?lang=EN&categories=${coin}`;
+                
+                try {
+                    const response = await fetchData(url, 'CryptoCompare News API fetch failed');
+                    if (response.Type !== 100) {
+                        throw new Error(response.Message);
+                    }
+                    
+                    const newsData = response.Data.slice(0, 5).map(article => ({
+                        title: article.title,
+                        source: article.source_info.name,
+                        url: article.url
+                    }));
+
+                    STATE.news = newsData;
+                    UI.renderNews(newsData);
+                    return newsData;
+
+                } catch (error) {
+                    console.error("Failed to fetch or process news:", error);
+                    UI.showError(DOM.newsListContainer, '新闻资讯加载失败');
+                    STATE.news = []; // Clear news on failure
+                    return [];
+                }
+            }
+
+
+            // --- 5. REAL-TIME & FLOW LOGIC ---
+            function openStream() {
+                if (STATE.ws) closeStream();
+                UI.updateStatus('connecting');
+                const stream = `${STATE.symbol.toLowerCase()}@aggTrade/${STATE.symbol.toLowerCase()}@kline_${STATE.kInterval}`;
+                STATE.ws = new WebSocket(`${CONFIG.api.binanceWs}?streams=${stream}`);
+                
+                STATE.ws.onopen = () => UI.updateStatus('connected');
+                STATE.ws.onmessage = handleWsMessage;
+                STATE.ws.onclose = handleReconnect;
+                STATE.ws.onerror = handleReconnect;
+            }
+            
+            function closeStream() {
+                if (STATE.ws) {
+                    STATE.ws.onclose = null;
+                    STATE.ws.close();
+                    STATE.ws = null;
+                }
+                if (STATE.reconnectTimer) clearTimeout(STATE.reconnectTimer);
+            }
+
+            function handleReconnect() {
+                UI.updateStatus('disconnected');
+                if (STATE.reconnectTimer) return;
+                STATE.reconnectTimer = setTimeout(() => {
+                    STATE.reconnectTimer = null;
+                    openStream();
+                }, 3000);
+            }
+
+            function handleWsMessage(event) {
+                if (STATE.isPaused) return;
+                const msg = JSON.parse(event.data);
+                if (msg.stream.endsWith('aggTrade')) processAggTrade(msg.data);
+                else if (msg.stream.includes('@kline_')) processKline(msg.data.k);
+            }
+
+            function processAggTrade(data) {
+                const qty = parseFloat(data.q);
+                const ts = data.T || data.E;
+                const bTs = Math.floor(ts / STATE.bucketMs) * STATE.bucketMs;
+                const bucket = STATE.buckets.get(bTs) || { buy: 0, sell: 0 };
+                data.m ? (bucket.sell += qty) : (bucket.buy += qty);
+                STATE.buckets.set(bTs, bucket);
+
+                const currentBucket = STATE.buckets.get(Math.floor(Date.now() / STATE.bucketMs) * STATE.bucketMs) || { buy: 0, sell: 0 };
+                DOM.buyNow.textContent = currentBucket.buy.toFixed(4);
+                DOM.sellNow.textContent = currentBucket.sell.toFixed(4);
+                DOM.netNow.textContent = (currentBucket.buy - currentBucket.sell).toFixed(4);
+                
+                updateFlowChart();
+            }
+
+            function processKline(k) {
+                const klineData = { time:k.t/1000, open:+k.o, high:+k.h, low:+k.l, close:+k.c, volume:+k.v };
+                candleSeries.update(klineData);
+                DOM.lastPrice.textContent = (+k.c).toLocaleString(undefined, { maximumFractionDigits: 2 });
+                const lastKline = STATE.klineHistory[STATE.klineHistory.length - 1];
+                if (lastKline && lastKline.time === klineData.time) STATE.klineHistory[STATE.klineHistory.length - 1] = klineData;
+                else { STATE.klineHistory.push(klineData); if (STATE.klineHistory.length > 500) STATE.klineHistory.shift(); }
+                
+                const vwapData = TechnicalIndicators.calculateVWAP(STATE.klineHistory);
+                if (vwapData.length > 0) vwapSeries.update(vwapData[vwapData.length - 1]);
+            }
+
+            function updateFlowChart() {
+                if(STATE.isRafPending) return;
+                STATE.isRafPending = true;
+                requestAnimationFrame(() => {
+                    const entries = Array.from(STATE.buckets.entries()).sort((a,b)=>a[0]-b[0]).slice(-CONFIG.charts.maxDataPoints);
+                    flowNetChart.data.labels = entries.map(([t])=>new Date(t));
+                    flowNetChart.data.datasets[0].data = entries.map(([,v])=>v.buy);
+                    flowNetChart.data.datasets[1].data = entries.map(([,v])=>v.sell);
+                    flowNetChart.data.datasets[2].data = entries.map(([,v])=>v.buy-v.sell);
+                    flowNetChart.update('none');
+                    STATE.isRafPending = false;
+                });
+            }
+
+            function resetFlowData() {
+                STATE.buckets.clear();
+                flowNetChart.data.labels = [];
+                flowNetChart.data.datasets.forEach(ds => ds.data = []);
+                flowNetChart.update('none');
+                DOM.buyNow.textContent = '-';
+                DOM.sellNow.textContent = '-';
+                DOM.netNow.textContent = '-';
+            }
+            
+            // --- 6. AI ENGINE ---
+            class TechnicalIndicators {
+                static calculateRSI(prices, period = 14) {
+                    if (prices.length <= period) return null;
+                    let gains = 0, losses = 0;
+                    for (let i = 1; i <= period; i++) {
+                        const diff = prices[i] - prices[i-1];
+                        if (diff > 0) gains += diff; else losses -= diff;
+                    }
+                    let avgGain = gains / period;
+                    let avgLoss = losses / period;
+                    for (let i = period + 1; i < prices.length; i++) {
+                        const diff = prices[i] - prices[i-1];
+                        avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
+                        avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
+                    }
+                    if (avgLoss === 0) return 100;
+                    const rs = avgGain / avgLoss;
+                    return 100 - (100 / (1 + rs));
+                }
+                static calculateEMA(data, period) {
+                    if (data.length < period) return null;
+                    const multiplier = 2 / (period + 1);
+                    const emaArray = [];
+                    if (data.length >= period) {
+                        let initialSma = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
+                        emaArray.push(...Array(period - 1).fill(null), initialSma);
+                        for (let i = period; i < data.length; i++) {
+                            const currentEma = (data[i] * multiplier) + (emaArray[i-1] * (1 - multiplier));
+                            emaArray.push(currentEma);
+                        }
+                    }
+                    return emaArray;
+                }
+                static calculateMACD(prices, fast=12, slow=26, signal=9) {
+                    if (prices.length < slow) return null;
+                    const emaFast = this.calculateEMA(prices, fast);
+                    const emaSlow = this.calculateEMA(prices, slow);
+                    if (!emaFast || !emaSlow) return null;
+                    const macdLineData = emaSlow.map((slowVal, i) => slowVal !== null ? emaFast[i] - slowVal : null).filter(v => v !== null);
+                    if (macdLineData.length < signal) return null;
+
+                    const signalLineData = this.calculateEMA(macdLineData, signal);
+                    if (!signalLineData) return null;
+                    const macd = macdLineData[macdLineData.length - 1];
+                    const signalLine = signalLineData[signalLineData.length - 1];
+                    return { macd, signal: signalLine, histogram: macd - signalLine };
+                }
+                static calculateBollingerBands(prices, period = 20, stdDev = 2) {
+                    if (prices.length < period) return null;
+                    const slice = prices.slice(-period);
+                    const sma = slice.reduce((a, b) => a + b) / period;
+                    const variance = slice.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period;
+                    const sd = Math.sqrt(variance);
+                    return { middle: sma, upper: sma + (sd * stdDev), lower: sma - (sd * stdDev) };
+                }
+                static calculateVWAP(candles) {
+                    let cumulativeTypicalPriceVolume = 0;
+                    let cumulativeVolume = 0;
+                    return candles.map(c => {
+                        const typicalPrice = (c.high + c.low + c.close) / 3;
+                        cumulativeTypicalPriceVolume += typicalPrice * c.volume;
+                        cumulativeVolume += c.volume;
+                        return { time: c.time, value: cumulativeVolume > 0 ? cumulativeTypicalPriceVolume / cumulativeVolume : typicalPrice };
+                    });
+                }
+                 static calculateSupportResistance(candles, lookback = 50) {
+                    if (candles.length < lookback) return { support: null, resistance: null };
+                    const recentCandles = candles.slice(-lookback);
+                    let support = null, resistance = null;
+                    let lowestLow = Infinity, highestHigh = -Infinity;
+                    
+                    recentCandles.forEach(c => {
+                        if(c.low < lowestLow) lowestLow = c.low;
+                        if(c.high > highestHigh) highestHigh = c.high;
+                    });
+                    
+                    const lastCandle = recentCandles[recentCandles.length - 1];
+                    const pivot = (lastCandle.high + lastCandle.low + lastCandle.close) / 3;
+                    support = pivot - (lastCandle.high - lastCandle.low);
+                    resistance = pivot + (lastCandle.high - lastCandle.low);
+
+                    return { support, resistance };
+                }
+            }
+            class TradingSignalEngine {
+                generateSignals(onchainIntel) {
+                    const candles = STATE.klineHistory;
+                    if (candles.length < 50) return { score: null, summary: '数据不足', breakdown: {}, metrics: {} };
+                    
+                    const prices = candles.map(c => c.close);
+                    const currentPrice = prices[prices.length - 1];
+                    
+                    const rsi = TechnicalIndicators.calculateRSI(prices);
+                    const macd = TechnicalIndicators.calculateMACD(prices);
+                    const bb = TechnicalIndicators.calculateBollingerBands(prices);
+                    const ema20 = TechnicalIndicators.calculateEMA(prices, 20)?.slice(-1)[0];
+                    const ema50 = TechnicalIndicators.calculateEMA(prices, 50)?.slice(-1)[0];
+                    const vwap = TechnicalIndicators.calculateVWAP(candles).slice(-1)[0]?.value;
+                    const sr = TechnicalIndicators.calculateSupportResistance(candles);
+
+                    let score = 50;
+                    const breakdown = {};
+
+                    // Technical Indicators Scoring
+                    if (rsi) {
+                        if (rsi < 30) { score += 15; breakdown.RSI = { signal: 'buy', reason: '超卖区域 (<30)' }; } 
+                        else if (rsi > 70) { score -= 15; breakdown.RSI = { signal: 'sell', reason: '超买区域 (>70)' }; }
+                        else { score += (50 - rsi) * 0.3; breakdown.RSI = { signal: 'neutral', reason: `中性区域 (${rsi.toFixed(1)})` }; }
+                    }
+                    if (macd) {
+                        if (macd.histogram > 0) { score += 10; breakdown.MACD = { signal: 'buy', reason: '柱状图为正 (看涨)' }; }
+                        else if (macd.histogram < 0) { score -= 10; breakdown.MACD = { signal: 'sell', reason: '柱状图为负 (看跌)' }; }
+                        else { breakdown.MACD = { signal: 'neutral', reason: '信号交叉' }; }
+                    }
+                    if (ema20 && ema50) {
+                        if (ema20 > ema50) { score += 10; breakdown.EMA = { signal: 'buy', reason: '短期均线上穿长期均线' }; }
+                        else { score -= 10; breakdown.EMA = { signal: 'sell', reason: '短期均线下穿长期均线' }; }
+                    }
+                    if (bb) {
+                        if (currentPrice < bb.lower) { score += 5; breakdown.BB = { signal: 'buy', reason: '价格触及下轨' }; }
+                        else if (currentPrice > bb.upper) { score -= 5; breakdown.BB = { signal: 'sell', reason: '价格触及上轨' }; }
+                        else { breakdown.BB = { signal: 'neutral', reason: '价格在通道内' }; }
+                    }
+                    if (vwap) {
+                        if (currentPrice > vwap) { score += 5; breakdown.VWAP = { signal: 'buy', reason: '价格在VWAP之上' }; }
+                        else if (currentPrice < vwap) { score -= 5; breakdown.VWAP = { signal: 'sell', reason: '价格在VWAP之下' }; }
+                        else { breakdown.VWAP = { signal: 'neutral', reason: '价格接近VWAP' }; }
+                    }
+                    
+                    // On-chain Indicators Scoring
+                    let onchainSignal = 'neutral';
+                    let onchainReason = '链上资金流动平稳';
+                    if(onchainIntel.stablecoinNetflow > 20e6) {
+                        score += 20;
+                        onchainSignal = 'buy';
+                        onchainReason = '稳定币呈显著净流入';
+                    } else if (onchainIntel.stablecoinNetflow < -20e6) {
+                        score -= 20;
+                        onchainSignal = 'sell';
+                        onchainReason = '稳定币呈显著净流出';
+                    }
+                    breakdown['资金流'] = { signal: onchainSignal, reason: onchainReason };
+
+
+                    score = Math.max(0, Math.min(100, Math.round(score)));
+                    
+                    let summary = "市场情绪中性，建议观察。";
+                    if (score > 75) summary = "AI建议：市场极度看涨，寻找买入点。";
+                    else if (score > 60) summary = "AI建议：市场偏向看涨，可考虑逢低做多。";
+                    else if (score < 25) summary = "AI建议：市场极度看跌，注意风险。";
+                    else if (score < 40) summary = "AI建议：市场偏向看跌，操作需谨慎。";
+                    
+                    let buyPrice = null, sellPrice = null;
+                    if (score > 60) buyPrice = sr.support || bb.lower;
+                    if (score < 40) sellPrice = sr.resistance || bb.upper;
+
+                    const trend = ema20 > ema50 ? 'bullish' : (ema20 < ema50 ? 'bearish' : 'neutral');
+                    const risk = (rsi > 80 || rsi < 20) ? 'high' : (bb && (currentPrice > bb.upper || currentPrice < bb.lower)) ? 'medium' : 'low';
+                    const fearGreedIndex = Math.round(rsi ? (100 - rsi) * 0.5 + (score / 100) * 50 : 50);
+
+                    const metrics = {
+                        buyPrice, sellPrice,
+                        support: sr.support,
+                        resistance: sr.resistance,
+                        trend,
+                        risk,
+                        fearGreedIndex
+                    };
+                    
+                    STATE.lastAnalysis = { score, summary, breakdown, metrics };
+                    return STATE.lastAnalysis;
+                }
+            }
+            const signalEngine = new TradingSignalEngine();
+
+            // --- 7. GEMINI API INTEGRATION ---
+            async function generateAiAnalysisReport() {
+                DOM.geminiBtn.disabled = true;
+                DOM.geminiBtn.textContent = '分析中...';
+                DOM.geminiPredictionContainer.innerHTML = `<div class="gemini-prediction"><div class="v">Gemini 正在分析数据...</div></div>`;
+
+                const { breakdown, metrics } = STATE.lastAnalysis;
+                const newsHeadlines = STATE.news.map(n => n.title).join('; ');
+
+                const prompt = `
+                    You are a professional cryptocurrency quantitative analyst. Your task is to provide a structured prediction based on the provided real-time data and recent news. Respond ONLY with a valid JSON object.
+
+                    Data for ${STATE.symbol} (${CONFIG.klineIntervals[STATE.kInterval]} timeframe):
+                    - Current Price: ${DOM.lastPrice.textContent}
+                    - 24h Change: ${DOM.change24h.textContent}
+                    - Trend Signal: ${metrics.trend}
+                    - Risk Level: ${metrics.risk}
+                    - Fear & Greed Index: ${metrics.fearGreedIndex}
+                    - Key Indicators: ${JSON.stringify(breakdown)}
+                    - On-Chain Signal: ${breakdown['资金流']?.reason}
+                    - Recent News Headlines: ${newsHeadlines}
+
+                    Based on a comprehensive analysis of BOTH the technical/on-chain data AND the recent news, provide a structured forecast in the following JSON format.
+                `;
+
+                try {
+                    const apiKey = ""; // Will be provided by the environment
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    
+                    const payload = {
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    pricePrediction: { type: "STRING", description: "A short, specific price prediction in Chinese, considering all data. e.g., '在宏观利好消息推动下，可能突破$70,000' or '技术面看跌，或将回调至$65,000支撑区域'." },
+                                    confidence: { type: "NUMBER", description: "Confidence level for the prediction, from 1 (low) to 5 (high)." },
+                                    strategySuggestion: { type: "STRING", description: "A concise, actionable trading suggestion in Chinese, considering all data. e.g., '建议在回调至支撑位附近时寻找买入机会，但需关注新闻面变化。'" }
+                                }
+                            }
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                    
+                    const result = await response.json();
+                    const predictionJson = JSON.parse(result.candidates[0].content.parts[0].text);
+                    UI.renderGeminiPrediction(predictionJson);
+
+                } catch (error) {
+                    console.error("Gemini API call failed:", error);
+                    DOM.geminiPredictionContainer.innerHTML = `<div class="error-message">AI 预测失败</div>`;
+                } finally {
+                    DOM.geminiBtn.disabled = false;
+                    DOM.geminiBtn.textContent = '✨ 生成AI深度分析';
+                }
+            }
+
+
+            // --- 8. INITIALIZATION ---
+            function runPredictionEngine() {
+                if (STATE.predictionUpdateInterval) clearInterval(STATE.predictionUpdateInterval);
+                const update = () => {
+                    if (STATE.klineHistory.length > 50) {
+                        const { score, summary, breakdown, metrics } = signalEngine.generateSignals(STATE.onchainIntel);
+                        UI.renderAiAnalysis(score, summary);
+                        UI.renderAiBreakdown(breakdown);
+                        UI.renderAiMetrics(metrics);
+                    }
+                };
+                update();
+                STATE.predictionUpdateInterval = setInterval(update, 5000);
+            }
+            
+            async function handleControlChange() {
+                [DOM.symbol, DOM.bucket, DOM.kInterval, DOM.resetBtn].forEach(el => el.disabled = true);
+                STATE.symbol = DOM.symbol.value;
+                STATE.bucketMs = +DOM.bucket.value;
+                STATE.kInterval = DOM.kInterval.value;
+                await initialize();
+                [DOM.symbol, DOM.bucket, DOM.kInterval, DOM.resetBtn].forEach(el => el.disabled = false);
+            }
+
+            function setupEventListeners() {
+                DOM.symbol.addEventListener('change', handleControlChange);
+                DOM.bucket.addEventListener('change', handleControlChange);
+                DOM.kInterval.addEventListener('change', handleControlChange);
+                DOM.resetBtn.addEventListener('click', handleControlChange);
+                
+                DOM.pauseBtn.addEventListener('click', () => {
+                    STATE.isPaused = !STATE.isPaused;
+                    DOM.pauseBtn.innerHTML = STATE.isPaused ? '▶️ 继续' : '⏯️ 暂停';
+                    DOM.pauseBtn.title = STATE.isPaused ? '恢复数据更新' : '暂停数据更新';
+                });
+
+                DOM.geminiBtn.addEventListener('click', generateAiAnalysisReport);
+            }
+
+            async function initialize() {
+                if (STATE.ws) closeStream();
+                resetFlowData();
+                UI.updateTitles();
+                UI.toggleLoader(DOM.kchartLoader, true);
+                UI.toggleLoader(DOM.predictionLoader, true);
+                if (STATE.predictionUpdateInterval) clearInterval(STATE.predictionUpdateInterval);
+                DOM.aiAnalysisContainer.innerHTML = '';
+                DOM.aiBreakdownContainer.innerHTML = '';
+                DOM.aiMetricsContainer.innerHTML = '';
+                DOM.geminiPredictionContainer.innerHTML = '';
+                
+                try {
+                    const [klineData] = await Promise.all([
+                        fetchKlines(),
+                        fetch24hStats(),
+                        fetchNews(STATE.symbol),
+                        fetchStablecoinFlows()
+                    ]);
+                    
+                    STATE.klineHistory = klineData;
+                    candleSeries.setData(klineData);
+                    const vwapData = TechnicalIndicators.calculateVWAP(klineData);
+                    vwapSeries.setData(vwapData);
+                    kChart.timeScale().fitContent();
+                    
+                    runPredictionEngine();
+                    openStream();
+                    
+                } catch (error) {
+                    console.error("Initialization failed:", error);
+                    UI.showError(DOM.kchartContainer, '初始化K线数据失败');
+                    UI.showError(DOM.aiAnalysisContainer, 'AI引擎启动失败');
+                    UI.updateStatus('disconnected');
+                } finally {
+                    UI.toggleLoader(DOM.kchartLoader, false);
+                    UI.toggleLoader(DOM.predictionLoader, false);
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                setupCharts();
+                UI.populateSelects();
+                setupEventListeners();
+                initialize();
+            });
+        })();
+    </script>
+</body>
+</html>
