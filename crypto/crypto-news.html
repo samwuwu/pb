@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>加密新闻 · 热度自动排行（5 个免费源）</title>
+<style>
+:root{
+  --bg:#0a0f16; --panel:#101827; --text:#e6edf3; --muted:#9fb0c2; --line:#1f2a37;
+  --chip:#162133; --link:#8ab4ff; --accent:#4c82ff; --danger:#ff8a8a; --ok:#25d07f;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 70% -10%, #142036 0%, transparent 70%) no-repeat, var(--bg);
+  color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"SF Pro Text",Inter,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif}
+a{color:var(--link);text-decoration:none}
+header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg, rgba(10,15,22,.9), rgba(10,15,22,.6));backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.wrap{max-width:1200px;margin:0 auto;padding:14px 16px}
+h1{margin:0;font-size:22px}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+input[type="search"]{background:#0f1623;border:1px solid #263144;color:var(--text);border-radius:10px;padding:10px 12px;outline:none;width:280px}
+button{background:linear-gradient(180deg,#507bff,#3a63f0);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer;box-shadow:0 8px 18px rgba(76,130,255,.25)}
+button.secondary{background:#182235;border:1px solid #2a3852;box-shadow:none;color:#d5e4ff}
+main{max-width:1200px;margin:0 auto;padding:18px 16px 40px}
+.grid{display:grid;grid-template-columns: 2fr 1fr;gap:16px}
+@media (max-width:1000px){.grid{grid-template-columns:1fr}}
+.panel{background:linear-gradient(180deg,#0f1726,#0c1421);border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel h2{margin:0 0 12px 0;font-size:16px;display:flex;align-items:center;gap:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--chip);color:#cfe0ff;border:1px solid #27334a;border-radius:999px;padding:3px 8px;font-size:12px}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:#0c1421;border:1px solid #1b2436;border-radius:12px;padding:12px}
+.item:hover{border-color:#2b3a58;background:#0f1827}
+.rank{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;background:#19263b;color:#cfe0ff}
+.item h3{margin:0;font-size:15px;line-height:1.4}
+.meta{color:#a7b9cc;font-size:12px;display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.badge{font-size:11px;border:1px solid #2a3852;border-radius:999px;padding:2px 6px;background:#141d2b}
+.score{font-variant-numeric:tabular-nums}
+.desc{color:#c6d3e2;font-size:13px;margin-top:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.toggle{background:#101a2b;border:1px solid #2b3a58;border-radius:999px;padding:4px 8px;color:#cfe0ff;font-size:12px;cursor:pointer}
+.src-panel .item{grid-template-columns:1fr auto}
+footer{color:#8aa0b4;font-size:12px;border-top:1px solid var(--line);padding:18px 16px 48px;max-width:1200px;margin:0 auto}
+.skeleton{height:14px;width:100%;border-radius:6px;background:linear-gradient(90deg,#0f1622,#121b2c,#0f1622);background-size:200% 100%;animation:shine 1.4s linear infinite}
+@keyframes shine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.desc-cn{color:#d8e7ff;font-size:13px;margin-top:6px;border-left:3px solid #2a3a56;padding-left:10px}
+.cn-tag{display:inline-block;margin-right:6px}
+.trend-card{background:linear-gradient(180deg,#0d1626,#0a1220);border:1px solid #22304a;border-radius:14px;padding:14px}
+.trend-card h3{margin:0 0 8px 0;font-size:15px}
+.trend-list{margin:0;padding-left:18px;color:#cfe0ff}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.kpi .badge{background:#0f1a2b}
+.toggle-cn{margin-left:auto}
+
+
+select{background:#0f1623;border:1px solid #263144;color:var(--text);border-radius:8px;padding:6px 8px;margin-left:6px}
+input[type="number"]{width:70px;background:#0f1623;border:1px solid #263144;color:var(--text);border-radius:8px;padding:4px 6px;margin-left:6px}
+input[type="checkbox"]{margin-left:6px;transform:scale(1.1)}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>加密新闻 · 热度自动排行</h1>
+    <div class="sub">来源：CoinDesk / The Block / Cointelegraph / CryptoSlate / Decrypt · 自动按“热度分”排序（时效 + 多源共识 + 关键词权重）</div>
+    <div class="controls">
+      <label class="chip">时间窗口 <select id="timewin"><option value="latest" selected>最新</option><option value="24h">近 24 小时</option><option value="48h">近 48 小时</option></select></label><label class="chip">中文源计入热度 <input id="cnInHot" type="checkbox"></label><label class="chip">中文源权重 <input id="cnWeight" type="number" step="0.05" min="0" max="1" value="0"></label><label class="chip">Stablecoin权重 <input id="wStable" type="number" step="0.01" min="0" max="1" value="0.18"></label><label class="chip">TAO权重 <input id="wTAO" type="number" step="0.01" min="0" max="1" value="0.15"></label><label class="chip">DOGE权重 <input id="wDOGE" type="number" step="0.01" min="0" max="1" value="0.12"></label>
+      <button id="toggleCN" class="secondary toggle-cn">中文摘要：开启</button>
+      <input id="q" type="search" placeholder="搜索标题 / 来源 / 关键词…">
+      <button id="refresh">立即刷新</button>
+      <button id="toggleAuto" class="secondary">自动刷新：开启</button>
+      <span class="chip">本地时间 <span id="now"></span></span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section class="panel" id="trend" style="margin-bottom:20px">
+    <h2>📈 总体趋势 & 30 天展望 <span class="chip" id="trendUpdated">生成中…</span></h2>
+    <div id="trendBody">
+      <div class="skeleton" style="height:18px"></div>
+      <div class="skeleton" style="height:14px;width:80%"></div>
+      <div class="skeleton" style="height:14px;width:60%"></div>
+    </div>
+  </section>
+
+  <div class="grid">
+
+    
+
+    <section class="panel" id="hot">
+      <h2>🔥 热点 Top 20 <span class="chip" id="hotUpdated">加载中…</span></h2>
+      <div class="list" id="hotList">
+        ${''.join('<div class="skeleton"></div>' for _ in range(8))}
+      </div>
+    </section>
+
+    <section class="panel src-panel" id="bySource">
+      <h2>📰 按来源浏览 <span class="chip" id="srcUpdated">加载中…</span></h2>
+      <div id="srcLists"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  注：本页通过官方/公开 RSS 获取标题与摘要，无法获取付费墙后的全文；“热度分”采用启发式算法：<span class="badge">时效性衰减</span> + <span class="badge">多源重复度</span> + <span class="badge">关键词加权</span>（如 ETF / SEC / 黑客 / 稳定币 等）。仅作资讯排序参考。
+</footer>
+
+<script>
+const feeds = [
+  // 中文资讯源（默认不计入热度，可切换/设置权重）
+  { name: '金色财经', home: 'https://www.jinse.com', url: 'https://www.jinse.com/rss', isCN:true },
+  { name: '巴比特',   home: 'https://www.8btc.com',  url: 'https://www.8btc.com/rss',  isCN:true },
+  // 英文资讯源
+  { name: "CoinDesk",      home: "https://www.coindesk.com",      url: "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml" },
+  { name: "The Block",     home: "https://www.theblock.co",       url: "https://www.theblock.co/rss.xml" },
+  { name: "Cointelegraph", home: "https://cointelegraph.com",     url: "https://cointelegraph.com/rss" },
+  { name: "CryptoSlate",   home: "https://cryptoslate.com",       url: "https://cryptoslate.com/feed/" },
+  { name: "Decrypt",       home: "https://decrypt.co",            url: "https://decrypt.co/feed" },
+];
+
+const KEYWORD_BOOSTS = [
+  {re:/\b(SEC|ETF|approval|spot etf|lawsuit|settlement)\b/i, w:0.25},
+  {re:/\b(hack|hacker|exploit|security breach|drain|rug)\b/i, w:0.25},
+  {re:/\b(stablecoin|USDT|USDC|Tether|Circle)\b/i, w:0.18},
+  {re:/\b(Bitcoin|BTC|Halving|Lightning)\b/i, w:0.12},
+  {re:/\b(Ethereum|ETH|L2|rollup|staking)\b/i, w:0.12},
+  {re:/\b(DeFi|DEX|TVL|airdrop)\b/i, w:0.1},
+];
+
+const MAX_PER_FEED = 12;
+const HOT_LIMIT = 20;
+let auto = true, autoTimer = null;
+
+const hotList = document.getElementById('hotList');
+const hotUpdated = document.getElementById('hotUpdated');
+const srcUpdated = document.getElementById('srcUpdated');
+const q = document.getElementById('q');
+const nowEl = document.getElementById('now');
+const btnRefresh = document.getElementById('refresh');
+const btnAuto = document.getElementById('toggleAuto');
+const srcLists = document.getElementById('srcLists');
+
+function tickNow(){ nowEl.textContent = new Date().toLocaleString(); }
+setInterval(tickNow, 1000); tickNow();
+
+btnRefresh.addEventListener('click', refreshAll);
+btnAuto.addEventListener('click', ()=>{
+  auto = !auto;
+  btnAuto.textContent = '自动刷新：' + (auto ? '开启' : '关闭');
+  btnAuto.classList.toggle('secondary', !auto);
+  if(auto) autoTimer = setInterval(refreshAll, 15*60*1000);
+  else clearInterval(autoTimer);
+});
+
+q.addEventListener('input', ()=>{
+  for (const el of document.querySelectorAll('[data-search]')){
+    const hit = (el.dataset.search || '').includes(q.value.trim().toLowerCase());
+    el.style.display = hit ? '' : 'none';
+  }
+});
+
+function domainFrom(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(_){ return ''; } }
+function strip(html){ const d = document.createElement('div'); d.innerHTML = html; return d.textContent || d.innerText || ''; }
+function trunc(s, n=180){ if(!s) return ''; return s.length>n ? s.slice(0,n-1) + '…' : s; }
+
+async function fetchWithFallbacks(url){
+  try{
+    const r = await fetch(url, {mode:'cors'});
+    if(r.ok){ return { kind:'xml', text: await r.text() }; }
+  }catch(e){}
+  try{
+    const r = await fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url));
+    if(r.ok){ return { kind:'xml', text: await r.text() }; }
+  }catch(e){}
+  try{
+    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(url));
+    if(r.ok){ return { kind:'json', json: await r.json() }; }
+  }catch(e){}
+  throw new Error('获取失败：'+url);
+}
+
+function parseXMLItems(xmlText){
+  const dp = new DOMParser(); const doc = dp.parseFromString(xmlText, 'text/xml');
+  let nodes = [...doc.querySelectorAll('item')]; if(nodes.length===0) nodes = [...doc.querySelectorAll('entry')];
+  const items = nodes.map(n=>{
+    const title = n.querySelector('title')?.textContent?.trim() || 'Untitled';
+    const link = n.querySelector('link')?.getAttribute('href') || n.querySelector('link')?.textContent?.trim() || '#';
+    const pubDate = n.querySelector('pubDate')?.textContent?.trim() || n.querySelector('updated')?.textContent?.trim() || n.querySelector('published')?.textContent?.trim() || '';
+    const desc = n.querySelector('description')?.textContent || n.querySelector('content\\:encoded')?.textContent || '';
+    return { title, link, pubDate, desc };
+  });
+  return items;
+}
+function parseJSONItems(j){
+  return (j.items||[]).map(x=>({ title:x.title, link:x.link, pubDate:x.pubDate||x.published||'', desc:x.description||'' }));
+}
+
+function scoreItem(it, appearances=1){
+  const KEYWORD_BOOSTS = getKeywordBoosts();
+  // recency
+  let recency = 0;
+  if(it.pubDate){
+    const ageMs = Date.now() - new Date(it.pubDate).getTime();
+    const ageH = Math.max(0, ageMs/3600000);
+    recency = Math.exp(-ageH/24); // 24h 半衰
+  }
+  // keywords
+  const text = (it.title + ' ' + (it.desc||'')).toLowerCase();
+  let ksum = 0;
+  for (const r of KEYWORD_BOOSTS){ if(r.re.test(text)) ksum += r.w; }
+  // multi-source
+  const multi = Math.min(1, 0.3 * Math.max(0, appearances-1));
+  let score = 0.6*recency + ksum + multi + 0.1; // 基础分 0.1
+  if(it.isCN){ score = score * (CN_WEIGHT>0 ? (1+CN_WEIGHT) : 1); }
+
+  return Math.round(score*100)/100;
+}
+
+function normalizeTitle(s){
+  return s.toLowerCase()
+    .replace(/[\|\-–—·•:;,_()\[\]{}]/g,' ')
+    .replace(/\s+/g,' ')
+    .replace(/\b(crypto|cryptocurrency|breaking|update|news)\b/g,'')
+    .trim();
+}
+
+async function refreshAll(){
+  hotUpdated.textContent = '更新中…';
+  srcUpdated.textContent = '更新中…';
+  hotList.innerHTML = '<div class="skeleton"></div>'.repeat(8);
+  srcLists.innerHTML = '';
+
+  // 1) 拉取各源
+  const allBySource = [];
+  await Promise.all(feeds.map(async f=>{
+    try{
+      const res = await fetchWithFallbacks(f.url);
+      let items = res.kind==='xml' ? parseXMLItems(res.text) : parseJSONItems(res.json);
+      items = items.slice(0, MAX_PER_FEED).map(x=>({ ...x, source:f.name, home:f.home }));
+      allBySource.push({ source:f.name, home:f.home, items });
+    }catch(e){
+      allBySource.push({ source:f.name, home:f.home, items:[{ title:'❌ 拉取失败：'+e.message, link:f.home, pubDate:'', desc:'' }] });
+    }
+  }));
+
+  // 2) 统计重复（标题归一化）
+  const bucket = new Map(); // key -> {item, appearances, sources:Set}
+  for (const pkg of allBySource){
+    for (const it of pkg.items){
+      const key = normalizeTitle(it.title);
+      if(!bucket.has(key)) bucket.set(key, { item: it, appearances:1, sources:new Set([it.source]) });
+      else{
+        const o = bucket.get(key);
+        o.appearances += 1; o.sources.add(it.source);
+        // 选更近的 pubDate
+        if(new Date(it.pubDate) > new Date(o.item.pubDate)) o.item = it;
+      }
+    }
+  }
+
+  // 过滤时间窗口
+  for(const [key,obj] of bucket){
+    if(obj.item && !inTimeWindow(obj.item.pubDate)) bucket.delete(key);
+  }
+
+  // 3) 计算热度分
+  let hot = [];
+  for (const [_, obj] of bucket){
+    const isCN = !!obj.item.isCN || (obj.item.source && (obj.item.source.includes('金色') || obj.item.source.includes('巴比特')));
+    if(isCN && !CN_INCLUDE_IN_HOT){
+      // 跳过进入 HOT，但仍会在“按来源”部分展示
+      continue;
+    }
+
+    const s = scoreItem(obj.item, obj.appearances);
+    hot.push({ ...obj.item, appearances: obj.appearances, sources: [...obj.sources], score: s });
+  }
+  hot.sort((a,b)=> b.score - a.score);
+  hot = hot.slice(0, HOT_LIMIT);
+
+  // 4) 渲染 HOT
+  hotList.innerHTML = hot.map((it, idx)=>{
+    const dom = domainFrom(it.link) || it.source;
+    const time = it.pubDate ? new Date(it.pubDate).toLocaleString() : '';
+    const search = (it.title + ' ' + dom + ' ' + it.source).toLowerCase();
+    const excerpt = trunc(strip(it.desc||''), 220);
+    return `
+      <article class="item" data-search="${search}">
+        <div class="rank">${idx+1}</div>
+        <div>
+          <h3><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h3>
+          <div class="meta">
+            <span class="badge">来源：${it.source}${it.appearances>1?` · ${it.appearances}源共识`:''}</span>
+            ${time?`<span class="badge">${time}</span>`:''}
+            <span class="badge score">热度分：${it.score.toFixed(2)}</span>
+          </div>
+          ${excerpt?`<div class="desc">${excerpt}</div>`:''}
+          ${renderCnBlock(it)}
+          <div class="actions">
+            <a class="chip" href="${it.link}" target="_blank" rel="noopener">阅读全文 →</a>
+            <a class="chip" href="${feeds.find(f=>f.name===it.source)?.home||'#'}" target="_blank" rel="noopener">访问 ${it.source}</a>
+          </div>
+        </div>
+        <div><span class="chip">${dom}</span></div>
+      </article>
+    `;
+  }).join('');
+  hotUpdated.textContent = '更新完成 · ' + new Date().toLocaleTimeString();
+  document.getElementById('trendBody').innerHTML = buildTrends(hot);
+  document.getElementById('trendUpdated').textContent = '已生成';
+
+  // 5) 渲染分来源
+  srcLists.innerHTML = allBySource.map(pkg=>{
+    const list = pkg.items.map(it=>{
+      const t = it.pubDate ? new Date(it.pubDate).toLocaleString() : '';
+      const ex = trunc(strip(it.desc||''), 120);
+      const s = scoreItem(it, 1);
+      const search = (it.title + ' ' + pkg.source + ' ' + (it.link||'')).toLowerCase();
+      return `
+        <div class="item" data-search="${search}">
+          <div>
+            <h3><a href="${it.link}" target="_blank" rel="noopener">${it.title}</a></h3>
+            <div class="meta">
+              ${t?`<span class="badge">${t}</span>`:''}
+              <span class="badge score">热度分：${isNaN(s)?'--':s.toFixed(2)}</span>
+            </div>
+            ${ex?`<div class="desc">${ex}</div>`:''}
+            ${renderCnBlock(it)}
+          </div>
+          <div><a class="chip" href="${pkg.home}" target="_blank" rel="noopener">主页</a></div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div class="panel" style="margin-bottom:12px">
+        <h2>${pkg.source}</h2>
+        <div class="list">${list}</div>
+      </div>
+    `;
+  }).join('');
+
+  // 应用搜索过滤（若有关键字）
+  q.dispatchEvent(new Event('input'));
+}
+
+
+// ===== CN SUMMARY & CONCLUSION =====
+let showCN = true;
+const btnCN = document.getElementById('toggleCN');
+if(btnCN){
+  btnCN.addEventListener('click', ()=>{
+    showCN = !showCN;
+    btnCN.textContent = '中文摘要：' + (showCN ? '开启' : '关闭');
+    for(const el of document.querySelectorAll('.desc-cn')){
+      el.style.display = showCN ? '' : 'none';
+    }
+  });
+}
+
+function classifyCategory(text){
+  const t = text.toLowerCase();
+  if(/(hack|drain|exploit|security breach|attack)/i.test(t)) return '安全事件';
+  if(/(etf|sec|approval|lawsuit|regulat|policy|congress)/i.test(t)) return '监管/ETF';
+  if(/(stablecoin|usdt|usdc|tether|circle)/i.test(t)) return '稳定币';
+  if(/(airdrop|tvl|defi|dex|staking|l2|rollup)/i.test(t)) return 'DeFi/生态';
+  if(/(bitcoin|btc|halving|lightning)/i.test(t)) return '比特币';
+  if(/(ethereum|eth)/i.test(t)) return '以太坊';
+  return '其他';
+}
+
+function cnSummary(it){
+  const title = it.title || '';
+  const desc = (it.desc || '').replace(/\s+/g,' ').trim();
+  const cat = classifyCategory(title + ' ' + desc);
+  const time = it.pubDate ? new Date(it.pubDate).toLocaleString() : '';
+  // 生成一句话中文摘要（基于关键词启发）
+  let point = '';
+  if(cat==='监管/ETF'){
+    if(/etf/i.test(title+desc)) point = 'ETF 相关进展增强了机构参与预期，或提升市场风险偏好。';
+    else if(/sec|policy|law|congress|approval|lawsuit/i.test(title+desc)) point = '监管动态带来不确定与边际明朗并存，短期波动可能加大。';
+    else point = '监管相关消息可能改变资金进出节奏与估值框架。';
+  }else if(cat==='安全事件'){
+    point = '安全事件提示链上风险，短期或压制情绪与流动性，利好安全赛道与蓝筹资产避险属性。';
+  }else if(cat==='稳定币'){
+    point = '稳定币相关进展影响整体流动性与做市条件，是判断资金面与风险偏好的关键变量。';
+  }else if(cat==='比特币'){
+    point = '比特币作为风向标，其走势常引领全盘；消息或影响中短期方向与资金风险偏好。';
+  }else if(cat==='以太坊'){
+    point = '以太坊生态消息可能影响 L2、质押与 DeFi 板块表现，结构性机会增多。';
+  }else if(cat==='DeFi/生态'){
+    point = '生态与应用层面的进展强化基本面叙事，利于活跃度与估值修复。';
+  }else{
+    point = '该消息对市场的影响需结合后续跟踪与多源验证综合判断。';
+  }
+  // 结论（可操作层面提示）
+  let concl = '';
+  if(cat==='监管/ETF'){
+    concl = '结论：跟踪官方文件与 ETF 申报节奏；若落地推进，逢回调关注主流资产与相关受益板块。';
+  }else if(cat==='安全事件'){
+    concl = '结论：短期控制杠杆、警惕假消息；份额上偏向高流动性资产，关注安全基础设施标的。';
+  }else if(cat==='稳定币'){
+    concl = '结论：留意交易所稳定币净流入/流出与储备变动，作为风险偏好的先行指标。';
+  }else if(cat==='比特币'){
+    concl = '结论：结合资金净流、期货杠杆与链上活跃度判断节奏；中枢仍取决于宏观与监管。';
+  }else if(cat==='以太坊'){
+    concl = '结论：跟踪质押与 L2 数据以及潜在 ETF 动向；分配上注意与 BTC 的轮动节奏。';
+  }else if(cat==='DeFi/生态'){
+    concl = '结论：重视真实用例与现金流数据；事件驱动参与，避免追高。';
+  }else{
+    concl = '结论：维持观察，等待多源确认后再评估交易价值。';
+  }
+  return {cat, point, concl, time};
+}
+
+function renderCnBlock(it){
+  const s = cnSummary(it);
+  return `<div class="desc-cn" style="${showCN?'':'display:none'}">
+    <span class="badge cn-tag">类别：${s.cat}</span>
+    <span class="badge">${s.time || ''}</span>
+    <div style="margin-top:6px">${s.point}</div>
+    <div class="muted" style="margin-top:4px">${s.concl}</div>
+  </div>`;
+}
+
+
+// ===== Runtime controls for window & weights =====
+const selTime = document.getElementById('timewin');
+const chkCnInHot = document.getElementById('cnInHot');
+const inpCnWeight = document.getElementById('cnWeight');
+const wStable = document.getElementById('wStable');
+const wTAO = document.getElementById('wTAO');
+const wDOGE = document.getElementById('wDOGE');
+
+// default: CN not counted (weight 0)
+let CN_INCLUDE_IN_HOT = false;
+let CN_WEIGHT = 0.0;
+
+function getKeywordBoosts(){
+  const wStableV = parseFloat(wStable.value||'0.18') || 0;
+  const wTAOV = parseFloat(wTAO.value||'0.15') || 0;
+  const wDOGEV = parseFloat(wDOGE.value||'0.12') || 0;
+  return [
+    {re:/\b(SEC|ETF|approval|spot etf|lawsuit|settlement)\b/i, w:0.25},
+    {re:/\b(hack|hacker|exploit|security breach|drain|rug)\b/i, w:0.25},
+    {re:/\b(stablecoin|USDT|USDC|Tether|Circle)\b/i, w:wStableV},
+    {re:/\b(TAO|Bittensor)\b/i, w:wTAOV},
+    {re:/\b(DOGE|Dogecoin)\b/i, w:wDOGEV},
+    {re:/\b(Bitcoin|BTC|Halving|Lightning)\b/i, w:0.12},
+    {re:/\b(Ethereum|ETH|L2|rollup|staking)\b/i, w:0.12},
+    {re:/\b(DeFi|DEX|TVL|airdrop)\b/i, w:0.1},
+  ];
+}
+
+// time window helper
+function inTimeWindow(pubDate){
+  if(!pubDate) return true;
+  const mode = selTime.value || 'latest';
+  if(mode==='latest') return true;
+  const ageMs = Date.now() - new Date(pubDate).getTime();
+  const limit = (mode==='24h') ? 24*3600000 : 48*3600000;
+  return ageMs <= limit;
+}
+
+chkCnInHot.addEventListener('change', ()=>{
+  CN_INCLUDE_IN_HOT = chkCnInHot.checked;
+  refreshAll();
+});
+inpCnWeight.addEventListener('input', ()=>{
+  CN_WEIGHT = Math.max(0, Math.min(1, parseFloat(inpCnWeight.value||'0')||0));
+});
+wStable.addEventListener('input', ()=> refreshAll());
+wTAO.addEventListener('input', ()=> refreshAll());
+wDOGE.addEventListener('input', ()=> refreshAll());
+selTime.addEventListener('change', ()=> refreshAll());
+
+// ===== TRENDS PANEL =====
+function buildTrends(hot){
+  const counts = { '监管/ETF':0, '安全事件':0, '稳定币':0, '比特币':0, '以太坊':0, 'DeFi/生态':0, '其他':0 };
+  let newestTs = 0;
+  for(const it of hot){
+    const cat = classifyCategory((it.title||'') + ' ' + (it.desc||''));
+    counts[cat] = (counts[cat]||0) + 1;
+    const ts = it.pubDate ? new Date(it.pubDate).getTime() : 0;
+    if(ts > newestTs) newestTs = ts;
+  }
+  const focus = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const dateStr = newestTs? new Date(newestTs).toLocaleString() : '';
+
+  const bullets = [];
+  if(counts['监管/ETF']>0) bullets.push('监管/ETF 相关消息占比提升，机构化与合规化进程或继续推动增量资金。');
+  if(counts['安全事件']>0) bullets.push('安全事件频发，短线需关注交易所与链上异常流向，控制杠杆。');
+  if(counts['稳定币']>0) bullets.push('稳定币成为资金面“晴雨表”，净流量变化将先于价格反应。');
+  if(counts['比特币']>0) bullets.push('比特币仍是风向标，易与监管/ETF叙事共振，注意与山寨币的节奏切换。');
+  if(counts['以太坊']>0) bullets.push('以太坊与 L2/质押叙事升温，结构性机会增多。');
+  if(bullets.length===0) bullets.push('市场主题分散，建议以风控为先，跟踪权威源的确认信息。');
+
+  const outlook = [];
+  outlook.push('30 天展望：');
+  if(counts['监管/ETF']>=counts['安全事件']) {
+    outlook.push('若监管与 ETF 进展顺利，主流资产维持偏强震荡，逢回调关注 BTC/ETH。');
+  } else {
+    outlook.push('若安全事件发酵或宏观波动上行，短期防守优先，高流动性与对冲策略占优。');
+  }
+  outlook.push('关注稳定币净流入/流出与交易所储备作为先行指标；事件驱动下做好仓位分层。');
+
+  const kpi = `
+    <div class="kpi">
+      ${focus.map(([k,v])=>`<span class="badge">${k}：${v} 条</span>`).join('')}
+      <span class="badge">最新时间：${dateStr||'—'}</span>
+    </div>`;
+
+  return `
+    <div class="trend-card">
+      <h3>要点</h3>
+      ${kpi}
+      <ul class="trend-list">
+        ${bullets.map(x=>`<li>${x}</li>`).join('')}
+      </ul>
+      <h3 style="margin-top:10px">预测</h3>
+      <ul class="trend-list">
+        ${outlook.map(x=>`<li>${x}</li>`).join('')}
+      </ul>
+    </div>
+  `;
+}
+
+// 初始与自动刷新
+refreshAll();
+autoTimer = setInterval(refreshAll, 15*60*1000);
+</script>
+</body>
+</html>
