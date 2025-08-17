@@ -313,6 +313,9 @@
 
             // --- 1. CONFIGURATION & STATE ---
             const CONFIG = {
+                OPENAI_BASE_URL: "https://free.v36.cm",
+                OPENAI_API_KEY: "sk-8pxkQ1TWxm8kG2GxB1818eE9Cb2b4b53A9Fd327d9eA531Ad",
+                
                 api: {
                     binanceRest: 'https://api3.binance.com/api/v3',
                     binanceWs: 'wss://stream.binance.com:9443/stream',
@@ -320,7 +323,7 @@
                     cryptoCompare: 'https://min-api.cryptocompare.com/data/v2/news/',
                     etherscan: 'https://api.etherscan.io/api'
                 },
-                etherscanApiKey: 'YourApiKeyToken', 
+                etherscanApiKey: 'AQ19QP12IEVP7BBZPV7EK8CVAZ6GANPYDJ', 
                 whaleWallets: [
                     { address: '0xab5801a7d398351b8be11c439e05c5b3259aec9b', name: '主钱包 (0xab58)' },
                     { address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', name: 'vitalik.eth' }
@@ -436,7 +439,7 @@
                 renderGeminiPrediction: (prediction) => {
                     DOM.geminiPredictionContainer.innerHTML = `
                         <div class="gemini-prediction">
-                            <div class="k">🔮 Gemini 价格预测</div>
+                            <div class="k">🔮 AI 价格预测</div>
                             <div class="v">${prediction.pricePrediction || '暂无预测'} (信心: ${prediction.confidence || 'N/A'})</div>
                             <div class="k" style="margin-top: 10px;">💡 策略建议</div>
                             <div class="v">${prediction.strategySuggestion || '暂无建议'}</div>
@@ -1114,7 +1117,7 @@
             }
             const signalEngine = new TradingSignalEngine();
 
-            // --- 7. GEMINI API INTEGRATION ---
+            // --- 7. AI API INTEGRATION (NOW OPENAI-COMPATIBLE) ---
             async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
                 for (let i = 0; i < retries; i++) {
                     try {
@@ -1135,7 +1138,7 @@
             async function generateAiAnalysisReport() {
                 DOM.geminiBtn.disabled = true;
                 DOM.geminiBtn.textContent = '分析中...';
-                DOM.geminiPredictionContainer.innerHTML = `<div class="gemini-prediction"><div class="v">Gemini 正在分析数据...</div></div>`;
+                DOM.geminiPredictionContainer.innerHTML = `<div class="gemini-prediction"><div class="v">AI 正在分析数据...</div></div>`;
 
                 const { breakdown, metrics } = STATE.lastAnalysis;
                 const newsHeadlines = STATE.news.map(n => n.title).join('; ');
@@ -1158,61 +1161,56 @@
                 };
                 const dexSummary = STATE.dexVolumes.slice(0, 3).map(d => `${d.displayName}: ${formatLargeNumber(d.total24h)}`).join(', ');
 
+                // UPDATE: Switched prompt to Chinese
+                const userPrompt = `
+                    关于 ${STATE.symbol} (${CONFIG.klineIntervals[STATE.kInterval]} 时间周期) 的数据:
+                    - 当前价格: ${DOM.lastPrice.textContent}
+                    - 24小时变化: ${DOM.change24h.textContent}
+                    - 趋势信号: ${metrics.trend}
+                    - 风险等级: ${metrics.risk}
+                    - 贪婪恐惧指数: ${metrics.fearGreedIndex}
+                    - 关键指标: ${JSON.stringify(breakdown)}
+                    - 链上信号: ${breakdown['资金流']?.reason}
+                    - 近期巨鲸活动: ${whaleSummary}
+                    - 热门DEX交易量 (24小时): ${dexSummary}
+                    - 近期新闻头条: ${newsHeadlines}
 
-                const prompt = `
-                    You are a professional cryptocurrency quantitative analyst. Your task is to provide a structured prediction based on the provided real-time data and recent news. Respond ONLY with a valid JSON object.
-
-                    Data for ${STATE.symbol} (${CONFIG.klineIntervals[STATE.kInterval]} timeframe):
-                    - Current Price: ${DOM.lastPrice.textContent}
-                    - 24h Change: ${DOM.change24h.textContent}
-                    - Trend Signal: ${metrics.trend}
-                    - Risk Level: ${metrics.risk}
-                    - Fear & Greed Index: ${metrics.fearGreedIndex}
-                    - Key Indicators: ${JSON.stringify(breakdown)}
-                    - On-Chain Signal: ${breakdown['资金流']?.reason}
-                    - Recent Whale Activity: ${whaleSummary}
-                    - Top DEX Volumes (24h): ${dexSummary}
-                    - Recent News Headlines: ${newsHeadlines}
-
-                    Based on a comprehensive analysis of ALL the provided data (technical, on-chain, whale activity, DEX volumes, and news), provide a structured forecast in the following JSON format.
+                    请基于对所有提供的数据（技术指标、链上数据、巨鲸活动、DEX交易量和新闻）的全面分析，以下列JSON格式提供一个结构化的预测。
                 `;
 
                 try {
-                    const apiKey = ""; // Will be provided by the environment
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiUrl = `${CONFIG.OPENAI_BASE_URL}/v1/chat/completions`;
                     
                     const payload = {
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    pricePrediction: { type: "STRING", description: "A short, specific price prediction in Chinese, considering all data. e.g., '在宏观利好消息推动下，可能突破$70,000' or '技术面看跌，或将回调至$65,000支撑区域'." },
-                                    confidence: { type: "NUMBER", description: "Confidence level for the prediction, from 1 (low) to 5 (high)." },
-                                    strategySuggestion: { type: "STRING", description: "A concise, actionable trading suggestion in Chinese, considering all data. e.g., '建议在回调至支撑位附近时寻找买入机会，但需关注新闻面变化。'" }
-                                }
-                            }
-                        }
+                        model: "gpt-4o-mini",
+                        messages: [
+                            { role: "system", content: "你是一位专业的加密货币量化分析师。请仅使用一个包含 'pricePrediction', 'confidence', 和 'strategySuggestion' 键的有效JSON对象进行回复。所有回复内容必须使用中文。" },
+                            { role: "user", content: userPrompt }
+                        ],
+                        response_format: { type: "json_object" },
+                        temperature: 0.7,
                     };
 
                     const response = await fetchWithRetry(apiUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${CONFIG.OPENAI_API_KEY}`
+                        },
                         body: JSON.stringify(payload)
                     });
                     
                     if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
                     
                     const result = await response.json();
-                    if (!result.candidates || result.candidates.length === 0) {
-                        throw new Error("No valid response from Gemini API.");
+                    if (!result.choices || result.choices.length === 0) {
+                        throw new Error("No valid response from OpenAI API.");
                     }
-                    const predictionJson = JSON.parse(result.candidates[0].content.parts[0].text);
+                    const predictionJson = JSON.parse(result.choices[0].message.content);
                     UI.renderGeminiPrediction(predictionJson);
 
                 } catch (error) {
-                    console.error("Gemini API call failed:", error);
+                    console.error("OpenAI API call failed:", error);
                     DOM.geminiPredictionContainer.innerHTML = `<div class="error-message">AI 预测失败</div>`;
                 } finally {
                     DOM.geminiBtn.disabled = false;
