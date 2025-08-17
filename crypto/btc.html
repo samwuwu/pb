@@ -34,34 +34,90 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+        
+        /* --- NEW LAYOUT STRUCTURE --- */
+        .wrap { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 16px;
+        }
+        .main-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1fr; /* Mobile-first: single column */
+        }
+        /* Tablet and small desktop: 2 columns */
+        @media (min-width: 992px) {
+            .main-grid {
+                grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+            }
+        }
+        /* Large desktop: 3 columns for optimal data view */
+        @media (min-width: 1280px) {
+            .main-grid {
+                grid-template-columns: minmax(0, 3fr) minmax(320px, 1fr) minmax(320px, 1fr);
+            }
+        }
 
-        .wrap { max-width: 1320px; margin: 20px auto; padding: 0 16px }
-        header { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 12px }
+        .main-content, .ai-column, .data-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 16px;
+        }
         .title-container { display: flex; align-items: center; gap: 12px; }
-        .title { font-weight: 800; font-size: 18px; }
+        .title { font-weight: 800; font-size: 20px; }
         .status-indicator { width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease; }
         .status-connected { background-color: var(--buy); box-shadow: 0 0 8px var(--buy); }
         .status-connecting { background-color: var(--warn); box-shadow: 0 0 8px var(--warn); animation: pulse 1.5s infinite; }
         .status-disconnected { background-color: var(--sell); box-shadow: 0 0 8px var(--sell); }
 
-        .panel { background: var(--panel); border: 1px solid #1f2937; border-radius: 14px; box-shadow: var(--shadow) }
-        .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 10px 12px }
-        .toolbar label { color: var(--muted); font-weight: 600 }
-        input, select, button { background: #0b1220; border: 1px solid #1f2937; color: var(--text); padding: 8px 10px; border-radius: 10px; transition: all 0.2s ease; }
+        .panel { background: var(--panel); border: 1px solid #1f2937; border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
+        
+        .toolbar { 
+            display: flex; 
+            gap: 12px; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            padding: 12px 16px;
+            flex-direction: row;
+        }
+        .toolbar-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .toolbar label { color: var(--muted); font-weight: 600; font-size: 13px; }
+        input, select, button { background: #0b1220; border: 1px solid #1f2937; color: var(--text); padding: 8px 12px; border-radius: 10px; transition: all 0.2s ease; }
         select:hover, button:hover:not(:disabled) { border-color: var(--accent); }
         button:disabled { opacity: .5; cursor: not-allowed; }
+        @media (max-width: 767px) {
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .toolbar-group { flex-direction: column; align-items: stretch; width: 100%;}
+            .toolbar-group > div { display: flex; flex-direction: column; }
+            .toolbar-group select { width: 100%; }
+            .toolbar-spacer { display: none; }
+        }
 
-        .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-top: 16px; }
-        .left-column { display: flex; flex-direction: column; gap: 16px; }
-        .right-column { display: flex; flex-direction: column; gap: 16px; }
 
-        .statbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 12px }
+        .statbar { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 16px; 
+            padding: 16px;
+        }
         .stat { background: var(--panel-light); border: 1px solid #2a3447; border-radius: 12px; padding: 12px; transition: all 0.3s ease; }
+        .stat:hover { transform: translateY(-2px); border-color: var(--accent); }
         .stat .k { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
         .stat .v { font-size: 18px; font-weight: 800; }
 
-        .chart-container { position: relative; padding: 12px; border-radius: 14px; border: 1px solid #1f2937; background: linear-gradient(180deg, #0b1220, #0b0f14); min-height: 280px; display: flex; flex-direction: column; }
+        .chart-container { position: relative; padding: 16px; background: linear-gradient(180deg, #0b1220, #0b0f14); min-height: 300px; flex-grow: 1; }
         .chart-container h3 { margin: 0 0 8px 4px; font-weight: 700; color: var(--muted); font-size: 13px; flex-shrink: 0; }
+        .chart-wrapper { flex-grow: 1; min-height: 250px; }
         .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; border: 1px solid #263144; background: #0b1220; color: var(--muted) }
         .buy { color: var(--buy) }
         .sell { color: var(--sell) }
@@ -71,7 +127,7 @@
         .ai-panel-header h3 { margin: 0; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
         .ai-summary { padding: 16px; background: var(--panel-light); text-align: center; }
         .ai-summary-title { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
-        .ai-summary-text { font-size: 18px; font-weight: 800; line-height: 1.4; min-height: 50px; }
+        .ai-summary-text { font-size: 18px; font-weight: 800; line-height: 1.4; min-height: 50px; word-break: break-word; }
         
         .ai-compass { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .compass-container { position: relative; width: 150px; height: 75px; overflow: hidden; }
@@ -95,16 +151,34 @@
         .gemini-prediction .k { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
         .gemini-prediction .v { font-size: 14px; color: var(--text); }
 
-        /* On-chain Intel Panel */
-        .onchain-intel-grid { padding: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+        /* On-chain Intel & Data Panels */
+        .data-panel-content { padding: 16px; display: grid; grid-template-columns: 1fr; gap: 16px; }
         .intel-stat { display: flex; align-items: flex-start; gap: 12px; }
         .intel-icon { font-size: 24px; margin-top: 4px; }
         .intel-value { font-size: 16px; font-weight: 700; }
         .intel-label { font-size: 12px; color: var(--muted); }
         .intel-trend { font-weight: 600; font-size: 14px; }
+
+        .whale-wallet-container { border-bottom: 1px solid #1f2937; padding-bottom: 12px; margin-bottom: 12px; }
+        .whale-wallet-container:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .whale-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .whale-name { font-weight: 700; font-size: 14px; color: var(--accent); }
+        .whale-balance { font-weight: 700; font-size: 14px; }
+        .whale-tx { display: flex; align-items: center; gap: 12px; font-size: 13px; margin-top: 8px; }
+        .whale-tx-dir { font-size: 20px; }
+        .whale-tx-details { flex-grow: 1; }
+        .whale-tx-amount { font-weight: 700; }
+        .whale-tx-meta { font-size: 11px; color: var(--muted); }
+        .whale-tx-meta a { color: var(--accent); text-decoration: none; }
+        .whale-tx-meta a:hover { text-decoration: underline; }
         
-        /* News Panel */
-        .news-list { padding: 16px; max-height: 250px; overflow-y: auto; }
+        .dex-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .dex-name { font-weight: 600; color: var(--text); }
+        .dex-volume-details { text-align: right; }
+        .dex-volume { font-weight: 700; }
+        .dex-change { font-size: 11px; }
+
+        .news-list { padding: 16px; max-height: 280px; overflow-y: auto; flex-grow: 1; }
         .news-item { margin-bottom: 12px; }
         .news-title { font-weight: 600; color: var(--text); text-decoration: none; display: block; margin-bottom: 4px; }
         .news-title:hover { color: var(--accent); }
@@ -132,14 +206,6 @@
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
         
-        @media (max-width: 1200px) {
-            .main-grid { grid-template-columns: 1fr; }
-            .right-column { display: grid; grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 768px) {
-            .right-column { grid-template-columns: 1fr; }
-            .toolbar { flex-direction: column; align-items: stretch; }
-        }
     </style>
 </head>
 
@@ -158,38 +224,45 @@
         </header>
 
         <div class="panel toolbar">
-            <div><label>📈 交易对</label><select id="symbol"></select></div>
-            <div><label>📊 成交聚合</label><select id="bucket"></select></div>
-            <div><label>🕐 K线周期</label><select id="kInterval"></select></div>
-            <div style="flex:1"></div>
-            <div>
+            <div class="toolbar-group">
+                <div><label>📈 交易对</label><select id="symbol"></select></div>
+                <div><label>📊 成交聚合</label><select id="bucket"></select></div>
+                <div><label>🕐 K线周期</label><select id="kInterval"></select></div>
+            </div>
+            <div style="flex:1" class="toolbar-spacer"></div>
+            <div class="toolbar-group">
                 <button id="pauseBtn" title="暂停数据更新">⏯️ 暂停</button>
                 <button id="resetBtn" title="重新连接数据源">🔄 重连</button>
             </div>
         </div>
 
+        <div class="panel statbar">
+            <div class="stat"><div class="k">最新价</div><div class="v" id="lastPrice">-</div></div>
+            <div class="stat"><div class="k">24h 涨跌幅</div><div class="v" id="change24h">-</div></div>
+            <div class="stat"><div class="k">周期主动买量</div><div class="v buy" id="buyNow">-</div></div>
+            <div class="stat"><div class="k">周期主动卖量</div><div class="v sell" id="sellNow">-</div></div>
+            <div class="stat"><div class="k">周期净值</div><div class="v" id="netNow">-</div></div>
+        </div>
+
+        <!-- NEW: Re-organized grid for responsiveness -->
         <div class="main-grid">
-            <div class="left-column">
-                <div class="panel statbar">
-                    <div class="stat"><div class="k">最新价</div><div class="v" id="lastPrice">-</div></div>
-                    <div class="stat"><div class="k">24h 涨跌幅</div><div class="v" id="change24h">-</div></div>
-                    <div class="stat"><div class="k">周期主动买量</div><div class="v buy" id="buyNow">-</div></div>
-                    <div class="stat"><div class="k">周期主动卖量</div><div class="v sell" id="sellNow">-</div></div>
-                    <div class="stat"><div class="k">周期净值</div><div class="v" id="netNow">-</div></div>
-                </div>
-                <div class="chart-container">
+            <!-- Column 1: Main Charts -->
+            <div class="main-content">
+                <div class="panel chart-container">
                     <h3 id="klineTitle">价格 K 线</h3>
-                    <div id="kchart" style="flex-grow: 1;"></div>
+                    <div class="chart-wrapper" id="kchart"></div>
                     <div class="loader-overlay" id="kchartLoader"><span class="loader"></span></div>
                 </div>
-                 <div class="chart-container">
+                 <div class="panel chart-container">
                     <h3>主动买/卖 & 净主动体量</h3>
-                    <div id="flowNetContainer" style="height: 220px; position: relative; flex-grow: 1;">
+                    <div class="chart-wrapper" id="flowNetContainer">
                         <canvas id="flowNetChart"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="right-column">
+
+            <!-- Column 2: AI Analysis -->
+            <div class="ai-column">
                 <div class="panel">
                     <div class="ai-panel-header"><h3>🧠 AI 智能分析引擎</h3></div>
                     <div id="aiAnalysisContainer"></div>
@@ -206,9 +279,21 @@
                     <div class="metrics-grid" id="aiMetricsContainer"></div>
                     <div id="geminiPredictionContainer"></div>
                 </div>
+            </div>
+
+            <!-- Column 3: On-chain & Market Data -->
+            <div class="data-column">
                 <div class="panel">
                      <div class="ai-panel-header"><h3>🔗 链上情报 (DefiLlama)</h3></div>
-                     <div class="onchain-intel-grid" id="onchainIntelGrid"></div>
+                     <div class="data-panel-content" id="onchainIntelGrid"></div>
+                </div>
+                <div class="panel">
+                    <div class="ai-panel-header"><h3>📈 DEX 24h交易量排行</h3></div>
+                    <div class="data-panel-content" id="dexVolumeList"></div>
+                </div>
+                <div class="panel">
+                    <div class="ai-panel-header"><h3>🐳 巨鲸钱包动态 (ETH)</h3></div>
+                    <div class="data-panel-content" id="whaleActivityList"></div>
                 </div>
                 <div class="panel">
                      <div class="ai-panel-header"><h3>📰 市场前沿资讯</h3></div>
@@ -229,15 +314,27 @@
             // --- 1. CONFIGURATION & STATE ---
             const CONFIG = {
                 api: {
-                    binanceRest: 'https://api.binance.com/api/v3',
+                    binanceRest: 'https://api3.binance.com/api/v3',
                     binanceWs: 'wss://stream.binance.com:9443/stream',
-                    defiLlama: 'https://stablecoins.llama.fi/stablecoincharts/all',
-                    cryptoCompare: 'https://min-api.cryptocompare.com/data/v2/news/'
+                    defiLlama: 'https://api.llama.fi',
+                    cryptoCompare: 'https://min-api.cryptocompare.com/data/v2/news/',
+                    etherscan: 'https://api.etherscan.io/api'
                 },
-                symbols: { 'BTCUSDT': { name: 'BTC/USDT', icon: '₿' }, 'ETHUSDT': { name: 'ETH/USDT', icon: 'Ξ' }, 'SOLUSDT': { name: 'SOL/USDT', icon: '☀️' }, 'DOGEUSDT': { name: 'DOGE/USDT', icon: 'Ð' }, 'TAOUSDT': { name: 'TAO/USDT', icon: '🧠' } },
+                etherscanApiKey: 'YourApiKeyToken', 
+                whaleWallets: [
+                    { address: '0xab5801a7d398351b8be11c439e05c5b3259aec9b', name: '主钱包 (0xab58)' },
+                    { address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', name: 'vitalik.eth' }
+                ],
+                symbols: { 
+                    'BTCUSDT': { name: 'BTC/USDT', icon: '₿', chain: null }, 
+                    'ETHUSDT': { name: 'ETH/USDT', icon: 'Ξ', chain: 'Ethereum' }, 
+                    'SOLUSDT': { name: 'SOL/USDT', icon: '☀️', chain: 'Solana' }, 
+                    'DOGEUSDT': { name: 'DOGE/USDT', icon: 'Ð', chain: null }, 
+                    'TAOUSDT': { name: 'TAO/USDT', icon: '🧠', chain: null } 
+                },
                 buckets: { '1分钟': 60000, '5分钟': 300000, '15分钟': 900000 },
                 klineIntervals: { '1m': '1分钟', '5m': '5分钟', '15m': '15分钟', '30m': '30分钟', '1h': '1小时', '4h': '4小时', '1d': '1日' },
-                defaults: { symbol: 'BTCUSDT', bucketMs: 60000, kInterval: '15m' },
+                defaults: { symbol: 'ETHUSDT', bucketMs: 60000, kInterval: '15m' },
                 charts: { maxDataPoints: 300, updateThrottleMs: 250 }
             };
 
@@ -248,7 +345,9 @@
                 ws: null, isPaused: false, reconnectTimer: null,
                 klineHistory: [], buckets: new Map(),
                 isRafPending: false, predictionUpdateInterval: null,
-                onchainIntel: { stablecoinNetflow: 0 },
+                onchainIntel: { stablecoinNetflow: 0, chainTvlChange: null, chainDexVolume: null },
+                whaleData: [],
+                dexVolumes: [],
                 lastAnalysis: {},
                 news: []
             };
@@ -268,7 +367,9 @@
                 geminiPredictionContainer: $('geminiPredictionContainer'),
                 onchainIntelGrid: $('onchainIntelGrid'),
                 newsListContainer: $('newsListContainer'),
-                geminiBtn: $('gemini-analysis-btn')
+                whaleActivityList: $('whaleActivityList'),
+                geminiBtn: $('gemini-analysis-btn'),
+                dexVolumeList: $('dexVolumeList')
             };
 
             const UI = {
@@ -343,18 +444,126 @@
                     `;
                 },
                 renderOnchainIntel: (intel) => {
-                    const formatNumber = (num, unit) => (num / 1e6).toFixed(2) + unit;
+                    const formatLargeNumber = (num) => {
+                        if (num === null || num === undefined) return '-';
+                        if (Math.abs(num) >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+                        if (Math.abs(num) >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
+                        if (Math.abs(num) >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
+                        return num.toFixed(2);
+                    };
+                    const formatPercent = (num) => {
+                        if (num === null || num === undefined) return '-';
+                        return `${(num * 100).toFixed(2)}%`;
+                    };
                     const trendArrow = (val) => val > 0 ? '🔼' : '🔽';
                     const trendColor = (val) => val > 0 ? 'var(--buy)' : 'var(--sell)';
-                    
-                    DOM.onchainIntelGrid.innerHTML = `
+
+                    let html = `
                         <div class="intel-stat">
                             <div class="intel-icon">💵</div>
                             <div>
-                                <div class="intel-value">${formatNumber(intel.stablecoinNetflow, 'M')} <span class="intel-trend" style="color:${trendColor(intel.stablecoinNetflow)}">${trendArrow(intel.stablecoinNetflow)}</span></div>
+                                <div class="intel-value">${formatLargeNumber(intel.stablecoinNetflow)} <span class="intel-trend" style="color:${trendColor(intel.stablecoinNetflow)}">${trendArrow(intel.stablecoinNetflow)}</span></div>
                                 <div class="intel-label">24h 稳定币净流入 (USD)</div>
                             </div>
-                        </div>`;
+                        </div>
+                    `;
+
+                    if (intel.chainTvlChange !== null) {
+                        html += `
+                            <div class="intel-stat">
+                                <div class="intel-icon">🔒</div>
+                                <div>
+                                    <div class="intel-value" style="color:${trendColor(intel.chainTvlChange)}">${formatPercent(intel.chainTvlChange)}</div>
+                                    <div class="intel-label">24h 链上TVL变化</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (intel.chainDexVolume !== null) {
+                        html += `
+                            <div class="intel-stat">
+                                <div class="intel-icon">🔄</div>
+                                <div>
+                                    <div class="intel-value">${formatLargeNumber(intel.chainDexVolume)}</div>
+                                    <div class="intel-label">24h 链上DEX交易量 (USD)</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    DOM.onchainIntelGrid.innerHTML = html;
+                },
+                renderWhaleActivity: (whaleData) => {
+                    if (whaleData.length === 0) {
+                        DOM.whaleActivityList.innerHTML = `<div class="error-message" style="padding: 10px;">无巨鲸数据</div>`;
+                        return;
+                    }
+                    const html = whaleData.map(wallet => {
+                        const balance = (wallet.balance / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 });
+                        
+                        const txsHtml = wallet.transactions.length > 0
+                            ? wallet.transactions.map(tx => {
+                                const isOut = tx.from.toLowerCase() === wallet.address.toLowerCase();
+                                const dirIcon = isOut ? `<span style="color: var(--sell)">📤</span>` : `<span style="color: var(--buy)">📥</span>`;
+                                const amount = (tx.value / 1e18).toFixed(2);
+                                const time = new Date(tx.timeStamp * 1000).toLocaleString();
+                                const shortAddr = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
+                                return `
+                                    <div class="whale-tx">
+                                        <div class="whale-tx-dir">${dirIcon}</div>
+                                        <div class="whale-tx-details">
+                                            <div class="whale-tx-amount">${isOut ? '转出' : '转入'} ${amount} ETH</div>
+                                            <div class="whale-tx-meta">
+                                                <span>${time} | From: ${shortAddr(tx.from)} | To: ${shortAddr(tx.to)}</span>
+                                                <a href="https://etherscan.io/tx/${tx.hash}" target="_blank">🔗 查看</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')
+                            : `<div class="error-message" style="font-size: 12px; padding: 5px 0;">暂无近期大额交易</div>`;
+
+                        return `
+                            <div class="whale-wallet-container">
+                                <div class="whale-header">
+                                    <span class="whale-name">${wallet.name}</span>
+                                    <span class="whale-balance">余额: ${balance} ETH</span>
+                                </div>
+                                ${txsHtml}
+                            </div>
+                        `;
+                    }).join('');
+                    DOM.whaleActivityList.innerHTML = html;
+                },
+                renderDexVolumes: (volumes) => {
+                    const formatLargeNumber = (num) => {
+                        if (num === null || num === undefined) return '-';
+                        if (Math.abs(num) >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+                        if (Math.abs(num) >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+                        if (Math.abs(num) >= 1e3) return `$${(num / 1e3).toFixed(2)}K`;
+                        return `$${num.toFixed(2)}`;
+                    };
+                    const trendColor = (val) => val >= 0 ? 'var(--buy)' : 'var(--sell)';
+
+                    if (volumes.length === 0) {
+                        DOM.dexVolumeList.innerHTML = `<div class="error-message" style="padding: 10px;">无DEX交易量数据</div>`;
+                        return;
+                    }
+
+                    const html = volumes.map(dex => `
+                        <div class="dex-row">
+                            <span class="dex-name">${dex.displayName}</span>
+                            <div class="dex-volume-details">
+                                <div class="dex-volume">${formatLargeNumber(dex.total24h)}</div>
+                                <div class="dex-change" style="color: ${trendColor(dex.change_1d)}">
+                                    ${dex.change_1d !== null ? `${dex.change_1d.toFixed(2)}%` : '-'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    DOM.dexVolumeList.innerHTML = html;
                 },
                  renderNews: (news) => {
                     if (!news || news.length === 0) {
@@ -431,46 +640,148 @@
                 }
             }
             
-            async function fetchStablecoinFlows() {
+            async function fetchAllOnchainData() {
+                // 1. Fetch stablecoin data
                 try {
-                    const data = await fetchData(CONFIG.api.defiLlama, 'DefiLlama API fetch failed');
-                    if (!Array.isArray(data)) {
-                        throw new Error("Invalid data format from DefiLlama");
-                    }
-                    const usdtData = data.find(s => s.id === "2");
-                    const usdcData = data.find(s => s.id === "1");
+                    const stablecoinUrl = `https://stablecoins.llama.fi/stablecoincharts/all`;
+                    const data = await fetchData(stablecoinUrl, 'DefiLlama Stablecoin API fetch failed');
                     
-                    let usdtChange = 0;
-                    let usdcChange = 0;
-
-                    const get24hChange = (chartData) => {
-                        if (!chartData || chartData.length < 2) return 0;
-                        const latest = chartData[chartData.length - 1]?.totalCirculatingUSD?.peggedUSD;
-                        const previous = chartData[chartData.length - 2]?.totalCirculatingUSD?.peggedUSD;
-                        if (latest === undefined || previous === undefined) return 0;
-                        return latest - previous;
-                    };
-                    
-                    if (usdtData) {
-                        usdtChange = get24hChange(usdtData.chart);
-                    } else {
-                        console.warn("USDT data not found in DefiLlama response.");
+                    if (!Array.isArray(data) || data.length < 2) {
+                        throw new Error("Invalid or insufficient data from DefiLlama stablecoin charts");
                     }
 
-                    if (usdcData) {
-                        usdcChange = get24hChange(usdcData.chart);
+                    const latestDataPoint = data[data.length - 1];
+                    const previousDataPoint = data[data.length - 2];
+
+                    const latestCirculation = latestDataPoint?.totalCirculating?.peggedUSD;
+                    const previousCirculation = previousDataPoint?.totalCirculating?.peggedUSD;
+
+                    if (latestCirculation !== undefined && previousCirculation !== undefined) {
+                        STATE.onchainIntel.stablecoinNetflow = latestCirculation - previousCirculation;
                     } else {
-                        console.warn("USDC data not found in DefiLlama response.");
+                        throw new Error("Unexpected data structure in stablecoin charts response");
                     }
-                    
-                    STATE.onchainIntel.stablecoinNetflow = usdtChange + usdcChange;
-                    UI.renderOnchainIntel(STATE.onchainIntel);
+
                 } catch (error) {
                     console.error("Failed to process stablecoin data:", error);
-                    UI.showError(DOM.onchainIntelGrid, '稳定币数据加载失败');
-                    STATE.onchainIntel.stablecoinNetflow = 0; // Reset to 0 on failure
+                    STATE.onchainIntel.stablecoinNetflow = 0;
+                }
+
+                // 2. Fetch Chain-specific data
+                const symbolInfo = CONFIG.symbols[STATE.symbol];
+                if (!symbolInfo || !symbolInfo.chain) {
+                    STATE.onchainIntel.chainTvlChange = null;
+                    STATE.onchainIntel.chainDexVolume = null;
+                    UI.renderOnchainIntel(STATE.onchainIntel);
+                    return;
+                }
+                const chain = symbolInfo.chain;
+
+                try {
+                    const tvlUrl = `${CONFIG.api.defiLlama}/v2/historicalChainTvl/${chain}`;
+                    const tvlData = await fetchData(tvlUrl, 'DefiLlama TVL API fetch failed');
+                    if (tvlData && tvlData.length >= 2) {
+                        const lastTvl = tvlData[tvlData.length - 1].tvl;
+                        const prevTvl = tvlData[tvlData.length - 2].tvl;
+                        STATE.onchainIntel.chainTvlChange = prevTvl > 0 ? (lastTvl - prevTvl) / prevTvl : 0;
+                    } else {
+                        STATE.onchainIntel.chainTvlChange = null;
+                    }
+
+                    const volumeUrl = `${CONFIG.api.defiLlama}/overview/dexs/${chain}?excludeTotalDataChartBreakdown=true&excludeProtocolList=true`;
+                    const volumeData = await fetchData(volumeUrl, 'DefiLlama DEX Volume API fetch failed');
+                    if (volumeData && Array.isArray(volumeData.totalDataChart) && volumeData.totalDataChart.length > 0) {
+                        STATE.onchainIntel.chainDexVolume = volumeData.totalDataChart[volumeData.totalDataChart.length - 1][1];
+                    } else {
+                         STATE.onchainIntel.chainDexVolume = null;
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch chain-specific on-chain data:", error);
+                    STATE.onchainIntel.chainTvlChange = null;
+                    STATE.onchainIntel.chainDexVolume = null;
+                }
+
+                // 3. Render all data
+                UI.renderOnchainIntel(STATE.onchainIntel);
+            }
+
+            async function fetchWhaleActivity() {
+                if (CONFIG.symbols[STATE.symbol].chain !== 'Ethereum') {
+                    DOM.whaleActivityList.innerHTML = `<div class="error-message" style="padding: 10px;">当前仅支持跟踪以太坊巨鲸</div>`;
+                    STATE.whaleData = [];
+                    return;
+                }
+
+                DOM.whaleActivityList.innerHTML = `<div class="loader-text" style="text-align:center; padding: 20px;">加载巨鲸动态中...</div>`;
+
+                try {
+                    let whaleData = CONFIG.whaleWallets.map(w => ({ ...w, balance: 0, transactions: [] }));
+                    const addresses = CONFIG.whaleWallets.map(w => w.address).join(',');
+
+                    const balanceUrl = `${CONFIG.api.etherscan}?module=account&action=balancemulti&address=${addresses}&tag=latest&apikey=${CONFIG.etherscanApiKey}`;
+                    const balanceRes = await fetchData(balanceUrl, 'Etherscan balance API failed');
+                    if (balanceRes.status === "1") {
+                        balanceRes.result.forEach(bal => {
+                            const wallet = whaleData.find(w => w.address.toLowerCase() === bal.account.toLowerCase());
+                            if (wallet) {
+                                wallet.balance = parseFloat(bal.balance);
+                            }
+                        });
+                    }
+
+                    const txPromises = CONFIG.whaleWallets.map(wallet => {
+                        const url = `${CONFIG.api.etherscan}?module=account&action=txlist&address=${wallet.address}&startblock=0&endblock=99999999&page=1&offset=50&sort=desc&apikey=${CONFIG.etherscanApiKey}`;
+                        return fetchData(url, `Etherscan txlist API failed for ${wallet.address}`);
+                    });
+                    const txResults = await Promise.all(txPromises);
+
+                    const sevenDaysAgo = Date.now() / 1000 - 7 * 24 * 60 * 60;
+                    const whaleTxThreshold = 100 * 1e18; 
+
+                    txResults.forEach((res, index) => {
+                        if (res.status === "1") {
+                            const walletAddress = CONFIG.whaleWallets[index].address;
+                            const wallet = whaleData.find(w => w.address === walletAddress);
+                            if (wallet) {
+                                wallet.transactions = res.result
+                                    .filter(tx => tx.timeStamp > sevenDaysAgo && parseFloat(tx.value) > whaleTxThreshold)
+                                    .slice(0, 5);
+                            }
+                        }
+                    });
+
+                    STATE.whaleData = whaleData;
+                    UI.renderWhaleActivity(STATE.whaleData);
+
+                } catch (error) {
+                    console.error("Failed to fetch or process whale activity:", error);
+                    UI.showError(DOM.whaleActivityList, '巨鲸动态加载失败');
+                    STATE.whaleData = [];
                 }
             }
+
+            async function fetchDexVolumes() {
+                DOM.dexVolumeList.innerHTML = `<div class="loader-text" style="text-align:center; padding: 20px;">加载DEX排行中...</div>`;
+                try {
+                    const url = `${CONFIG.api.defiLlama}/overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true`;
+                    const data = await fetchData(url, 'DefiLlama DEX overview API fetch failed');
+                    
+                    if (data && Array.isArray(data.protocols)) {
+                        const sortedDexs = data.protocols
+                            .sort((a, b) => b.total24h - a.total24h)
+                            .slice(0, 5);
+                        STATE.dexVolumes = sortedDexs;
+                        UI.renderDexVolumes(sortedDexs);
+                    } else {
+                        throw new Error("Invalid data format from DEX overview API");
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch DEX volumes:", error);
+                    UI.showError(DOM.dexVolumeList, 'DEX排行加载失败');
+                    STATE.dexVolumes = [];
+                }
+            }
+
 
             async function fetchNews(symbol) {
                 DOM.newsListContainer.innerHTML = `<div class="loader-text" style="text-align:center; padding: 20px;">加载新闻中...</div>`;
@@ -496,7 +807,7 @@
                 } catch (error) {
                     console.error("Failed to fetch or process news:", error);
                     UI.showError(DOM.newsListContainer, '新闻资讯加载失败');
-                    STATE.news = []; // Clear news on failure
+                    STATE.news = [];
                     return [];
                 }
             }
@@ -612,33 +923,46 @@
                     const rs = avgGain / avgLoss;
                     return 100 - (100 / (1 + rs));
                 }
-                static calculateEMA(data, period) {
+                static calculateLastEMA(data, period) {
                     if (data.length < period) return null;
+                    const multiplier = 2 / (period + 1);
+                    let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
+                    for (let i = period; i < data.length; i++) {
+                        ema = (data[i] * multiplier) + (ema * (1 - multiplier));
+                    }
+                    return ema;
+                }
+                static calculateMACD(prices, fast=12, slow=26, signal=9) {
+                    if (prices.length < slow) return null;
+                    const emaFast = this.calculateLastEMA(prices, fast);
+                    const emaSlow = this.calculateLastEMA(prices, slow);
+                    if (emaFast === null || emaSlow === null) return null;
+                    
+                    const macdLine = emaFast - emaSlow;
+
+                    const fullEmaFast = this.calculateFullEMA(prices, fast);
+                    const fullEmaSlow = this.calculateFullEMA(prices, slow);
+                    const macdLineHistory = fullEmaSlow.map((slowVal, i) => slowVal !== null ? fullEmaFast[i] - slowVal : null).filter(v => v !== null);
+                    
+                    if (macdLineHistory.length < signal) return null;
+                    
+                    const signalLine = this.calculateLastEMA(macdLineHistory, signal);
+                    if (signalLine === null) return null;
+
+                    return { macd: macdLine, signal: signalLine, histogram: macdLine - signalLine };
+                }
+                static calculateFullEMA(data, period) {
                     const multiplier = 2 / (period + 1);
                     const emaArray = [];
                     if (data.length >= period) {
                         let initialSma = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
-                        emaArray.push(...Array(period - 1).fill(null), initialSma);
+                        emaArray.push(initialSma);
                         for (let i = period; i < data.length; i++) {
-                            const currentEma = (data[i] * multiplier) + (emaArray[i-1] * (1 - multiplier));
+                            const currentEma = (data[i] * multiplier) + (emaArray[emaArray.length-1] * (1 - multiplier));
                             emaArray.push(currentEma);
                         }
                     }
-                    return emaArray;
-                }
-                static calculateMACD(prices, fast=12, slow=26, signal=9) {
-                    if (prices.length < slow) return null;
-                    const emaFast = this.calculateEMA(prices, fast);
-                    const emaSlow = this.calculateEMA(prices, slow);
-                    if (!emaFast || !emaSlow) return null;
-                    const macdLineData = emaSlow.map((slowVal, i) => slowVal !== null ? emaFast[i] - slowVal : null).filter(v => v !== null);
-                    if (macdLineData.length < signal) return null;
-
-                    const signalLineData = this.calculateEMA(macdLineData, signal);
-                    if (!signalLineData) return null;
-                    const macd = macdLineData[macdLineData.length - 1];
-                    const signalLine = signalLineData[signalLineData.length - 1];
-                    return { macd, signal: signalLine, histogram: macd - signalLine };
+                    return Array(data.length - emaArray.length).fill(null).concat(emaArray);
                 }
                 static calculateBollingerBands(prices, period = 20, stdDev = 2) {
                     if (prices.length < period) return null;
@@ -651,17 +975,23 @@
                 static calculateVWAP(candles) {
                     let cumulativeTypicalPriceVolume = 0;
                     let cumulativeVolume = 0;
+                    let lastDate = null;
                     return candles.map(c => {
+                        const currentDate = new Date(c.time * 1000).getUTCDate();
+                        if (lastDate !== null && currentDate !== lastDate) {
+                            cumulativeTypicalPriceVolume = 0;
+                            cumulativeVolume = 0;
+                        }
                         const typicalPrice = (c.high + c.low + c.close) / 3;
                         cumulativeTypicalPriceVolume += typicalPrice * c.volume;
                         cumulativeVolume += c.volume;
+                        lastDate = currentDate;
                         return { time: c.time, value: cumulativeVolume > 0 ? cumulativeTypicalPriceVolume / cumulativeVolume : typicalPrice };
                     });
                 }
                  static calculateSupportResistance(candles, lookback = 50) {
                     if (candles.length < lookback) return { support: null, resistance: null };
                     const recentCandles = candles.slice(-lookback);
-                    let support = null, resistance = null;
                     let lowestLow = Infinity, highestHigh = -Infinity;
                     
                     recentCandles.forEach(c => {
@@ -669,12 +999,7 @@
                         if(c.high > highestHigh) highestHigh = c.high;
                     });
                     
-                    const lastCandle = recentCandles[recentCandles.length - 1];
-                    const pivot = (lastCandle.high + lastCandle.low + lastCandle.close) / 3;
-                    support = pivot - (lastCandle.high - lastCandle.low);
-                    resistance = pivot + (lastCandle.high - lastCandle.low);
-
-                    return { support, resistance };
+                    return { support: lowestLow, resistance: highestHigh };
                 }
             }
             class TradingSignalEngine {
@@ -688,8 +1013,8 @@
                     const rsi = TechnicalIndicators.calculateRSI(prices);
                     const macd = TechnicalIndicators.calculateMACD(prices);
                     const bb = TechnicalIndicators.calculateBollingerBands(prices);
-                    const ema20 = TechnicalIndicators.calculateEMA(prices, 20)?.slice(-1)[0];
-                    const ema50 = TechnicalIndicators.calculateEMA(prices, 50)?.slice(-1)[0];
+                    const ema20 = TechnicalIndicators.calculateLastEMA(prices, 20);
+                    const ema50 = TechnicalIndicators.calculateLastEMA(prices, 50);
                     const vwap = TechnicalIndicators.calculateVWAP(candles).slice(-1)[0]?.value;
                     const sr = TechnicalIndicators.calculateSupportResistance(candles);
 
@@ -726,16 +1051,37 @@
                     let onchainSignal = 'neutral';
                     let onchainReason = '链上资金流动平稳';
                     if(onchainIntel.stablecoinNetflow > 20e6) {
-                        score += 20;
+                        score += 15;
                         onchainSignal = 'buy';
                         onchainReason = '稳定币呈显著净流入';
                     } else if (onchainIntel.stablecoinNetflow < -20e6) {
-                        score -= 20;
+                        score -= 15;
                         onchainSignal = 'sell';
                         onchainReason = '稳定币呈显著净流出';
                     }
                     breakdown['资金流'] = { signal: onchainSignal, reason: onchainReason };
 
+                    if (onchainIntel.chainTvlChange !== null) {
+                        let tvlSignal = 'neutral';
+                        let tvlReason = `TVL 24h 变化: ${(onchainIntel.chainTvlChange * 100).toFixed(2)}%`;
+                        if (onchainIntel.chainTvlChange > 0.02) {
+                            score += 10;
+                            tvlSignal = 'buy';
+                            tvlReason = `TVL 显著增长 (+${(onchainIntel.chainTvlChange * 100).toFixed(2)}%)`;
+                        } else if (onchainIntel.chainTvlChange < -0.02) {
+                            score -= 10;
+                            tvlSignal = 'sell';
+                            tvlReason = `TVL 显著下降 (${(onchainIntel.chainTvlChange * 100).toFixed(2)}%)`;
+                        }
+                        breakdown['链TVL'] = { signal: tvlSignal, reason: tvlReason };
+                    }
+
+                    if (onchainIntel.chainDexVolume !== null) {
+                        breakdown['链上交易量'] = { signal: 'neutral', reason: `24h 交易量: ${(onchainIntel.chainDexVolume / 1e9).toFixed(2)}B` };
+                        if (onchainIntel.chainDexVolume > 1e9) {
+                            score += 5;
+                        }
+                    }
 
                     score = Math.max(0, Math.min(100, Math.round(score)));
                     
@@ -769,6 +1115,23 @@
             const signalEngine = new TradingSignalEngine();
 
             // --- 7. GEMINI API INTEGRATION ---
+            async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                           if (response.status === 429 || response.status >= 500) {
+                               throw new Error(`API Error: ${response.status}`);
+                           }
+                        }
+                        return response;
+                    } catch (error) {
+                        if (i === retries - 1) throw error;
+                        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+                    }
+                }
+            }
+            
             async function generateAiAnalysisReport() {
                 DOM.geminiBtn.disabled = true;
                 DOM.geminiBtn.textContent = '分析中...';
@@ -776,6 +1139,25 @@
 
                 const { breakdown, metrics } = STATE.lastAnalysis;
                 const newsHeadlines = STATE.news.map(n => n.title).join('; ');
+                
+                let whaleSummary = "没有观察到显著的巨鲸活动。";
+                if (STATE.whaleData.length > 0) {
+                    const allTxs = STATE.whaleData.flatMap(w => w.transactions.map(tx => ({...tx, monitoredAddress: w.address})));
+                    const buys = allTxs.filter(tx => tx.to.toLowerCase() === tx.monitoredAddress.toLowerCase()).length;
+                    const sells = allTxs.filter(tx => tx.from.toLowerCase() === tx.monitoredAddress.toLowerCase()).length;
+                    if (buys > 0 || sells > 0) {
+                        whaleSummary = `最近观察到 ${buys} 笔巨鲸大额买入和 ${sells} 笔大额卖出。`;
+                    }
+                }
+                
+                const formatLargeNumber = (num) => {
+                    if (num === null || num === undefined) return '-';
+                    if (Math.abs(num) >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+                    if (Math.abs(num) >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+                    return `$${(num/1e3).toFixed(2)}K`;
+                };
+                const dexSummary = STATE.dexVolumes.slice(0, 3).map(d => `${d.displayName}: ${formatLargeNumber(d.total24h)}`).join(', ');
+
 
                 const prompt = `
                     You are a professional cryptocurrency quantitative analyst. Your task is to provide a structured prediction based on the provided real-time data and recent news. Respond ONLY with a valid JSON object.
@@ -788,9 +1170,11 @@
                     - Fear & Greed Index: ${metrics.fearGreedIndex}
                     - Key Indicators: ${JSON.stringify(breakdown)}
                     - On-Chain Signal: ${breakdown['资金流']?.reason}
+                    - Recent Whale Activity: ${whaleSummary}
+                    - Top DEX Volumes (24h): ${dexSummary}
                     - Recent News Headlines: ${newsHeadlines}
 
-                    Based on a comprehensive analysis of BOTH the technical/on-chain data AND the recent news, provide a structured forecast in the following JSON format.
+                    Based on a comprehensive analysis of ALL the provided data (technical, on-chain, whale activity, DEX volumes, and news), provide a structured forecast in the following JSON format.
                 `;
 
                 try {
@@ -812,15 +1196,18 @@
                         }
                     };
 
-                    const response = await fetch(apiUrl, {
+                    const response = await fetchWithRetry(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
+                    
                     if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
                     
                     const result = await response.json();
+                    if (!result.candidates || result.candidates.length === 0) {
+                        throw new Error("No valid response from Gemini API.");
+                    }
                     const predictionJson = JSON.parse(result.candidates[0].content.parts[0].text);
                     UI.renderGeminiPrediction(predictionJson);
 
@@ -854,8 +1241,13 @@
                 STATE.symbol = DOM.symbol.value;
                 STATE.bucketMs = +DOM.bucket.value;
                 STATE.kInterval = DOM.kInterval.value;
-                await initialize();
-                [DOM.symbol, DOM.bucket, DOM.kInterval, DOM.resetBtn].forEach(el => el.disabled = false);
+                try {
+                    await initialize();
+                } catch (error) {
+                    console.error("Failed to re-initialize dashboard:", error);
+                } finally {
+                    [DOM.symbol, DOM.bucket, DOM.kInterval, DOM.resetBtn].forEach(el => el.disabled = false);
+                }
             }
 
             function setupEventListeners() {
@@ -885,13 +1277,15 @@
                 DOM.aiMetricsContainer.innerHTML = '';
                 DOM.geminiPredictionContainer.innerHTML = '';
                 
+                // Fetch all data concurrently
+                fetchAllOnchainData();
+                fetchWhaleActivity();
+                fetchDexVolumes();
+                fetchNews(STATE.symbol);
+
                 try {
-                    const [klineData] = await Promise.all([
-                        fetchKlines(),
-                        fetch24hStats(),
-                        fetchNews(STATE.symbol),
-                        fetchStablecoinFlows()
-                    ]);
+                    const klineData = await fetchKlines();
+                    await fetch24hStats();
                     
                     STATE.klineHistory = klineData;
                     candleSeries.setData(klineData);
@@ -903,10 +1297,11 @@
                     openStream();
                     
                 } catch (error) {
-                    console.error("Initialization failed:", error);
+                    console.error("Critical initialization failed:", error);
                     UI.showError(DOM.kchartContainer, '初始化K线数据失败');
                     UI.showError(DOM.aiAnalysisContainer, 'AI引擎启动失败');
                     UI.updateStatus('disconnected');
+                    throw error;
                 } finally {
                     UI.toggleLoader(DOM.kchartLoader, false);
                     UI.toggleLoader(DOM.predictionLoader, false);
