@@ -301,8 +301,8 @@ html, body {
             <div class="modal-content">
                 <h1>安检大挑战 ✈️</h1>
                 <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
-                    <strong style="color: var(--obstacle-color-light);">躲开红色危险品 ☠️</strong><br>
-                    <strong style="color: var(--collectible-color-light);">收集绿色旅行好物 ✅</strong>
+                    <strong style="color: var(--obstacle-color-light);">躲开危险品 ☠️</strong><br>
+                    <strong style="color: var(--collectible-color-light);">收集旅行好物 ✅</strong>
                 </p>
                 <p class="cta">准备好了吗？</p>
                 <button id="start-button" class="modal-button">开始挑战</button>
@@ -870,6 +870,7 @@ html, body {
                 ctx.fillStyle = '#2d3748';
                 drawRoundedRect(-20, -this.h/2 - 15, 40, 15, 5);
                 ctx.beginPath(); ctx.arc(-25, this.h/2, 10, 0, Math.PI * 2); ctx.arc(25, this.h/2, 10, 0, Math.PI * 2); ctx.fill();
+
                 ctx.restore();
             }
             update(speed) {
@@ -1382,6 +1383,24 @@ html, body {
                 if (!p.active) { particlePool.release(p); activeParticles.splice(i, 1); }
             }
             player.update(speedModifier);
+
+            // 如果盾牌激活，绘制一个跟随行李箱的盾牌 emoji
+            if (typeof shieldActive !== 'undefined' && shieldActive) {
+                ctx.save();
+                // 设置绘制字体和颜色
+                const shieldFontSize = 36;
+                // 使用模板字符串设置字体，内部双引号不会终止模板字符串
+                ctx.font = `${shieldFontSize}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                // 使用玩家亮色作为 emoji 颜色
+                ctx.fillStyle = COLORS.playerLight;
+                // 在玩家上方绘制盾牌 emoji
+                const shieldX = player.x + player.w / 2;
+                const shieldY = player.y - 5;
+                ctx.fillText('🛡️', shieldX, shieldY);
+                ctx.restore();
+            }
 
             // 绘制道具倒计时进度条
             if (activePowerupBar.active) {
