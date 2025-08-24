@@ -301,8 +301,8 @@ html, body {
             <div class="modal-content">
                 <h1>安检大挑战 ✈️</h1>
                 <p style="text-align: center; font-size: 1.1rem; line-height: 2;">
-                    <strong style="color: var(--obstacle-color-light);">躲开危险品 ☠️</strong><br>
-                    <strong style="color: var(--collectible-color-light);">收集旅行好物 ✅</strong>
+                    <strong style="color: var(--obstacle-color-light);">躲开红色危险品 ☠️</strong><br>
+                    <strong style="color: var(--collectible-color-light);">收集绿色旅行好物 ✅</strong>
                 </p>
                 <p class="cta">准备好了吗？</p>
                 <button id="start-button" class="modal-button">开始挑战</button>
@@ -395,7 +395,8 @@ html, body {
             </div>
         </div>
         <!-- 最佳成绩显示 -->
-        <div id="high-score-display" class="ui-element" style="top: 80px; left: 20px; padding: 10px 32px; font-size: 1.6rem; border-radius: 25px; display:none;">
+        <!-- 将最高分面板与当前分数面板风格保持一致：相同的边距、内边距和圆角尺寸 -->
+        <div id="high-score-display" class="ui-element" style="top: 80px; left: 20px; padding: 14px 32px; font-size: 2.0rem; border-radius: 25px; display:none;">
             🥇 0
         </div>
     </div>
@@ -1038,8 +1039,8 @@ html, body {
             tutorialManager = {
                 step: 0, isStepComplete: false,
                 steps: [
-                    { text: "收集绿色物品获得积分", action: "collect", target: ITEM_TYPES.COLLECTIBLE, emoji: '🍪', isAerial: true, speed: 5 },
-                    { text: "躲避红色危险品！", action: "dodge", target: ITEM_TYPES.OBSTACLE, emoji: '🔪', speed: 8 },
+                    { text: "收集物品获得积分", action: "collect", target: ITEM_TYPES.COLLECTIBLE, emoji: '🍪', isAerial: true, speed: 5 },
+                    { text: "躲避危险品！", action: "dodge", target: ITEM_TYPES.OBSTACLE, emoji: '🔪', speed: 8 },
                     { text: "在空中再次轻点来二段跳，越过高障碍！", action: "dodge", target: ITEM_TYPES.OBSTACLE, emoji: '💣', isTall: true, speed: 8 },
                     { text: "收集道具，获得无敌能力！", action: "collect", target: ITEM_TYPES.POWERUP, emoji: '⭐', speed: 5 },
                     { text: "无敌状态下，撞毁障碍物！", action: "destroy", target: ITEM_TYPES.OBSTACLE, emoji: '🧪', speed: 8, startInvincible: true },
@@ -1393,7 +1394,8 @@ html, body {
                 }
                 // 调整倒计时进度条尺寸及位置：长度比行李箱稍长，高度更厚一些
                 const barWidth = player.w + 40;
-                const barHeight = 16;
+                // 将进度条高度适当加厚，提升可见性
+                const barHeight = 20;
                 const barX = player.x + player.w / 2 - barWidth / 2;
                 const barY = player.y - 55;
                 ctx.save();
@@ -1626,18 +1628,19 @@ html, body {
                     magnetState.timeoutId = null;
                 }, 8000);
             } else if (powerup.type === 'shield') {
-                // 激活盾牌，可抵挡一次碰撞或短时间
-                if (shieldState.timeoutId) clearTimeout(shieldState.timeoutId);
-                if (shieldState.intervalId) clearInterval(shieldState.intervalId);
-                shieldActive = true;
-                if (!isTutorial) {
-                    startTimer(6, '🛡️', COLORS.playerLight, shieldState);
-                    activePowerupBar = { active: true, startTime: performance.now(), duration: 6000, color: COLORS.playerLight };
+                // 激活盾牌：仅抵挡一次碰撞，无时间限制
+                // 清除任何遗留的盾牌计时器
+                if (shieldState.timeoutId) {
+                    clearTimeout(shieldState.timeoutId);
                 }
-                shieldState.timeoutId = setTimeout(() => {
-                    shieldActive = false;
-                    shieldState.timeoutId = null;
-                }, 6000);
+                if (shieldState.intervalId) {
+                    clearInterval(shieldState.intervalId);
+                }
+                shieldState.timeoutId = null;
+                shieldState.intervalId = null;
+                shieldActive = true;
+                // 对于一次性盾牌，不显示倒计时文字和进度条
+                // 仅在获得盾牌时播放浮动提示即可
             }
         }
 
@@ -1709,18 +1712,52 @@ html, body {
 
         function shakeScreen() { wrapper.classList.add('shake'); setTimeout(() => wrapper.classList.remove('shake'), 300); }
         function clearAllTimers() {
-            if (invincibleState.timeoutId) clearTimeout(invincibleState.timeoutId);
-            if (invincibleState.intervalId) clearInterval(invincibleState.intervalId);
-            if (slowmoState.timeoutId) clearTimeout(slowmoState.timeoutId);
-            if (slowmoState.intervalId) clearInterval(slowmoState.intervalId);
+            // 清理无敌、慢速、磁铁、盾牌等状态的定时器和间隔，并重置相关标识。
+            if (invincibleState.timeoutId) {
+                clearTimeout(invincibleState.timeoutId);
+            }
+            if (invincibleState.intervalId) {
+                clearInterval(invincibleState.intervalId);
+            }
+            // 重置 invincibleState 标识，以防止遗留的非空值导致后续逻辑判定错误
+            invincibleState.timeoutId = null;
+            invincibleState.intervalId = null;
+
+            if (slowmoState.timeoutId) {
+                clearTimeout(slowmoState.timeoutId);
+            }
+            if (slowmoState.intervalId) {
+                clearInterval(slowmoState.intervalId);
+            }
+            slowmoState.timeoutId = null;
+            slowmoState.intervalId = null;
+
             // 清除磁铁和盾牌计时器
-            if (magnetState.timeoutId) clearTimeout(magnetState.timeoutId);
-            if (magnetState.intervalId) clearInterval(magnetState.intervalId);
-            if (shieldState.timeoutId) clearTimeout(shieldState.timeoutId);
-            if (shieldState.intervalId) clearInterval(shieldState.intervalId);
-            // 重置状态
+            if (magnetState.timeoutId) {
+                clearTimeout(magnetState.timeoutId);
+            }
+            if (magnetState.intervalId) {
+                clearInterval(magnetState.intervalId);
+            }
+            magnetState.timeoutId = null;
+            magnetState.intervalId = null;
+
+            if (shieldState.timeoutId) {
+                clearTimeout(shieldState.timeoutId);
+            }
+            if (shieldState.intervalId) {
+                clearInterval(shieldState.intervalId);
+            }
+            shieldState.timeoutId = null;
+            shieldState.intervalId = null;
+
+            // 复位玩家状态以及全局速度修饰符
+            player.isInvincible = false;
+            targetSpeedModifier = 1.0;
             magnetActive = false;
             shieldActive = false;
+            player.hasSuperJump = false;
+            // 隐藏倒计时显示与进度条
             powerupTimerDisplay.style.display = 'none';
             activePowerupBar.active = false;
         }
