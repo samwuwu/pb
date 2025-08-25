@@ -107,7 +107,6 @@
 
         #output,
         #error {
-            margin-top: 28px;
             padding: 14px;
             min-height: 50px;
             border-radius: 8px;
@@ -117,29 +116,40 @@
             font-size: 15px;
         }
 
+        /* Colour overrides for output and error messages */
         #output {
+            margin-top: 0;
             color: #28a745;
         }
 
         #error {
+            margin-top: 20px;
             color: #d0021b;
         }
 
-        /* Layout wrapper for the output area and copy button.  The copy button
-           sits below the output by default, but can be positioned as
-           necessary. */
+        /* Layout wrapper for the output area and copy button.  Position
+           relative so the copy button can be absolutely positioned within
+           the wrapper. */
         .output-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
+            position: relative;
+            margin-top: 28px;
         }
 
-        /* Style for the one‑click copy button.  It uses the same gradient and
-           interactive ripple as the primary buttons but is slightly smaller. */
+        /* Adjust the output container to leave space for the copy button on
+           the right so text does not overlap. */
+        .output-wrapper #output {
+            padding-right: 80px;
+        }
+
+        /* Style for the one‑click copy button.  Absolutely position it in
+           the top‑right corner of the output wrapper.  It uses the same
+           gradient and interactive ripple as the primary buttons but is
+           slightly smaller. */
         .copy-btn {
-            align-self: flex-start;
-            padding: 10px 20px;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 8px 18px;
             border: none;
             border-radius: 10px;
             background: linear-gradient(180deg, #007aff 0%, #5ac8fa 100%);
@@ -213,11 +223,13 @@
            reduce padding and adjust font sizes for better legibility. */
         @media (max-width: 600px) {
             .container {
-                width: 95%;
+                width: 100%;
+                max-width: 100%;
                 padding: 24px;
+                border-radius: 0;
             }
             h1 {
-                font-size: 28px;
+                font-size: 26px;
             }
             .buttons {
                 flex-direction: column;
@@ -236,6 +248,17 @@
             #error {
                 font-size: 14px;
                 padding: 12px;
+            }
+
+            .output-wrapper {
+                margin-top: 20px;
+            }
+
+            .copy-btn {
+                top: 4px;
+                right: 4px;
+                padding: 6px 14px;
+                font-size: 13px;
             }
         }
     </style>
@@ -317,8 +340,9 @@
             }
             try {
                 console.log("Encrypting with NoKey:", text);
-                const emoji = encodeNoKey(text, alphabet);
-                // Store the raw result for copy
+                const raw = encodeNoKey(text, alphabet);
+                // Always prefix the result with the 🍊 emoji
+                const emoji = '🍊' + raw;
                 currentResult = emoji;
                 output.textContent = `加密结果：${emoji}`;
                 error.textContent = "";
@@ -338,7 +362,8 @@
             }
             try {
                 console.log("Encrypting with key:", text);
-                const emoji = await encryptToEmoji(text, key, alphabet);
+                const raw = await encryptToEmoji(text, key, alphabet);
+                const emoji = '🍊' + raw;
                 currentResult = emoji;
                 output.textContent = `加密结果：${emoji}`;
                 error.textContent = "";
@@ -359,12 +384,17 @@
             try {
                 console.log("Decrypting emoji:", emojiStr);
                 let decrypted;
+                // Strip the 🍊 prefix if present before decoding
+                let toDecode = emojiStr;
+                if (toDecode.startsWith('🍊')) {
+                    toDecode = toDecode.slice(1);
+                }
                 if (key) {
                     // Decrypt using the passphrase via AES‑GCM
-                    decrypted = await decryptFromEmoji(emojiStr, key, alphabet);
+                    decrypted = await decryptFromEmoji(toDecode, key, alphabet);
                 } else {
                     // Fallback to no‑key mode if no passphrase is supplied
-                    decrypted = decodeNoKey(emojiStr, alphabet);
+                    decrypted = decodeNoKey(toDecode, alphabet);
                 }
                 currentResult = decrypted;
                 output.textContent = `解密结果：${decrypted}`;
