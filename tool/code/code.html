@@ -125,6 +125,36 @@
             color: #d0021b;
         }
 
+        /* Layout wrapper for the output area and copy button.  The copy button
+           sits below the output by default, but can be positioned as
+           necessary. */
+        .output-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* Style for the one‑click copy button.  It uses the same gradient and
+           interactive ripple as the primary buttons but is slightly smaller. */
+        .copy-btn {
+            align-self: flex-start;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #007aff 0%, #5ac8fa 100%);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        .copy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(0, 122, 255, 0.4);
+        }
+
         /* Aurora text effect: animated pastel gradient that gently flows
            across the text.  The colours are softened to suit a light
            interface while still providing a sense of movement. */
@@ -176,6 +206,38 @@
             height: 220px;
             opacity: 1;
         }
+
+
+        /* Responsive adjustments for mobile devices.  When the viewport
+           width is narrow (e.g. phones), stack the buttons vertically,
+           reduce padding and adjust font sizes for better legibility. */
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 24px;
+            }
+            h1 {
+                font-size: 28px;
+            }
+            .buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            button {
+                flex: 1 1 100%;
+                margin: 6px 0;
+                font-size: 15px;
+            }
+            textarea,
+            input[type="password"] {
+                font-size: 15px;
+            }
+            #output,
+            #error {
+                font-size: 14px;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -191,7 +253,11 @@
             <button id="encryptToEmojiBtn" class="interactive-button">带密钥加密</button>
             <button id="decryptFromEmojiBtn" class="interactive-button">解密 Emoji</button>
         </div>
-        <div id="output"></div>
+        <!-- Wrap the output and copy button together for easier layout -->
+        <div class="output-wrapper">
+            <div id="output"></div>
+            <button id="copyBtn" class="copy-btn interactive-button" type="button">复制</button>
+        </div>
         <div id="error"></div>
     </div>
 
@@ -214,6 +280,13 @@
         const passphrase = document.getElementById("passphrase");
         const output = document.getElementById("output");
         const error = document.getElementById("error");
+        const copyBtn = document.getElementById("copyBtn");
+
+        // Track the current result for quick copying.  Whenever a new
+        // encryption or decryption completes, this variable is updated
+        // with the raw result string (without the label).  The copy
+        // button uses this value when copying to clipboard.
+        let currentResult = "";
 
         // Attach interactive hover effect to each button.  On mouse move
         // we update the CSS custom properties --mouse-x and --mouse-y on
@@ -245,6 +318,8 @@
             try {
                 console.log("Encrypting with NoKey:", text);
                 const emoji = encodeNoKey(text, alphabet);
+                // Store the raw result for copy
+                currentResult = emoji;
                 output.textContent = `加密结果：${emoji}`;
                 error.textContent = "";
             } catch (e) {
@@ -264,6 +339,7 @@
             try {
                 console.log("Encrypting with key:", text);
                 const emoji = await encryptToEmoji(text, key, alphabet);
+                currentResult = emoji;
                 output.textContent = `加密结果：${emoji}`;
                 error.textContent = "";
             } catch (e) {
@@ -290,11 +366,36 @@
                     // Fallback to no‑key mode if no passphrase is supplied
                     decrypted = decodeNoKey(emojiStr, alphabet);
                 }
+                currentResult = decrypted;
                 output.textContent = `解密结果：${decrypted}`;
                 error.textContent = "";
             } catch (e) {
                 error.textContent = `解密失败：${e.message}`;
                 console.error(e);
+            }
+        });
+
+        // Copy result to clipboard when the user clicks the copy button.  If
+        // there is no result yet, show an error message.  When copying
+        // succeeds, temporarily change the button label to indicate
+        // success.
+        copyBtn.addEventListener('click', async () => {
+            if (!currentResult) {
+                error.textContent = "没有可复制的内容！";
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(currentResult);
+                const originalLabel = copyBtn.textContent;
+                copyBtn.textContent = "已复制";
+                // Clear any previous error
+                error.textContent = "";
+                setTimeout(() => {
+                    copyBtn.textContent = originalLabel;
+                }, 2000);
+            } catch (err) {
+                error.textContent = "复制失败，请检查浏览器设置";
+                console.error(err);
             }
         });
     </script>
