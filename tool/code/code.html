@@ -5,25 +5,202 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emoji 加密工具</title>
     <style>
-        /* Keep the previous style here */
+        /*
+         * Modern, Apple‑inspired UI for the Emoji encryption tool.  The design
+         * is clean and minimal with a light background, gentle shadows and
+         * rounded corners reminiscent of Apple’s design language.  Colours are
+         * subtle and consistent, emphasising clarity and ease of use.  The
+         * interface scales gracefully across different viewport sizes.
+         */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            /* Use the system font stack for better cross‑platform appearance */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+                Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            /* Light, neutral background similar to apple.com */
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border: 1px solid #e5e5ea;
+            border-radius: 16px;
+            /* Soft shadow for subtle depth */
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            width: 600px;
+            max-width: 90%;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0 0 24px;
+            font-size: 32px;
+            font-weight: 600;
+            /* Use a gentle gradient reminiscent of Apple’s colourful text
+               occasionally seen in marketing materials */
+            background: linear-gradient(90deg, #6e6ef7, #87a2f9, #a5c7ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        textarea,
+        input[type="password"] {
+            background-color: #f2f3f7;
+            border: 1px solid #d7d8dc;
+            border-radius: 8px;
+            padding: 12px;
+            color: #1d1d1f;
+            width: 100%;
+            font-size: 16px;
+            resize: vertical;
+            /* Provide a subtle inner shadow when focused */
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        textarea:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #007aff;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        button {
+            flex: 1 1 calc(33% - 10px);
+            margin: 5px;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            /* Apple‑style blue gradient reminiscent of iOS primary buttons */
+            background: linear-gradient(180deg, #007aff 0%, #5ac8fa 100%);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0, 122, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0, 122, 255, 0.4);
+        }
+
+        #output,
+        #error {
+            margin-top: 28px;
+            padding: 14px;
+            min-height: 50px;
+            border-radius: 8px;
+            background-color: #f2f3f7;
+            border: 1px solid #e5e5ea;
+            word-break: break-all;
+            font-size: 15px;
+        }
+
+        #output {
+            color: #28a745;
+        }
+
+        #error {
+            color: #d0021b;
+        }
+
+        /* Aurora text effect: animated pastel gradient that gently flows
+           across the text.  The colours are softened to suit a light
+           interface while still providing a sense of movement. */
+        .aurora-text {
+            position: relative;
+            display: inline-block;
+            background: linear-gradient(45deg, #a18fff, #c4b6ff, #bfe3ff, #9acbff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: aurora 12s ease infinite;
+        }
+
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Interactive hover button effect: radial ripple that follows the
+           mouse pointer, creating a sense of depth and interactivity. */
+        button.interactive-button {
+            /* Each interactive button has a custom property to track the
+               ripple origin.  Default to the centre so that the gradient
+               originates from the middle when idle.  We also position
+               them relative to enable the pseudo‑element overlay. */
+            --mouse-x: 50%;
+            --mouse-y: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        button.interactive-button::after {
+            content: "";
+            position: absolute;
+            left: var(--mouse-x);
+            top: var(--mouse-y);
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            /* Softer radial highlight for a light interface */
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 70%);
+            opacity: 0;
+            transition: width 0.4s ease, height 0.4s ease, opacity 0.4s;
+            pointer-events: none;
+        }
+        button.interactive-button:hover::after {
+            width: 220px;
+            height: 220px;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Emoji 加密工具</h1>
-
-    <textarea id="inputText" placeholder="输入文本..."></textarea>
-    <input type="password" id="passphrase" placeholder="输入加密密钥" />
-    
-    <button id="encodeNoKeyBtn">无密钥加密</button>
-    <button id="encryptToEmojiBtn">带密钥加密</button>
-    <button id="decryptFromEmojiBtn">解密 Emoji</button>
-
-    <div id="output"></div>
-    <div id="error"></div>
+    <div class="container">
+        <h1><span class="aurora-text">Emoji 加密工具</span></h1>
+        <div class="input-group">
+            <textarea id="inputText" placeholder="输入文本..."></textarea>
+            <input type="password" id="passphrase" placeholder="输入加密密钥" />
+        </div>
+        <div class="buttons">
+            <button id="encodeNoKeyBtn" class="interactive-button">无密钥加密</button>
+            <button id="encryptToEmojiBtn" class="interactive-button">带密钥加密</button>
+            <button id="decryptFromEmojiBtn" class="interactive-button">解密 Emoji</button>
+        </div>
+        <div id="output"></div>
+        <div id="error"></div>
+    </div>
 
     <script type="module">
-        import { BaseEmoji, encodeNoKey, decryptFromEmoji, encryptToEmoji } from "./index.mjs";
+        // Import the emoji codec API from our ESM module.  Note that we import
+        // decodeNoKey as well so the decode button can fall back to the
+        // no‑key mode if no passphrase is provided.  This mirrors the
+        // behaviour of our Python reference implementation.
+        import { BaseEmoji, encodeNoKey, decodeNoKey, decryptFromEmoji, encryptToEmoji } from "./index.mjs";
         
         console.log("emoji module loaded");
         const alphabet = await fetch("./base-emoji-alphabet-v1-256.json")
@@ -37,6 +214,26 @@
         const passphrase = document.getElementById("passphrase");
         const output = document.getElementById("output");
         const error = document.getElementById("error");
+
+        // Attach interactive hover effect to each button.  On mouse move
+        // we update the CSS custom properties --mouse-x and --mouse-y on
+        // the button element.  These variables control the radial ripple
+        // position defined in the CSS.  When the mouse leaves the button,
+        // reset the variables to the centre of the element.
+        document.querySelectorAll('button.interactive-button').forEach(btn => {
+            btn.addEventListener('mousemove', e => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                btn.style.setProperty('--mouse-x', `${x}px`);
+                btn.style.setProperty('--mouse-y', `${y}px`);
+            });
+            btn.addEventListener('mouseleave', () => {
+                // Reset the ripple to centre when the pointer leaves
+                btn.style.setProperty('--mouse-x', '50%');
+                btn.style.setProperty('--mouse-y', '50%');
+            });
+        });
 
         // 无密钥加密
         document.getElementById("encodeNoKeyBtn").addEventListener("click", () => {
@@ -77,15 +274,22 @@
 
         // 解密 Emoji
         document.getElementById("decryptFromEmojiBtn").addEventListener("click", async () => {
-            const emoji = inputText.value.trim();
+            const emojiStr = inputText.value.trim();
             const key = passphrase.value.trim();
-            if (!emoji || !key) {
-                error.textContent = "请输入 Emoji 和密钥！";
+            if (!emojiStr) {
+                error.textContent = "请输入待解密的 Emoji！";
                 return;
             }
             try {
-                console.log("Decrypting emoji:", emoji);
-                const decrypted = await decryptFromEmoji(emoji, key, alphabet);
+                console.log("Decrypting emoji:", emojiStr);
+                let decrypted;
+                if (key) {
+                    // Decrypt using the passphrase via AES‑GCM
+                    decrypted = await decryptFromEmoji(emojiStr, key, alphabet);
+                } else {
+                    // Fallback to no‑key mode if no passphrase is supplied
+                    decrypted = decodeNoKey(emojiStr, alphabet);
+                }
                 output.textContent = `解密结果：${decrypted}`;
                 error.textContent = "";
             } catch (e) {
