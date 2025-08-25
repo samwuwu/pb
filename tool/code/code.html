@@ -384,17 +384,33 @@
             try {
                 console.log("Decrypting emoji:", emojiStr);
                 let decrypted;
-                // Strip the 🍊 prefix if present before decoding
-                let toDecode = emojiStr;
-                if (toDecode.startsWith('🍊')) {
-                    toDecode = toDecode.slice(1);
-                }
+                // Attempt to remove a leading 🍊 prefix if present.  If decoding
+                // with the stripped string fails, fall back to decoding the
+                // original string.  This avoids accidentally stripping an
+                // actual encoded emoji that happens to match the prefix.
+                const hasPrefix = emojiStr.startsWith('🍊');
+                const candidate = hasPrefix ? emojiStr.slice(1) : null;
                 if (key) {
-                    // Decrypt using the passphrase via AES‑GCM
-                    decrypted = await decryptFromEmoji(toDecode, key, alphabet);
+                    if (candidate) {
+                        try {
+                            decrypted = await decryptFromEmoji(candidate, key, alphabet);
+                        } catch (err) {
+                            // Fallback to decoding the full string if prefix removal fails
+                            decrypted = await decryptFromEmoji(emojiStr, key, alphabet);
+                        }
+                    } else {
+                        decrypted = await decryptFromEmoji(emojiStr, key, alphabet);
+                    }
                 } else {
-                    // Fallback to no‑key mode if no passphrase is supplied
-                    decrypted = decodeNoKey(toDecode, alphabet);
+                    if (candidate) {
+                        try {
+                            decrypted = decodeNoKey(candidate, alphabet);
+                        } catch (err) {
+                            decrypted = decodeNoKey(emojiStr, alphabet);
+                        }
+                    } else {
+                        decrypted = decodeNoKey(emojiStr, alphabet);
+                    }
                 }
                 currentResult = decrypted;
                 output.textContent = `解密结果：${decrypted}`;
