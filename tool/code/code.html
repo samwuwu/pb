@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji 加密工具</title>
+    <style>
+        /* Keep the previous style here */
+    </style>
+</head>
+<body>
+
+    <h1>Emoji 加密工具</h1>
+
+    <textarea id="inputText" placeholder="输入文本..."></textarea>
+    <input type="password" id="passphrase" placeholder="输入加密密钥" />
+    
+    <button id="encodeNoKeyBtn">无密钥加密</button>
+    <button id="encryptToEmojiBtn">带密钥加密</button>
+    <button id="decryptFromEmojiBtn">解密 Emoji</button>
+
+    <div id="output"></div>
+    <div id="error"></div>
+
+    <script type="module">
+        import { BaseEmoji, encodeNoKey, decryptFromEmoji, encryptToEmoji } from "./index.mjs";
+        
+        console.log("emoji module loaded");
+        const alphabet = await fetch("./base-emoji-alphabet-v1-256.json")
+            .then(res => res.json())
+            .then(data => new BaseEmoji(data.index_to_emoji))
+            .catch(err => {
+                console.error("Error loading alphabet:", err);
+            });
+        
+        const inputText = document.getElementById("inputText");
+        const passphrase = document.getElementById("passphrase");
+        const output = document.getElementById("output");
+        const error = document.getElementById("error");
+
+        // 无密钥加密
+        document.getElementById("encodeNoKeyBtn").addEventListener("click", () => {
+            const text = inputText.value.trim();
+            if (!text) {
+                error.textContent = "请输入文本进行加密！";
+                return;
+            }
+            try {
+                console.log("Encrypting with NoKey:", text);
+                const emoji = encodeNoKey(text, alphabet);
+                output.textContent = `加密结果：${emoji}`;
+                error.textContent = "";
+            } catch (e) {
+                error.textContent = `加密失败：${e.message}`;
+                console.error(e);
+            }
+        });
+
+        // 带密钥加密
+        document.getElementById("encryptToEmojiBtn").addEventListener("click", async () => {
+            const text = inputText.value.trim();
+            const key = passphrase.value.trim();
+            if (!text || !key) {
+                error.textContent = "请输入文本和密钥！";
+                return;
+            }
+            try {
+                console.log("Encrypting with key:", text);
+                const emoji = await encryptToEmoji(text, key, alphabet);
+                output.textContent = `加密结果：${emoji}`;
+                error.textContent = "";
+            } catch (e) {
+                error.textContent = `加密失败：${e.message}`;
+                console.error(e);
+            }
+        });
+
+        // 解密 Emoji
+        document.getElementById("decryptFromEmojiBtn").addEventListener("click", async () => {
+            const emoji = inputText.value.trim();
+            const key = passphrase.value.trim();
+            if (!emoji || !key) {
+                error.textContent = "请输入 Emoji 和密钥！";
+                return;
+            }
+            try {
+                console.log("Decrypting emoji:", emoji);
+                const decrypted = await decryptFromEmoji(emoji, key, alphabet);
+                output.textContent = `解密结果：${decrypted}`;
+                error.textContent = "";
+            } catch (e) {
+                error.textContent = `解密失败：${e.message}`;
+                console.error(e);
+            }
+        });
+    </script>
+
+</body>
+</html>
