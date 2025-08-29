@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广播系统</title>
+    <link rel="stylesheet" href="broadcast.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-broadcast-tower"></i> 广播系统</h1>
+            <p>选择广播情景，播放专属音频</p>
+        </header>
+        
+        <main class="main-content">
+            <!-- 广播分类选择标签页 -->
+            <div class="scene-selector">
+                <div class="scene-tabs">
+                    <button class="scene-tab active" data-scene="normal">
+                        <i class="fas fa-suitcase"></i>
+                        <span>行李广播</span>
+                    </button>
+                    <button class="scene-tab" data-scene="delay">
+                        <i class="fas fa-clock"></i>
+                        <span>延误登机</span>
+                    </button>
+                    <button class="scene-tab" data-scene="other">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>其他广播</span>
+                    </button>
+                    <button class="scene-tab" data-scene="custom">
+                        <i class="fas fa-upload"></i>
+                        <span>自定义上传</span>
+                    </button>
+                </div>
+                
+                <!-- 分类内容区域 -->
+                <div class="scene-content">
+                    <!-- 行李广播分类 -->
+                    <div class="scene-panel active" data-scene="normal">
+                        <div class="scene-header">
+                            <div class="scene-icon">
+                                <i class="fas fa-suitcase"></i>
+                            </div>
+                            <div class="scene-info">
+                                <h3>行李广播</h3>
+                                <p>多语言行李提取和安全提示</p>
+                            </div>
+                        </div>
+                        <div class="scene-tracks">
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-language"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>中文广播</h4>
+                                    <p>行李提取提示 - 中文版</p>
+                                </div>
+                                <button class="play-btn" data-audio="00/中.wav" data-title="中文广播">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-language"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>粤语广播</h4>
+                                    <p>行李提取提示 - 粤语版</p>
+                                </div>
+                                <button class="play-btn" data-audio="00/粤.wav" data-title="粤语广播">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-language"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>英语广播</h4>
+                                    <p>行李提取提示 - 英语版</p>
+                                </div>
+                                <button class="play-btn" data-audio="00/英.wav" data-title="英语广播">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 延误登机分类 -->
+                    <div class="scene-panel" data-scene="delay">
+                        <div class="scene-header">
+                            <div class="scene-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="scene-info">
+                                <h3>延误登机广播</h3>
+                                <p>航班延误原因通知和安抚广播</p>
+                            </div>
+                        </div>
+                        <div class="scene-tracks">
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>准备工作未结束</h4>
+                                    <p>飞机维护检查等准备工作尚未完成</p>
+                                </div>
+                                <button class="play-btn" data-audio="01/01航前准备工作未结束.mp3" data-title="准备工作未结束">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-plane-arrival"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>飞机晚到</h4>
+                                    <p>前序航班晚到导致本航班延误</p>
+                                </div>
+                                <button class="play-btn" data-audio="01/01飞机晚到晚点通知.mp3" data-title="飞机晚到">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-cloud-rain"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>天气原因</h4>
+                                    <p>恶劣天气条件影响航班正常运行</p>
+                                </div>
+                                <button class="play-btn" data-audio="01/01天气原因导致航班延误.mp3" data-title="天气原因">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-broadcast-tower"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>航空管制</h4>
+                                    <p>空中交通管制限制导致航班延误</p>
+                                </div>
+                                <button class="play-btn" data-audio="01/01航空管制导致航班延误.mp3" data-title="航空管制">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他广播分类 -->
+                    <div class="scene-panel" data-scene="other">
+                        <div class="scene-header">
+                            <div class="scene-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <div class="scene-info">
+                                <h3>其他广播</h3>
+                                <p>其他特殊广播内容</p>
+                            </div>
+                        </div>
+                        <div class="scene-tracks">
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>欢迎致辞</h4>
+                                    <p>航班欢迎辞</p>
+                                </div>
+                                <button class="play-btn" data-audio="welcome-speech.mp3" data-title="欢迎致辞">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-sun"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>天气预报</h4>
+                                    <p>目的地天气情况</p>
+                                </div>
+                                <button class="play-btn" data-audio="weather-forecast.mp3" data-title="天气预报">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                            <div class="track-item">
+                                <div class="track-icon">
+                                    <i class="fas fa-gift"></i>
+                                </div>
+                                <div class="track-details">
+                                    <h4>特殊祝福</h4>
+                                    <p>节日或特殊祝福</p>
+                                </div>
+                                <button class="play-btn" data-audio="special-greeting.mp3" data-title="特殊祝福">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 自定义上传分类 -->
+                    <div class="scene-panel" data-scene="custom">
+                        <div class="scene-header">
+                            <div class="scene-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <div class="scene-info">
+                                <h3>自定义上传</h3>
+                                <p>上传本地音频文件直接播放</p>
+                            </div>
+                        </div>
+                        <div class="scene-tracks">
+                            <div class="file-upload-area">
+                                <div class="upload-icon">
+                                    <i class="fas fa-music"></i>
+                                </div>
+                                <h3>选择本地音频文件</h3>
+                                <p>支持 MP3, WAV, OGG 格式，文件直接在本地播放</p>
+                                <input type="file" id="audioFileInput" accept=".mp3,.wav,.ogg,.m4a" multiple>
+                                <button class="browse-btn" onclick="document.getElementById('audioFileInput').click()">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span>选择文件</span>
+                                </button>
+                            </div>
+                            <div class="selected-files" id="selectedFiles"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="now-playing" id="nowPlaying">
+                <div class="playing-header">
+                    <div class="playing-info">
+                        <div class="playing-icon">
+                            <i class="fas fa-music playing-animation"></i>
+                        </div>
+                        <div class="playing-text">
+                            <span id="currentTrack">准备播放...</span>
+                            <span id="playingStatus" class="status-text">等待中</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="duration">0:00</span>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="stopBtn" class="control-btn">
+                        <i class="fas fa-stop"></i>
+                        <span class="btn-text">停止</span>
+                    </button>
+                    
+                    <div class="volume-control">
+                        <i class="fas fa-volume-up"></i>
+                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">
+                        <span id="volumeValue">50%</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
+    
+    <script src="broadcast.js"></script>
+</body>
+</html>
