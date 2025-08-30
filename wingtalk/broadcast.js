@@ -462,11 +462,14 @@ class BroadcastSystem {
         }
         
         // 检查文件扩展名 - iOS设备主要依赖扩展名
-        const audioExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.wma', '.mp4'];
+        const audioExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.wma', '.mp4', '.m4b', '.oga', '.opus'];
         const hasValidExtension = audioExtensions.some(ext => fileName.endsWith(ext));
         
-        if (hasValidExtension) {
-            console.log('文件通过扩展名检查:', file.name);
+        // 检查文件大小（至少1字节，最多50MB）
+        const isValidSize = file.size > 0 && file.size <= 50 * 1024 * 1024;
+        
+        if (hasValidExtension && isValidSize) {
+            console.log('文件通过扩展名和大小检查:', file.name);
             return true;
         }
         
@@ -474,10 +477,10 @@ class BroadcastSystem {
         const isIOS = this.isIOSDevice();
         if (isIOS) {
             // iOS设备可能没有正确的MIME类型，主要依赖扩展名
-            const iosAudioExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.flac'];
+            const iosAudioExtensions = ['.mp3', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.wma'];
             const hasIOSExtension = iosAudioExtensions.some(ext => fileName.endsWith(ext));
             
-            if (hasIOSExtension) {
+            if (hasIOSExtension && file.size > 0) {
                 console.log('iOS文件通过扩展名检查:', file.name);
                 return true;
             }
@@ -771,8 +774,8 @@ class BroadcastSystem {
         console.log('开始 iOS Safari 强力文件选择');
         
         try {
-            // 方案1: 使用动态创建的 input
-            this.createDynamicFileInput('audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+            // 方案1: 使用动态创建的 input，增加更多音频格式支持
+            this.createDynamicFileInput('audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma');
         } catch (error) {
             console.error('方案1失败:', error);
             
@@ -1208,7 +1211,7 @@ class BroadcastSystem {
     // 根据设备类型优化文件输入
     optimizeFileInputForDevice(fileInput, isIOS, isAndroid, iOSVersion) {
         // 基础音频文件类型
-        const audioTypes = 'audio/*,.mp3,.wav,.ogg,.m4a,.aac';
+        const audioTypes = 'audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma';
         
         if (isIOS) {
             // iOS特殊处理
