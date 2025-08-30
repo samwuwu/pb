@@ -1200,21 +1200,26 @@ class BroadcastSystem {
             return;
         }
         
-        // 根据来源设置不同的accept属性
-        this.setupFileInputForSource(fileInput, source);
-        
         // 检测设备类型
         const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
         const isIOS = this.isIOSDevice();
         
         console.log('设备类型检测:', { isSafari, isIOS });
         
+        // iOS设备特殊处理 - 直接使用文件管理器
+        if (isIOS) {
+            // iOS设备强制使用文件管理器，避免音乐库选择
+            this.setupFileInputForSource(fileInput, 'files');
+            this.handleIOSFileSelection(fileInput, 'files');
+            return;
+        }
+        
+        // 根据来源设置不同的accept属性
+        this.setupFileInputForSource(fileInput, source);
+        
         // 触发文件选择
         try {
-            if (isIOS) {
-                // iOS 设备的特殊处理
-                this.handleIOSFileSelection(fileInput, source);
-            } else if (isSafari) {
+            if (isSafari) {
                 // Safari 浏览器处理
                 this.handleSafariFileSelection(fileInput);
             } else {
@@ -1223,7 +1228,7 @@ class BroadcastSystem {
             }
         } catch (error) {
             console.error('文件选择失败:', error);
-            this.handleFileSelectionError(error, isIOS, isSafari);
+            this.handleFileSelectionError(error, false, isSafari);
         }
     }
     
@@ -1231,11 +1236,11 @@ class BroadcastSystem {
     handleIOSFileSelection(fileInput, source) {
         console.log('处理iOS文件选择，来源:', source);
         
-        // 显示iOS专用提示
-        this.showIOSFileSelectionHelp();
+        // iOS设备强制使用文件管理器，不显示音乐库选项
+        this.setupFileInputForSource(fileInput, 'files');
         
-        // 设置文件输入属性
-        this.setupFileInputForSource(fileInput, source);
+        // 显示iOS专用提示
+        this.showNotification('正在打开iOS文件管理器...', 'info');
         
         // 延迟触发，确保用户有足够时间看到提示
         setTimeout(() => {
@@ -1255,13 +1260,13 @@ class BroadcastSystem {
                 // 触发文件选择
                 setTimeout(() => {
                     newFileInput.click();
-                }, 100);
+                }, 200);
                 
             } catch (error) {
                 console.error('iOS文件选择处理失败:', error);
                 this.showIOSAlternativeMethod();
             }
-        }, 800);
+        }, 500);
     }
     
     // Safari文件选择处理
@@ -1346,16 +1351,22 @@ class BroadcastSystem {
     setupFileInputForSource(fileInput, source) {
         switch (source) {
             case 'music':
-                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg');
+                // iOS音乐库选择 - 使用具体的音频格式，避免触发相机
+                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg,audio/aac,audio/mp4,audio/wav,audio/ogg');
+                fileInput.setAttribute('capture', 'microphone');
                 break;
             case 'files':
-                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+                // iOS文件选择 - 使用更广泛的音频格式
+                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg,audio/aac,audio/mp4,audio/wav,audio/ogg,audio/flac,audio/x-m4a');
+                fileInput.removeAttribute('capture');
                 break;
             default:
-                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+                // 默认选择 - 支持所有音频格式
+                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg,audio/aac,audio/mp4,audio/wav,audio/ogg,audio/flac,audio/x-m4a');
+                fileInput.removeAttribute('capture');
         }
         
-        fileInput.removeAttribute('capture');
+        // 确保multiple属性
         fileInput.setAttribute('multiple', '');
     }
     
@@ -1371,20 +1382,15 @@ class BroadcastSystem {
                 return;
             }
             
-            // 根据模式设置accept属性
-            if (mode === 'music') {
-                // 音乐库模式 - 更宽泛的音频格式
-                fileInput.setAttribute('accept', 'audio/*');
-            } else {
-                // 文件选择模式 - 包含具体扩展名
-                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma');
-            }
+            // 强制使用文件管理器，不再使用音乐库模式
+            // 文件选择模式 - 包含具体扩展名
+            fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma');
             
             // 确保multiple属性
             fileInput.setAttribute('multiple', '');
             
             // 显示iOS提示
-            this.showNotification(`正在打开${mode === 'music' ? '音乐库' : '文件'}选择器...`, 'info');
+            this.showNotification('正在打开iOS文件管理器...', 'info');
             
             // 直接触发点击
             fileInput.click();
@@ -1405,29 +1411,34 @@ class BroadcastSystem {
     showIOSAlternativeMethod() {
         console.log('显示iOS备用文件选择方法');
         
-        // 创建一个更简单的文件选择界面
+        // 创建简化的文件选择界面，去掉音乐库选择，直接使用文件管理器
         const iosAlternative = document.createElement('div');
         iosAlternative.className = 'ios-alternative-upload';
         iosAlternative.innerHTML = `
             <div class="ios-alternative-content">
                 <div class="ios-alternative-icon">
-                    <i class="fas fa-cloud-upload-alt"></i>
+                    <i class="fas fa-folder-open"></i>
                 </div>
                 <h3>iOS 文件选择</h3>
-                <p>点击下方按钮选择音频文件</p>
+                <p>点击下方按钮从文件管理器选择音频文件</p>
                 <div class="ios-alternative-buttons">
-                    <button onclick="broadcastSystem.triggerIOSAlternative('music')" class="ios-alt-music-btn">
-                        <i class="fas fa-music"></i>
-                        <span>音乐库</span>
-                    </button>
                     <button onclick="broadcastSystem.triggerIOSAlternative('files')" class="ios-alt-files-btn">
-                        <i class="fas fa-folder"></i>
-                        <span>文件</span>
+                        <i class="fas fa-music"></i>
+                        <span>选择音频文件</span>
                     </button>
                 </div>
                 <p class="ios-alternative-tips">
-                    提示：iOS设备需要用户直接点击按钮才能打开文件选择器
+                    <i class="fas fa-info-circle"></i>
+                    支持格式：MP3、WAV、OGG、M4A、AAC、FLAC
                 </p>
+                <div class="ios-alternative-hints">
+                    <p><strong>提示：</strong></p>
+                    <ul>
+                        <li>请在iOS文件管理器中查找音频文件</li>
+                        <li>支持从音乐应用、文件应用或其他应用中选择</li>
+                        <li>如果无法选择，请尝试拖拽文件到页面</li>
+                    </ul>
+                </div>
             </div>
         `;
         
@@ -1444,10 +1455,12 @@ class BroadcastSystem {
             backdrop-filter: blur(20px);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             z-index: 10004;
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
             border: 1px solid rgba(255, 255, 255, 0.25);
             animation: slideIn 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
         `;
         
         // 添加按钮样式
@@ -1457,39 +1470,39 @@ class BroadcastSystem {
                 display: flex;
                 gap: 16px;
                 margin: 24px 0;
-                flex-wrap: wrap;
+                flex-direction: column;
             }
             
-            .ios-alt-music-btn, .ios-alt-files-btn {
-                flex: 1;
+            .ios-alt-files-btn {
                 background: rgba(255, 255, 255, 0.15);
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-radius: 12px;
-                padding: 16px 20px;
+                padding: 20px 24px;
                 color: white;
-                font-size: 0.95rem;
+                font-size: 1rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.3s ease;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 8px;
-                min-width: 120px;
+                gap: 12px;
+                min-width: 160px;
+                align-self: center;
             }
             
-            .ios-alt-music-btn:hover, .ios-alt-files-btn:hover {
+            .ios-alt-files-btn:hover {
                 background: rgba(255, 255, 255, 0.25);
                 transform: translateY(-2px);
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
             }
             
-            .ios-alt-music-btn i, .ios-alt-files-btn i {
-                font-size: 1.5rem;
+            .ios-alt-files-btn i {
+                font-size: 2rem;
             }
             
-            .ios-alt-music-btn span, .ios-alt-files-btn span {
-                font-size: 0.9rem;
+            .ios-alt-files-btn span {
+                font-size: 1rem;
             }
             
             .ios-alternative-tips {
@@ -1497,7 +1510,52 @@ class BroadcastSystem {
                 color: rgba(255, 255, 255, 0.9);
                 text-align: center;
                 margin-top: 20px;
+                margin-bottom: 24px;
                 line-height: 1.4;
+                padding: 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+            }
+            
+            .ios-alternative-tips i {
+                margin-right: 8px;
+            }
+            
+            .ios-alternative-hints {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 16px;
+                border-radius: 12px;
+                margin-top: 20px;
+            }
+            
+            .ios-alternative-hints p {
+                font-size: 0.9rem;
+                font-weight: 500;
+                margin-bottom: 12px;
+                color: rgba(255, 255, 255, 0.95);
+            }
+            
+            .ios-alternative-hints ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .ios-alternative-hints li {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.85);
+                margin-bottom: 8px;
+                padding-left: 20px;
+                position: relative;
+                line-height: 1.4;
+            }
+            
+            .ios-alternative-hints li::before {
+                content: '•';
+                position: absolute;
+                left: 0;
+                color: rgba(0, 122, 255, 0.8);
+                font-size: 1rem;
             }
         `;
         document.head.appendChild(style);
@@ -1514,7 +1572,7 @@ class BroadcastSystem {
                     }
                 }, 300);
             }
-        }, 30000);
+        }, 45000);
         
         // 点击关闭按钮
         const closeBtn = document.createElement('button');
@@ -1556,34 +1614,52 @@ class BroadcastSystem {
                 return;
             }
             
-            // 设置accept属性
-            if (mode === 'music') {
-                fileInput.setAttribute('accept', 'audio/*');
-                this.showNotification('正在打开音乐库...', 'info');
-            } else {
-                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
-                this.showNotification('正在打开文件管理器...', 'info');
-            }
+            // 设置accept属性 - 统一使用文件管理器选择所有音频文件
+            fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.wma,.mp4');
+            
+            // 移除capture属性，避免触发相机
+            fileInput.removeAttribute('capture');
             
             // 确保multiple属性
             fileInput.setAttribute('multiple', '');
             
-            // 创建临时点击事件
-            const tempEvent = new MouseEvent('click', {
-                view: window,
-                bubbles: true,
-                cancelable: true,
-                clientX: 0,
-                clientY: 0
-            });
+            // 显示文件选择状态
+            this.showIOSFileStatus('正在打开文件管理器...', 'loading');
             
-            // 直接触发文件选择
-            const result = fileInput.dispatchEvent(tempEvent);
-            
-            if (!result) {
-                // 如果dispatchEvent失败，尝试直接调用click()
-                fileInput.click();
-            }
+            // 使用更可靠的方式触发文件选择
+            setTimeout(() => {
+                try {
+                    // 创建新的文件输入以避免状态问题
+                    const newFileInput = fileInput.cloneNode(true);
+                    
+                    // 重新绑定事件监听器
+                    newFileInput.addEventListener('change', (e) => {
+                        console.log('iOS替代文件输入变化事件');
+                        this.handleFileSelect(e);
+                        
+                        // 移除状态指示器
+                        setTimeout(() => {
+                            const status = document.querySelector('.ios-file-status');
+                            if (status) {
+                                status.remove();
+                            }
+                        }, 1000);
+                    });
+                    
+                    // 替换原文件输入
+                    fileInput.parentNode.replaceChild(newFileInput, fileInput);
+                    
+                    // 触发文件选择
+                    newFileInput.click();
+                    
+                } catch (error) {
+                    console.error('iOS替代文件选择触发失败:', error);
+                    this.showNotification('文件选择失败，请尝试拖拽文件', 'error');
+                    
+                    // 显示指导
+                    this.showIOSFileSelectionGuide();
+                }
+            }, 200);
             
             // 移除替代界面
             setTimeout(() => {
