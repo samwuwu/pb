@@ -1041,6 +1041,32 @@ class BroadcastSystem {
         
         // 优化移动端文件选择体验
         this.optimizeMobileFileSelection();
+        
+        // 检测浏览器并给出建议
+        this.checkBrowserCompatibility();
+    }
+    
+    // 检测浏览器兼容性并提供建议
+    checkBrowserCompatibility() {
+        const browser = this.detectBrowser();
+        
+        if (browser.isIOS) {
+            if (browser.isSafari) {
+                console.log('检测到iOS Safari，兼容性良好');
+            } else if (browser.isChrome) {
+                console.log('检测到iOS Chrome，兼容性一般，建议使用Safari');
+                this.showBrowserRecommendation('Chrome');
+            } else {
+                console.log('检测到其他iOS浏览器，兼容性未知');
+            }
+        }
+    }
+    
+    // 显示浏览器使用建议
+    showBrowserRecommendation(browserType) {
+        // 不主动显示推荐，避免打扰用户
+        // 但会在备用界面中提供相应指导
+        console.log(`建议使用Safari浏览器以获得最佳体验，当前使用${browserType}`);
     }
     
     // 添加情景切换动画效果
@@ -1267,27 +1293,26 @@ class BroadcastSystem {
             return;
         }
         
-        // 检测设备类型
-        const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
-        const isIOS = this.isIOSDevice();
+        // 检测浏览器类型
+        const browser = this.detectBrowser();
+        console.log('浏览器检测:', browser);
         
-        console.log('设备类型检测:', { isSafari, isIOS });
-        
-        // iOS设备特殊处理 - 直接使用文件管理器
-        if (isIOS) {
-            // iOS设备强制使用文件管理器，避免音乐库选择
-            this.setupFileInputForSource(fileInput, 'files');
-            this.handleIOSFileSelection(fileInput, 'files');
-            return;
-        }
-        
-        // 根据来源设置不同的accept属性
-        this.setupFileInputForSource(fileInput, source);
-        
-        // 触发文件选择
+        // 针对不同浏览器使用不同策略
         try {
-            if (isSafari) {
-                // Safari 浏览器处理
+            if (browser.isIOS && browser.isSafari) {
+                // iOS Safari: 使用特殊的处理方式解决音频文件灰色问题
+                this.setupFileInputForSource(fileInput, source);
+                this.handleiOSSafariFileSelection(fileInput, source);
+            } else if (browser.isIOS && browser.isChrome) {
+                // iOS Chrome: 使用特殊方式处理
+                this.setupFileInputForSource(fileInput, source);
+                this.handleIOSChromeFileSelection(fileInput, source);
+            } else if (browser.isIOS) {
+                // 其他iOS浏览器
+                this.setupFileInputForSource(fileInput, source);
+                this.handleIOSFileSelection(fileInput, source);
+            } else if (browser.isSafari) {
+                // 桌面Safari
                 this.handleSafariFileSelection(fileInput);
             } else {
                 // 其他浏览器的标准处理
@@ -1295,37 +1320,117 @@ class BroadcastSystem {
             }
         } catch (error) {
             console.error('文件选择失败:', error);
-            this.handleFileSelectionError(error, false, isSafari);
+            this.handleFileSelectionError(error, false, browser.isSafari);
         }
     }
     
-    // iOS文件选择处理
-    handleIOSFileSelection(fileInput, source) {
-        console.log('处理iOS文件选择，来源:', source);
+    // iOS Safari文件选择处理 - 解决音频文件灰色不可选问题
+    handleiOSSafariFileSelection(fileInput, source) {
+        console.log('处理iOS Safari文件选择，来源:', source);
         
-        // iOS设备强制使用文件管理器，不显示音乐库选项
-        this.setupFileInputForSource(fileInput, 'files');
+        // iOS Safari使用特殊的accept策略
+        fileInput.setAttribute('accept', 'audio/*');
+        fileInput.removeAttribute('capture');
         
-        // 显示iOS专用提示
-        this.showNotification('正在打开iOS文件管理器...', 'info');
+        // 显示iOS Safari专用提示
+        this.showNotification('正在打开iOS Safari文件管理器...', 'info');
         
         // 延迟触发，确保用户有足够时间看到提示
         setTimeout(() => {
             try {
-                // 创建全新的文件输入，避免任何状态问题
+                // 使用全新的文件输入元素，避免Safari的状态问题
                 const newFileInput = document.createElement('input');
                 newFileInput.type = 'file';
                 newFileInput.id = 'audioFileInput';
                 newFileInput.className = 'audio-file-input';
                 
-                // 设置iOS兼容的accept属性
-                newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac,.wma,.mp4');
+                // iOS Safari使用audio/*，但设置webkitdirectory以触发文件管理器
+                newFileInput.setAttribute('accept', 'audio/*');
+                newFileInput.setAttribute('multiple', '');
+                newFileInput.style.display = 'none';
+                
+                // 添加特殊的Safari属性
+                if (this.detectBrowser().version >= '15') {
+                    newFileInput.setAttribute('webkitdirectory', '');
+                    console.log('iOS Safari 15+: 使用webkitdirectory属性');
+                }
+                
+                // 绑定事件监听器
+                newFileInput.addEventListener('change', (e) => {
+                    console.log('iOS Safari文件输入变化事件 - 文件数量:', e.target.files.length);
+                    console.log('选择的文件详情:', Array.from(e.target.files).map(f => ({
+                        name: f.name,
+                        type: f.type || '未知MIME类型',
+                        size: f.size,
+                        extension: f.name.split('.').pop()?.toLowerCase()
+                    })));
+                    
+                    // 检查是否有选择的文件
+                    if (e.target.files.length === 0) {
+                        console.log('没有选择文件，可能是音频文件灰色状态');
+                        this.showNotification('未检测到音频文件，请尝试从"文件"应用中选择', 'warning');
+                        this.showIOSAlternativeMethod();
+                        return;
+                    }
+                    
+                    // 替换全局文件输入引用
+                    this.audioFileInput = newFileInput;
+                    this.handleFileSelect(e);
+                });
+                
+                // 移除旧的文件输入
+                const oldFileInput = document.getElementById('audioFileInput');
+                if (oldFileInput && oldFileInput.parentNode) {
+                    oldFileInput.parentNode.removeChild(oldFileInput);
+                }
+                
+                // 添加新的文件输入到body
+                document.body.appendChild(newFileInput);
+                
+                // 更新当前文件输入引用
+                this.audioFileInput = newFileInput;
+                
+                // 触发文件选择
+                setTimeout(() => {
+                    newFileInput.click();
+                    console.log('iOS Safari文件选择器已触发');
+                }, 300);
+                
+            } catch (error) {
+                console.error('iOS Safari文件选择处理失败:', error);
+                this.handleIOSFileSelectionError(error, '文件选择');
+            }
+        }, 800);
+    }
+    
+    // iOS Chrome文件选择处理 - 解决无法打开文件管理器的问题
+    handleIOSChromeFileSelection(fileInput, source) {
+        console.log('处理iOS Chrome文件选择，来源:', source);
+        
+        // iOS Chrome使用扩展名列表
+        fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+        fileInput.removeAttribute('capture');
+        
+        // 显示iOS Chrome专用提示
+        this.showNotification('正在打开Chrome文件选择器...', 'info');
+        
+        // 延迟触发，确保用户有足够时间看到提示
+        setTimeout(() => {
+            try {
+                // 创建全新的文件输入元素
+                const newFileInput = document.createElement('input');
+                newFileInput.type = 'file';
+                newFileInput.id = 'audioFileInput';
+                newFileInput.className = 'audio-file-input';
+                
+                // iOS Chrome使用扩展名列表
+                newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
                 newFileInput.setAttribute('multiple', '');
                 newFileInput.style.display = 'none';
                 
                 // 绑定事件监听器
                 newFileInput.addEventListener('change', (e) => {
-                    console.log('iOS文件输入变化事件 - 文件数量:', e.target.files.length);
+                    console.log('iOS Chrome文件输入变化事件 - 文件数量:', e.target.files.length);
                     console.log('选择的文件详情:', Array.from(e.target.files).map(f => ({
                         name: f.name,
                         type: f.type || '未知MIME类型',
@@ -1353,12 +1458,12 @@ class BroadcastSystem {
                 // 触发文件选择
                 setTimeout(() => {
                     newFileInput.click();
-                    console.log('iOS文件选择器已触发');
+                    console.log('iOS Chrome文件选择器已触发');
                 }, 200);
                 
             } catch (error) {
-                console.error('iOS文件选择处理失败:', error);
-                this.showIOSAlternativeMethod();
+                console.error('iOS Chrome文件选择处理失败:', error);
+                this.handleIOSFileSelectionError(error, '文件选择');
             }
         }, 500);
     }
@@ -1441,52 +1546,78 @@ class BroadcastSystem {
         }, 5000);
     }
     
-    // 根据来源设置文件输入
+    // 根据来源和浏览器类型设置文件输入
     setupFileInputForSource(fileInput, source) {
-        // 检测是否为iOS设备
-        const isIOS = this.isIOSDevice();
+        // 检测浏览器类型
+        const browser = this.detectBrowser();
         
-        console.log('设置文件输入，来源:', source, '是否iOS:', isIOS);
+        console.log('设置文件输入，来源:', source, '浏览器:', browser);
         
+        // 根据浏览器类型选择不同的策略
         switch (source) {
             case 'music':
-                // 音乐库选择 - iOS使用简单的accept属性
-                if (isIOS) {
-                    // iOS设备使用最简单的accept属性，避免兼容性问题
-                    fileInput.setAttribute('accept', 'audio/*');
-                    // 注意：iOS中audio/*可能仍然会触发相机，但我们已经在代码中处理了这种情况
-                } else {
-                    // 非iOS设备使用具体的音频格式
-                    fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg,audio/aac,audio/mp4,audio/wav,audio/ogg');
-                    fileInput.setAttribute('capture', 'microphone');
-                }
+                // 音乐库选择 - 大部分浏览器不支持，主要使用文件管理器
+                this.setupFileInputForBrowser(fileInput, browser);
                 break;
             case 'files':
-                // 文件选择 - 针对iOS优化
-                if (isIOS) {
-                    // iOS设备使用扩展名列表，避免MIME类型问题
-                    fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
-                    fileInput.removeAttribute('capture');
-                } else {
-                    // 非iOS设备使用MIME类型
-                    fileInput.setAttribute('accept', 'audio/*');
-                    fileInput.removeAttribute('capture');
-                }
+                // 文件选择 - 根据浏览器类型优化
+                this.setupFileInputForBrowser(fileInput, browser);
                 break;
             default:
-                // 默认选择 - iOS使用扩展名，其他使用MIME类型
-                if (isIOS) {
-                    fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
-                } else {
-                    fileInput.setAttribute('accept', 'audio/*');
-                }
-                fileInput.removeAttribute('capture');
+                // 默认选择 - 根据浏览器类型
+                this.setupFileInputForBrowser(fileInput, browser);
         }
         
         // 确保multiple属性
         fileInput.setAttribute('multiple', '');
         
         console.log('文件输入设置完成，accept属性:', fileInput.getAttribute('accept'));
+    }
+    
+    // 根据浏览器类型设置文件输入
+    setupFileInputForBrowser(fileInput, browser) {
+        if (browser.isIOS && browser.isSafari) {
+            // iOS Safari: 使用简单的audio/*，但需要特殊处理
+            fileInput.setAttribute('accept', 'audio/*');
+            fileInput.removeAttribute('capture');
+            console.log('iOS Safari: 使用audio/* accept');
+            
+        } else if (browser.isIOS && browser.isChrome) {
+            // iOS Chrome: 使用扩展名列表，避免文件管理器问题
+            fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+            fileInput.removeAttribute('capture');
+            console.log('iOS Chrome: 使用扩展名列表');
+            
+        } else if (browser.isIOS) {
+            // 其他iOS浏览器: 使用扩展名列表
+            fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+            fileInput.removeAttribute('capture');
+            console.log('iOS 其他浏览器: 使用扩展名列表');
+            
+        } else if (browser.isChrome) {
+            // Chrome浏览器: 使用MIME类型
+            fileInput.setAttribute('accept', 'audio/*');
+            fileInput.removeAttribute('capture');
+            console.log('Chrome: 使用audio/* MIME类型');
+            
+        } else if (browser.isFirefox) {
+            // Firefox: 使用MIME类型
+            fileInput.setAttribute('accept', 'audio/*');
+            fileInput.removeAttribute('capture');
+            console.log('Firefox: 使用audio/* MIME类型');
+            
+        } else if (browser.isEdge) {
+            // Edge: 使用MIME类型
+            fileInput.setAttribute('accept', 'audio/*');
+            fileInput.removeAttribute('capture');
+            console.log('Edge: 使用audio/* MIME类型');
+            
+        } else {
+            // 默认: 使用MIME类型
+            fileInput.setAttribute('accept', 'audio/*');
+            fileInput.removeAttribute('capture');
+            console.log('默认: 使用audio/* MIME类型');
+        }
     }
     
     // iOS 专用文件选择
@@ -1520,17 +1651,89 @@ class BroadcastSystem {
         }
     }
     
-    // 检测是否为iOS设备
-    isIOSDevice() {
-        const userAgent = navigator.userAgent;
-        return /iPad|iPhone|iPod/.test(userAgent);
+    // 检测浏览器类型
+    detectBrowser() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        return {
+            isIOS: /iPad|iPhone|iPod/.test(userAgent),
+            isSafari: userAgent.includes('safari') && !userAgent.includes('chrome'),
+            isChrome: userAgent.includes('chrome'),
+            isFirefox: userAgent.includes('firefox'),
+            isEdge: userAgent.includes('edge'),
+            isWeChat: userAgent.includes('micromessenger'),
+            isQQ: userAgent.includes('qq'),
+            version: this.getBrowserVersion(userAgent)
+        };
     }
     
-    // iOS备用方法处理
+    // 获取浏览器版本
+    getBrowserVersion(userAgent) {
+        const matches = userAgent.match(/(safari|chrome|firefox|edge)\/(\d+)/);
+        return matches ? matches[2] : 'unknown';
+    }
+    
+    // 检测是否为iOS设备
+    isIOSDevice() {
+        return this.detectBrowser().isIOS;
+    }
+    
+    // iOS备用方法处理 - 根据不同浏览器显示不同指导
     showIOSAlternativeMethod() {
         console.log('显示iOS备用文件选择方法');
         
-        // 创建简化的文件选择界面，去掉音乐库选择，直接使用文件管理器
+        // 检测浏览器类型
+        const browser = this.detectBrowser();
+        let browserSpecificContent = '';
+        
+        if (browser.isSafari) {
+            browserSpecificContent = `
+                <div class="browser-specific-info">
+                    <div class="browser-icon">
+                        <i class="fab fa-safari"></i>
+                    </div>
+                    <h4>iOS Safari 浏览器</h4>
+                    <p>如果您看到音频文件呈灰色不可选状态，请尝试以下方法：</p>
+                    <ul>
+                        <li>点击"从文件中选择"按钮</li>
+                        <li>在弹出的界面中，点击"浏览"或"更多"选项</li>
+                        <li>选择"文件"应用或"音乐"应用</li>
+                        <li>找到您的音频文件并选择</li>
+                    </ul>
+                </div>
+            `;
+        } else if (browser.isChrome) {
+            browserSpecificContent = `
+                <div class="browser-specific-info">
+                    <div class="browser-icon">
+                        <i class="fab fa-chrome"></i>
+                    </div>
+                    <h4>Chrome 浏览器</h4>
+                    <p>Chrome浏览器可能无法直接打开文件管理器，请尝试：</p>
+                    <ul>
+                        <li>点击下方的"Chrome文件选择"按钮</li>
+                        <li>如果您有iCloud Drive应用，可以尝试从中选择</li>
+                        <li>或者使用Safari浏览器以获得更好的兼容性</li>
+                    </ul>
+                </div>
+            `;
+        } else {
+            browserSpecificContent = `
+                <div class="browser-specific-info">
+                    <div class="browser-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h4>其他浏览器</h4>
+                    <p>请尝试以下通用方法：</p>
+                    <ul>
+                        <li>点击下方按钮选择音频文件</li>
+                        <li>如果无法选择，请尝试从Safari浏览器访问</li>
+                        <li>也可以尝试拖拽音频文件到页面</li>
+                    </ul>
+                </div>
+            `;
+        }
+        
         const iosAlternative = document.createElement('div');
         iosAlternative.className = 'ios-alternative-upload';
         iosAlternative.innerHTML = `
@@ -1540,10 +1743,21 @@ class BroadcastSystem {
                 </div>
                 <h3>iOS 文件选择</h3>
                 <p>点击下方按钮从文件管理器选择音频文件</p>
+                ${browserSpecificContent}
                 <div class="ios-alternative-buttons">
-                    <button onclick="broadcastSystem.triggerIOSAlternative('files')" class="ios-alt-files-btn">
-                        <i class="fas fa-music"></i>
-                        <span>选择音频文件</span>
+                    ${browser.isChrome ? 
+                        `<button onclick="broadcastSystem.triggerIOSAlternative('chrome')" class="ios-alt-files-btn">
+                            <i class="fab fa-chrome"></i>
+                            <span>Chrome文件选择</span>
+                        </button>` : 
+                        `<button onclick="broadcastSystem.triggerIOSAlternative('files')" class="ios-alt-files-btn">
+                            <i class="fas fa-music"></i>
+                            <span>选择音频文件</span>
+                        </button>`
+                    }
+                    <button onclick="broadcastSystem.triggerIOSAlternative('standard')" class="ios-alt-files-btn">
+                        <i class="fas fa-folder"></i>
+                        <span>标准文件选择</span>
                     </button>
                 </div>
                 <p class="ios-alternative-tips">
@@ -1551,11 +1765,12 @@ class BroadcastSystem {
                     支持格式：MP3、WAV、OGG、M4A、AAC、FLAC
                 </p>
                 <div class="ios-alternative-hints">
-                    <p><strong>提示：</strong></p>
+                    <p><strong>通用提示：</strong></p>
                     <ul>
                         <li>请在iOS文件管理器中查找音频文件</li>
                         <li>支持从音乐应用、文件应用或其他应用中选择</li>
                         <li>如果无法选择，请尝试拖拽文件到页面</li>
+                        <li>建议使用Safari浏览器以获得最佳兼容性</li>
                     </ul>
                 </div>
             </div>
@@ -1574,7 +1789,7 @@ class BroadcastSystem {
             backdrop-filter: blur(20px);
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             z-index: 10004;
-            max-width: 420px;
+            max-width: 460px;
             width: 90%;
             border: 1px solid rgba(255, 255, 255, 0.25);
             animation: slideIn 0.3s ease;
@@ -1585,6 +1800,55 @@ class BroadcastSystem {
         // 添加按钮样式
         const style = document.createElement('style');
         style.textContent = `
+            .browser-specific-info {
+                background: rgba(255, 255, 255, 0.1);
+                padding: 16px;
+                border-radius: 12px;
+                margin-bottom: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            
+            .browser-icon {
+                font-size: 2rem;
+                margin-bottom: 12px;
+                color: rgba(255, 255, 255, 0.95);
+            }
+            
+            .browser-specific-info h4 {
+                font-size: 1.1rem;
+                margin-bottom: 12px;
+                color: white;
+            }
+            
+            .browser-specific-info p {
+                font-size: 0.9rem;
+                margin-bottom: 16px;
+                color: rgba(255, 255, 255, 0.9);
+            }
+            
+            .browser-specific-info ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .browser-specific-info li {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.85);
+                margin-bottom: 8px;
+                padding-left: 20px;
+                position: relative;
+                line-height: 1.4;
+            }
+            
+            .browser-specific-info li::before {
+                content: '→';
+                position: absolute;
+                left: 0;
+                color: rgba(0, 122, 255, 0.8);
+                font-size: 0.9rem;
+            }
+            
             .ios-alternative-buttons {
                 display: flex;
                 gap: 16px;
@@ -1596,17 +1860,17 @@ class BroadcastSystem {
                 background: rgba(255, 255, 255, 0.15);
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-radius: 12px;
-                padding: 20px 24px;
+                padding: 16px 20px;
                 color: white;
-                font-size: 1rem;
+                font-size: 0.95rem;
                 font-weight: 500;
                 cursor: pointer;
                 transition: all 0.3s ease;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 12px;
-                min-width: 160px;
+                gap: 10px;
+                min-width: 140px;
                 align-self: center;
             }
             
@@ -1617,11 +1881,11 @@ class BroadcastSystem {
             }
             
             .ios-alt-files-btn i {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .ios-alt-files-btn span {
-                font-size: 1rem;
+                font-size: 0.9rem;
             }
             
             .ios-alternative-tips {
@@ -1691,7 +1955,7 @@ class BroadcastSystem {
                     }
                 }, 300);
             }
-        }, 45000);
+        }, 60000);
         
         // 点击关闭按钮
         const closeBtn = document.createElement('button');
@@ -1733,8 +1997,31 @@ class BroadcastSystem {
                 return;
             }
             
-            // iOS设备使用扩展名列表，这是最兼容的方式
-            fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac,.wma,.mp4');
+            // 根据模式设置不同的accept属性
+            const browser = this.detectBrowser();
+            
+            if (mode === 'chrome') {
+                // Chrome特殊模式
+                fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                this.showIOSFileStatus('正在打开Chrome文件选择器...', 'loading');
+                console.log('Chrome模式: 使用扩展名列表');
+            } else if (mode === 'standard') {
+                // 标准模式
+                if (browser.isSafari) {
+                    fileInput.setAttribute('accept', 'audio/*');
+                    this.showIOSFileStatus('正在打开标准文件选择器(Safari)...', 'loading');
+                    console.log('标准模式(Safari): 使用audio/*');
+                } else {
+                    fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                    this.showIOSFileStatus('正在打开标准文件选择器...', 'loading');
+                    console.log('标准模式(其他): 使用扩展名列表');
+                }
+            } else {
+                // 默认模式
+                fileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                this.showIOSFileStatus('正在打开文件管理器...', 'loading');
+                console.log('默认模式: 使用扩展名列表');
+            }
             
             // 移除capture属性，避免触发相机
             fileInput.removeAttribute('capture');
@@ -1753,7 +2040,18 @@ class BroadcastSystem {
                     newFileInput.type = 'file';
                     newFileInput.id = 'audioFileInput';
                     newFileInput.className = 'audio-file-input';
-                    newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac,.wma,.mp4');
+                    // 设置accept属性
+                    if (mode === 'chrome') {
+                        newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                    } else if (mode === 'standard') {
+                        if (browser.isSafari) {
+                            newFileInput.setAttribute('accept', 'audio/*');
+                        } else {
+                            newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                        }
+                    } else {
+                        newFileInput.setAttribute('accept', '.mp3,.m4a,.wav,.aac,.ogg,.flac');
+                    }
                     newFileInput.setAttribute('multiple', '');
                     newFileInput.style.display = 'none';
                     
@@ -1803,10 +2101,7 @@ class BroadcastSystem {
             
         } catch (error) {
             console.error('iOS替代文件选择失败:', error);
-            this.showNotification('文件选择失败，请尝试拖拽文件', 'error');
-            
-            // 显示指导
-            this.showIOSFileSelectionGuide();
+            this.handleIOSFileSelectionError(error, '文件选择');
         }
     }
     
