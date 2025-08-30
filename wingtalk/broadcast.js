@@ -568,6 +568,7 @@ class BroadcastSystem {
     // 添加拖拽上传支持
     addDragDropSupport() {
         const uploadArea = document.querySelector('.file-upload-area');
+        if (!uploadArea) return;
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             uploadArea.addEventListener(eventName, this.preventDefaults, false);
@@ -585,6 +586,238 @@ class BroadcastSystem {
             const files = Array.from(e.dataTransfer.files);
             this.addFiles(files);
         }, false);
+    }
+    
+    // iOS Safari 强力文件选择
+    forceIOSFileSelect() {
+        console.log('开始 iOS Safari 强力文件选择');
+        
+        try {
+            // 方案1: 使用动态创建的 input
+            this.createDynamicFileInput('audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+        } catch (error) {
+            console.error('方案1失败:', error);
+            
+            try {
+                // 方案2: 分阶段触发
+                this.phasedTriggerFileSelect();
+            } catch (error2) {
+                console.error('方案2失败:', error2);
+                
+                // 方案3: 显示用户指导
+                this.showiOSFileSelectionGuide();
+            }
+        }
+    }
+    
+    // 创建动态文件输入元素
+    createDynamicFileInput(accept) {
+        console.log('创建动态文件输入:', accept);
+        
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = accept;
+        fileInput.multiple = true;
+        fileInput.style.cssText = 'position: fixed; top: -9999px; left: -9999px; opacity: 0; width: 1px; height: 1px;';
+        
+        const changeHandler = (e) => {
+            console.log('动态文件输入触发:', e.target.files);
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                setTimeout(() => {
+                    this.addFiles(files);
+                }, 50);
+            }
+            document.body.removeChild(fileInput);
+        };
+        
+        fileInput.addEventListener('change', changeHandler);
+        document.body.appendChild(fileInput);
+        
+        // 多次触发尝试
+        setTimeout(() => fileInput.click(), 10);
+        setTimeout(() => fileInput.click(), 100);
+        setTimeout(() => fileInput.click(), 300);
+        
+        // 设置超时清理
+        setTimeout(() => {
+            if (document.body.contains(fileInput)) {
+                document.body.removeChild(fileInput);
+            }
+        }, 5000);
+    }
+    
+    // 分阶段触发文件选择
+    phasedTriggerFileSelect() {
+        return new Promise((resolve, reject) => {
+            console.log('开始分阶段文件选择');
+            
+            const phase1 = () => {
+                try {
+                    const input1 = this.createHiddenFileInput('audio/mp3,audio/mpeg');
+                    if (input1) {
+                        this.checkFileInputSuccess(input1, phase2, reject);
+                    } else {
+                        phase2();
+                    }
+                } catch (error) {
+                    console.error('阶段1失败:', error);
+                    phase2();
+                }
+            };
+            
+            const phase2 = () => {
+                try {
+                    const input2 = this.createHiddenFileInput('audio/*,.mp3,.wav,.ogg');
+                    if (input2) {
+                        this.checkFileInputSuccess(input2, phase3, reject);
+                    } else {
+                        phase3();
+                    }
+                } catch (error) {
+                    console.error('阶段2失败:', error);
+                    phase3();
+                }
+            };
+            
+            const phase3 = () => {
+                try {
+                    const input3 = this.createHiddenFileInput('*/*');
+                    if (input3) {
+                        this.checkFileInputSuccess(input3, resolve, reject);
+                    } else {
+                        reject(new Error('所有文件选择方案都失败'));
+                    }
+                } catch (error) {
+                    console.error('阶段3失败:', error);
+                    reject(error);
+                }
+            };
+            
+            phase1();
+        });
+    }
+    
+    // 创建隐藏的文件输入
+    createHiddenFileInput(accept) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = accept;
+        input.style.cssText = 'position: fixed; top: -9999px; left: -9999px; opacity: 0; width: 1px; height: 1px;';
+        
+        const handler = () => {
+            input.removeEventListener('change', handler);
+            return input;
+        };
+        
+        input.addEventListener('change', handler);
+        document.body.appendChild(input);
+        input.click();
+        
+        // 如果5秒内没有响应，返回null
+        setTimeout(() => {
+            if (document.body.contains(input) && !input.value) {
+                document.body.removeChild(input);
+                return null;
+            }
+        }, 5000);
+        
+        return handler;
+    }
+    
+    // 检查文件输入是否成功
+    checkFileInputSuccess(input, successCallback, rejectCallback) {
+        const checkInterval = setInterval(() => {
+            if (input.value) {
+                clearInterval(checkInterval);
+                successCallback(input);
+            }
+        }, 100);
+        
+        // 5秒后检查
+        setTimeout(() => {
+            clearInterval(checkInterval);
+            if (!input.value) {
+                if (document.body.contains(input)) {
+                    document.body.removeChild(input);
+                }
+                rejectCallback(new Error('文件选择超时'));
+            }
+        }, 5000);
+    }
+    
+    // 显示iOS文件选择指导
+    showiOSFileSelectionGuide() {
+        console.log('显示iOS文件选择指导');
+        
+        const guide = document.createElement('div');
+        guide.className = 'ios-file-guide';
+        guide.innerHTML = `
+            <div class="guide-container">
+                <div class="guide-icon">
+                    <i class="fab fa-apple"></i>
+                </div>
+                <h3>iOS Safari 文件选择指南</h3>
+                <div class="guide-steps">
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <div class="step-content">
+                            <h4>点击"从音乐库选择"</h4>
+                            <p>选择iOS音乐应用中的音频文件</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <div class="step-content">
+                            <h4>点击"从文件选择"</h4>
+                            <p>使用iOS文件管理器选择文件</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <div class="step-content">
+                            <h4>拖拽文件</h4>
+                            <p>将音频文件拖拽到下方区域</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-tips">
+                    <h4>提示：</h4>
+                    <ul>
+                        <li>请确保允许Safari访问文件</li>
+                        <li>支持的格式：MP3、WAV、OGG、M4A、AAC</li>
+                        <li>如果仍然无法选择，请尝试重启Safari</li>
+                    </ul>
+                </div>
+                <button class="guide-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                    关闭
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(guide);
+        
+        // 自动关闭
+        const autoClose = setTimeout(() => {
+            if (document.body.contains(guide)) {
+                guide.style.opacity = '0';
+                setTimeout(() => {
+                    if (document.body.contains(guide)) {
+                        document.body.removeChild(guide);
+                    }
+                }, 300);
+            }
+        }, 30000);
+        
+        // 点击关闭时清除自动关闭
+        const closeBtn = guide.querySelector('.guide-close');
+        closeBtn.onclick = () => {
+            clearTimeout(autoClose);
+            if (document.body.contains(guide)) {
+                document.body.removeChild(guide);
+            }
+        };
     }
     
     preventDefaults(e) {
@@ -814,7 +1047,7 @@ class BroadcastSystem {
             
             // iOS 备用方案
             if (this.isIOSDevice()) {
-                this.triggerIOSFileSelect();
+                this.triggerIOSFileSelect(source);
             }
         }
     }
@@ -844,31 +1077,102 @@ class BroadcastSystem {
             // 创建隐藏的文件输入
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
-            fileInput.style.display = 'none';
+            fileInput.style.position = 'fixed';
+            fileInput.style.left = '-9999px';
+            fileInput.style.opacity = '0';
             
-            // 根据模式设置属性
+            // iOS Safari 特殊处理
             if (mode === 'music') {
+                // 音乐库模式 - iOS Safari 需要特殊处理
                 fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg');
+                
+                // 添加额外的 iOS Safari 优化属性
+                fileInput.setAttribute('capture', 'user');
+                fileInput.setAttribute('webkitdirectory', '');
+                
+                // 尝试使用 iOS Safari 特有的音乐库 API
+                if (window.webkit && window.webkit.messageHandlers) {
+                    // iOS 15+ 支持的 API
+                    console.log('尝试使用 iOS 音乐库 API');
+                    // 这里可以添加与原生应用的交互
+                }
             } else {
+                // 文件选择模式
                 fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+                fileInput.setAttribute('multiple', '');
+                
+                // iOS Safari 优化
+                fileInput.removeAttribute('capture');
+                
+                // 添加 iOS Safari 特殊触发
+                fileInput.setAttribute('webkitdirectory', '');
             }
             
-            fileInput.setAttribute('multiple', '');
-            
             // 添加事件监听
-            fileInput.addEventListener('change', (e) => {
+            const changeHandler = (e) => {
+                console.log('iOS文件选择触发');
                 const files = Array.from(e.target.files);
                 if (files.length > 0) {
                     console.log('iOS选择文件成功:', files);
-                    this.addFiles(files);
+                    
+                    // 延迟处理，确保文件完全加载
+                    setTimeout(() => {
+                        this.addFiles(files);
+                        document.body.removeChild(fileInput);
+                    }, 100);
+                } else {
+                    console.log('iOS文件选择被取消');
+                    document.body.removeChild(fileInput);
                 }
-                // 移除临时元素
-                document.body.removeChild(fileInput);
-            });
+                
+                // 移除事件监听
+                fileInput.removeEventListener('change', changeHandler);
+            };
             
-            // 添加到DOM并触发
+            fileInput.addEventListener('change', changeHandler);
+            
+            // 多次触发尝试（iOS Safari 需要）
+            const triggerClick = () => {
+                console.log('触发 iOS 文件选择');
+                
+                // 创建并点击一个临时的触发按钮
+                const triggerBtn = document.createElement('button');
+                triggerBtn.textContent = '选择文件';
+                triggerBtn.style.position = 'fixed';
+                triggerBtn.style.top = '-100px';
+                triggerBtn.style.left = '-100px';
+                triggerBtn.style.opacity = '0';
+                triggerBtn.onclick = () => {
+                    fileInput.click();
+                    document.body.removeChild(triggerBtn);
+                };
+                
+                document.body.appendChild(triggerBtn);
+                triggerBtn.click();
+                
+                // 延迟清理
+                setTimeout(() => {
+                    if (triggerBtn.parentNode) {
+                        document.body.removeChild(triggerBtn);
+                    }
+                }, 1000);
+            };
+            
+            // 添加到DOM
             document.body.appendChild(fileInput);
-            fileInput.click();
+            
+            // 使用多种触发方式
+            triggerClick();
+            
+            // 延迟再次尝试
+            setTimeout(() => {
+                fileInput.click();
+            }, 50);
+            
+            // 最终尝试
+            setTimeout(() => {
+                triggerClick();
+            }, 200);
             
         } catch (error) {
             console.error('iOS文件选择失败:', error);
