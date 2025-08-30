@@ -350,32 +350,84 @@ class BroadcastSystem {
     
     // 处理文件选择
     handleFileSelect(event) {
+        event.preventDefault();
         const files = Array.from(event.target.files);
+        if (files.length === 0) {
+            this.showNotification('请选择音频文件', 'warning');
+            return;
+        }
+        console.log('选择的文件:', files);
         this.addFiles(files);
+        // 清空文件输入，允许重复选择同一文件
+        event.target.value = '';
     }
     
     // 添加文件到列表
     addFiles(files) {
         files.forEach(file => {
+            console.log('处理文件:', file.name, file.type, file.size);
             if (this.isAudioFile(file)) {
-                const fileData = {
-                    id: Date.now() + Math.random(),
-                    file: file,
-                    name: file.name,
-                    size: this.formatFileSize(file.size),
-                    url: URL.createObjectURL(file),
-                    isLocalFile: true
-                };
-                this.uploadedFiles.push(fileData);
-                this.renderFileItem(fileData);
+                try {
+                    // 处理中文文件名编码
+                    const fileName = this.decodeFileName(file.name);
+                    const fileUrl = URL.createObjectURL(file);
+                    
+                    const fileData = {
+                        id: Date.now() + Math.random(),
+                        file: file,
+                        name: fileName,
+                        originalName: file.name,
+                        size: this.formatFileSize(file.size),
+                        url: fileUrl,
+                        isLocalFile: true
+                    };
+                    
+                    this.uploadedFiles.push(fileData);
+                    this.renderFileItem(fileData);
+                    
+                    console.log('文件添加成功:', fileName);
+                } catch (error) {
+                    console.error('文件处理失败:', error);
+                    this.showNotification(`文件 "${file.name}" 处理失败`, 'error');
+                }
+            } else {
+                this.showNotification(`文件 "${file.name}" 不是支持的音频格式`, 'warning');
             }
         });
     }
     
+    // 解码文件名（处理中文编码问题）
+    decodeFileName(fileName) {
+        try {
+            // 尝试解码URL编码的文件名
+            if (fileName.includes('%')) {
+                return decodeURIComponent(fileName);
+            }
+            // 尝试处理UTF-8编码
+            const decoder = new TextDecoder('utf-8');
+            const encoder = new TextEncoder();
+            const encoded = encoder.encode(fileName);
+            const decoded = decoder.decode(encoded);
+            return decoded;
+        } catch (error) {
+            console.warn('文件名解码失败，使用原始文件名:', error);
+            return fileName;
+        }
+    }
+    
     // 检查是否为音频文件
     isAudioFile(file) {
-        const audioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac'];
-        return audioTypes.includes(file.type) || /\.(mp3|wav|ogg|m4a|aac)$/i.test(file.name);
+        const audioTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac', 'audio/x-wav', 'audio/x-m4a'];
+        const fileName = file.name.toLowerCase();
+        
+        // 检查MIME类型
+        if (file.type && audioTypes.includes(file.type)) {
+            return true;
+        }
+        
+        // 检查文件扩展名
+        const audioExtensions = ['.mp3', '.wav', '.ogg', '.m4a', '.aac'];
+        return audioExtensions.some(ext => fileName.endsWith(ext));
     }
     
     // 格式化文件大小
@@ -422,17 +474,39 @@ class BroadcastSystem {
         const fileData = this.uploadedFiles.find(f => f.id == fileId);
         if (!fileData) return;
         
+        console.log('播放文件:', fileData);
+        
         // 停止当前播放
         this.stopPlayback();
         
         // 设置新的音频源
         this.audioPlayer.src = fileData.url;
-        this.currentTrack.textContent = fileData.name;
+        
+        // 使用解码后的文件名显示
+        const displayName = fileData.name || fileData.originalName;
+        this.currentTrack.textContent = displayName;
         
         // 更新当前按钮
         const fileItem = document.querySelector(`[data-file-id="${fileId}"]`);
+        if (!fileItem) {
+            this.showNotification('找不到对应的文件项', 'error');
+            return;
+        }
+        
         const playBtn = fileItem.querySelector('.file-play-btn');
+        if (!playBtn) {
+            this.showNotification('找不到播放按钮', 'error');
+            return;
+        }
+        
         this.currentButton = playBtn;
+        
+        // 添加错误处理
+        this.audioPlayer.onerror = (e) => {
+            console.error('音频播放错误:', e);
+            this.showNotification('音频文件播放失败，请检查文件格式', 'error');
+            this.updateButtonState(playBtn, false);
+        };
         
         // 开始播放
         this.startPlayback();
@@ -576,20 +650,50 @@ class BroadcastSystem {
         // 检测是否为移动设备
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        if (isMobile) {
-            const fileInput = document.getElementById('audioFileInput');
-            if (fileInput) {
-                // 优化移动端文件输入属性
-                fileInput.setAttribute('capture', 'microphone');
-                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a');
-                
-                // 添加移动端特定的触摸事件处理
-                fileInput.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    this.showMobileFileSelectionHint();
-                });
-            }
+        console.log('移动设备检测:', isMobile);
+        
+        const fileInput = document.getElementById('audioFileInput');
+        if (!fileInput) {
+            console.error('找不到文件输入元素');
+            return;
         }
+        
+        // 移除可能存在的旧事件监听器
+        fileInput.removeEventListener('change', this.handleFileSelectBound);
+        this.handleFileSelectBound = this.handleFileSelect.bind(this);
+        fileInput.addEventListener('change', this.handleFileSelectBound);
+        
+        if (isMobile) {
+            // 优化移动端文件输入属性
+            fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+            
+            // 移除capture属性，让它可以选择文件而不是录音
+            fileInput.removeAttribute('capture');
+            
+            // 添加移动端特定的触摸事件处理
+            fileInput.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                console.log('移动端文件选择触发');
+                this.showMobileFileSelectionHint();
+            });
+            
+            // 添加点击事件确保文件选择对话框弹出
+            fileInput.addEventListener('click', (e) => {
+                console.log('文件输入被点击');
+            });
+        }
+        
+        // 确保文件输入可见并可交互
+        fileInput.style.display = 'block';
+        fileInput.style.opacity = '0';
+        fileInput.style.position = 'absolute';
+        fileInput.style.width = '100%';
+        fileInput.style.height = '100%';
+        fileInput.style.top = '0';
+        fileInput.style.left = '0';
+        fileInput.style.zIndex = '1000';
+        
+        console.log('文件选择器初始化完成');
     }
     
     // 显示移动端文件选择提示
