@@ -647,10 +647,20 @@ class BroadcastSystem {
     
     // 优化移动端文件选择体验
     optimizeMobileFileSelection() {
-        // 检测是否为移动设备
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // 检测设备类型
+        const userAgent = navigator.userAgent;
+        const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+        const isAndroid = /Android/.test(userAgent);
+        const isMobile = isIOS || isAndroid;
         
-        console.log('移动设备检测:', isMobile);
+        console.log('设备检测:', { isIOS, isAndroid, isMobile, userAgent });
+        
+        // 检测iOS版本
+        const iOSVersion = isIOS ? this.getIOSVersion(userAgent) : null;
+        console.log('iOS版本:', iOSVersion);
+        
+        // 显示对应的文件选择界面
+        this.setupFileSelectionInterface(isIOS, isAndroid);
         
         const fileInput = document.getElementById('audioFileInput');
         if (!fileInput) {
@@ -663,27 +673,87 @@ class BroadcastSystem {
         this.handleFileSelectBound = this.handleFileSelect.bind(this);
         fileInput.addEventListener('change', this.handleFileSelectBound);
         
-        if (isMobile) {
-            // 优化移动端文件输入属性
-            fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+        // 根据设备类型优化文件输入
+        this.optimizeFileInputForDevice(fileInput, isIOS, isAndroid, iOSVersion);
+        
+        // 添加拖拽支持
+        this.setupDragAndDrop();
+        
+        console.log('文件选择器初始化完成');
+    }
+    
+    // 获取iOS版本
+    getIOSVersion(userAgent) {
+        const iosMatch = userAgent.match(/OS (\d+)_(\d+)(?:_(\d+))?/);
+        if (iosMatch) {
+            return parseInt(iosMatch[1]);
+        }
+        return null;
+    }
+    
+    // 设置文件选择界面
+    setupFileSelectionInterface(isIOS, isAndroid) {
+        const iosArea = document.getElementById('iosFileUploadArea');
+        const standardArea = document.getElementById('standardFileUploadArea');
+        const dropZone = document.getElementById('dropZone');
+        
+        if (isIOS) {
+            // iOS设备：显示iOS专用界面
+            if (iosArea) iosArea.style.display = 'block';
+            if (standardArea) standardArea.style.display = 'none';
+            if (dropZone) dropZone.style.display = 'none';
             
-            // 移除capture属性，让它可以选择文件而不是录音
+            console.log('显示iOS专用文件选择界面');
+        } else {
+            // 非iOS设备：显示标准界面
+            if (iosArea) iosArea.style.display = 'none';
+            if (standardArea) standardArea.style.display = 'block';
+            if (dropZone) dropZone.style.display = 'flex';
+            
+            console.log('显示标准文件选择界面');
+        }
+    }
+    
+    // 根据设备类型优化文件输入
+    optimizeFileInputForDevice(fileInput, isIOS, isAndroid, iOSVersion) {
+        // 基础音频文件类型
+        const audioTypes = 'audio/*,.mp3,.wav,.ogg,.m4a,.aac';
+        
+        if (isIOS) {
+            // iOS特殊处理
+            fileInput.setAttribute('accept', audioTypes);
             fileInput.removeAttribute('capture');
             
-            // 添加移动端特定的触摸事件处理
-            fileInput.addEventListener('touchstart', (e) => {
+            // iOS 13+ 支持更好的文件选择
+            if (iOSVersion && iOSVersion >= 13) {
+                fileInput.setAttribute('webkitdirectory', '');
+                fileInput.setAttribute('multiple', '');
+            }
+            
+            // 添加iOS特定的点击处理
+            fileInput.addEventListener('click', (e) => {
+                console.log('iOS文件输入被点击');
                 e.preventDefault();
-                console.log('移动端文件选择触发');
-                this.showMobileFileSelectionHint();
+                this.showIOSFileSelectionHelp();
             });
             
-            // 添加点击事件确保文件选择对话框弹出
-            fileInput.addEventListener('click', (e) => {
-                console.log('文件输入被点击');
+            // 添加触摸处理
+            fileInput.addEventListener('touchstart', (e) => {
+                console.log('iOS文件输入触摸开始');
+                e.preventDefault();
             });
+            
+        } else if (isAndroid) {
+            // Android处理
+            fileInput.setAttribute('accept', audioTypes);
+            fileInput.removeAttribute('capture');
+            
+        } else {
+            // 桌面浏览器
+            fileInput.setAttribute('accept', audioTypes);
         }
         
-        // 确保文件输入可见并可交互
+        // 确保文件输入可交互
         fileInput.style.display = 'block';
         fileInput.style.opacity = '0';
         fileInput.style.position = 'absolute';
@@ -692,8 +762,161 @@ class BroadcastSystem {
         fileInput.style.top = '0';
         fileInput.style.left = '0';
         fileInput.style.zIndex = '1000';
+    }
+    
+    // 设置拖拽上传
+    setupDragAndDrop() {
+        const dropZone = document.getElementById('dropZone');
+        if (!dropZone) return;
         
-        console.log('文件选择器初始化完成');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, this.preventDefaults, false);
+        });
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            const files = Array.from(e.dataTransfer.files);
+            console.log('拖拽文件:', files);
+            this.addFiles(files);
+        }, false);
+    }
+    
+    // 触发文件选择（统一入口）
+    triggerFileSelect(source = 'standard') {
+        console.log('触发文件选择，来源:', source);
+        
+        const fileInput = document.getElementById('audioFileInput');
+        if (!fileInput) {
+            this.showNotification('文件选择器初始化失败', 'error');
+            return;
+        }
+        
+        // 根据来源设置不同的accept属性
+        this.setupFileInputForSource(fileInput, source);
+        
+        // 触发文件选择
+        try {
+            fileInput.click();
+        } catch (error) {
+            console.error('文件选择失败:', error);
+            this.showNotification('文件选择对话框打开失败', 'error');
+            
+            // iOS 备用方案
+            if (this.isIOSDevice()) {
+                this.triggerIOSFileSelect();
+            }
+        }
+    }
+    
+    // 根据来源设置文件输入
+    setupFileInputForSource(fileInput, source) {
+        switch (source) {
+            case 'music':
+                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg');
+                break;
+            case 'files':
+                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+                break;
+            default:
+                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+        }
+        
+        fileInput.removeAttribute('capture');
+        fileInput.setAttribute('multiple', '');
+    }
+    
+    // iOS 专用文件选择
+    triggerIOSFileSelect(mode = 'music') {
+        console.log('iOS文件选择，模式:', mode);
+        
+        try {
+            // 创建隐藏的文件输入
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.style.display = 'none';
+            
+            // 根据模式设置属性
+            if (mode === 'music') {
+                fileInput.setAttribute('accept', 'audio/mp3,audio/mpeg');
+            } else {
+                fileInput.setAttribute('accept', 'audio/*,.mp3,.wav,.ogg,.m4a,.aac');
+            }
+            
+            fileInput.setAttribute('multiple', '');
+            
+            // 添加事件监听
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    console.log('iOS选择文件成功:', files);
+                    this.addFiles(files);
+                }
+                // 移除临时元素
+                document.body.removeChild(fileInput);
+            });
+            
+            // 添加到DOM并触发
+            document.body.appendChild(fileInput);
+            fileInput.click();
+            
+        } catch (error) {
+            console.error('iOS文件选择失败:', error);
+            this.showNotification('iOS文件选择失败，请使用其他方式', 'error');
+        }
+    }
+    
+    // 检测是否为iOS设备
+    isIOSDevice() {
+        const userAgent = navigator.userAgent;
+        return /iPad|iPhone|iPod/.test(userAgent);
+    }
+    
+    // 显示iOS文件选择帮助
+    showIOSFileSelectionHelp() {
+        const help = document.createElement('div');
+        help.className = 'ios-file-help';
+        help.innerHTML = `
+            <div class="help-content">
+                <i class="fab fa-apple"></i>
+                <div>
+                    <h4>iOS 文件选择指南</h4>
+                    <p><strong>方法一：</strong>使用下方"从音乐库选择"按钮</p>
+                    <p><strong>方法二：</strong>使用"从文件选择"按钮</p>
+                    <p><strong>方法三：</strong>将音频文件拖拽到指定区域</p>
+                    <p style="margin-top: 12px; font-size: 0.8rem; opacity: 0.8;">
+                        提示：iOS 13+ 版本支持更好的文件选择体验
+                    </p>
+                </div>
+                <button class="help-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(help);
+        
+        // 自动移除
+        setTimeout(() => {
+            if (help.parentNode) {
+                help.style.opacity = '0';
+                setTimeout(() => {
+                    if (help.parentNode) {
+                        help.parentNode.removeChild(help);
+                    }
+                }, 300);
+            }
+        }, 15000);
     }
     
     // 显示移动端文件选择提示
