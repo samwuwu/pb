@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>网页闹钟（自定义音频）</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171922;
+      --text: #e9ecf1;
+      --muted: #a9b1bd;
+      --accent: #84a0ff;
+      --accent-2: #52d1b2;
+      --danger: #ff6b6b;
+      --warn: #ffd166;
+      --ok: #7bd88f;
+      --border: #2a2f3a;
+      --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 600px at 10% -10%, rgba(132,160,255,.12), transparent 60%),
+                  radial-gradient(900px 500px at 110% -10%, rgba(82,209,178,.12), transparent 60%),
+                  var(--bg);
+      color: var(--text);
+      font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans CJK SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+    .app {
+      width: min(920px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    header {
+      padding: 22px 24px;
+      display: flex; gap: 14px; align-items: center; justify-content: space-between;
+      background: linear-gradient(180deg, rgba(255,255,255,.04), transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+      filter: saturate(1.1);
+      box-shadow: inset 0 0 20px rgba(0,0,0,.25);
+    }
+    h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+    .clock {
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+      color: var(--muted);
+    }
+    main { padding: 20px 24px 26px; display: grid; gap: 16px; }
+    .grid { display: grid; gap: 16px; grid-template-columns: 1.1fr 1fr; }
+    @media (max-width: 880px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 { margin: 0 0 8px 0; font-size: 16px; }
+    .row { display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center; margin: 10px 0; }
+    .row label { color: var(--muted); }
+    input[type="time"], input[type="text"], input[type="number"], input[type="file"] {
+      width: 100%;
+      padding: 12px 12px;
+      background: #0c0f14;
+      border: 1px solid #1f2430;
+      border-radius: 10px;
+      color: var(--text);
+      outline: none;
+    }
+    input[type="time"]::-webkit-datetime-edit-ampm-field { text-transform: uppercase; }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    button {
+      appearance: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      font-weight: 600;
+      letter-spacing: .2px;
+      transition: transform .08s ease, border-color .2s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: #3a4152; }
+    button:active { transform: translateY(0); }
+    .primary { border-color: #4150ff66; background: linear-gradient(180deg, #5c6cff33, #5966ff1a); }
+    .danger { border-color: #ff6b6b66; background: linear-gradient(180deg, #ff6b6b33, #ff6b6b1a); }
+    .muted { color: var(--muted); }
+    .hint { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .alarms { display: grid; gap: 10px; }
+    .alarm {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+      padding: 10px 12px; border: 1px dashed #2e3443; border-radius: 10px; background: #0f1320;
+    }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px;
+      background: #101522; border: 1px solid #2a2f3a; font-size: 12px; color: var(--muted);
+    }
+    .countdown { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; color: var(--accent-2); }
+    .toast {
+      position: fixed; left: 50%; top: 20px; transform: translateX(-50%);
+      background: #151a26; border: 1px solid var(--border); color: var(--text); padding: 10px 14px;
+      border-radius: 10px; box-shadow: var(--shadow); z-index: 999; display: none;
+    }
+    details { border: 1px dashed #2a2f3a; border-radius: 10px; padding: 8px 10px; }
+    summary { cursor: pointer; color: var(--muted); outline: none; }
+    .badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #101522; border: 1px solid #2a2f3a; color: var(--muted); }
+    .danger-text { color: var(--danger); }
+    .good { color: var(--ok); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>网页闹钟（自定义音频）</h1>
+          <div class="clock" id="now">--:--:--</div>
+        </div>
+      </div>
+      <div class="btns">
+        <button id="enable-audio" class="primary">🔊 启用音频</button>
+        <button id="enable-noti">🔔 允许通知</button>
+        <span class="badge" id="status">待机</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <section class="card">
+          <h2>设置闹钟</h2>
+          <div class="row">
+            <label for="time">时间</label>
+            <input id="time" type="time" step="1" />
+          </div>
+          <div class="row">
+            <label for="label">备注</label>
+            <input id="label" type="text" placeholder="例如：开会 / 休息 / 提醒喝水…" />
+          </div>
+          <div class="row">
+            <label for="audio-file">音频文件</label>
+            <input id="audio-file" type="file" accept="audio/*" />
+          </div>
+          <div class="row">
+            <label for="audio-url">或音频 URL</label>
+            <input id="audio-url" type="text" placeholder="https://example.com/alarm.mp3" />
+          </div>
+          <div class="row">
+            <label for="volume">音量 (0-100)</label>
+            <input id="volume" type="number" min="0" max="100" value="100" />
+          </div>
+          <div class="btns">
+            <button id="add" class="primary">➕ 添加闹钟</button>
+            <button id="stop-all" class="danger">⏹ 停止全部</button>
+          </div>
+          <div class="hint">
+            提示：移动端/iOS 需先点击“启用音频”以解锁声音播放；
+            浏览器在后台或设备息屏时，定时器可能被延迟。建议保持页面前台或将其安装为 PWA。
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>已设置闹钟</h2>
+          <div class="alarms" id="alarms"></div>
+          <div class="hint">支持同时设置多个闹钟。</div>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>常见限制与解决方案</h2>
+        <details>
+          <summary>为什么需要“启用音频”？</summary>
+          <div class="hint">大多数浏览器要求用户交互后才能播放带声音的媒体，否则会被拦截。先点击“启用音频”即可。</div>
+        </details>
+        <details>
+          <summary>锁屏/后台可能不准</summary>
+          <div class="hint">浏览器在后台会节流 JS 定时器；iOS 在锁屏后网页可能被挂起。重要闹钟请确保页面保持前台，或考虑原生 App。</div>
+        </details>
+        <details>
+          <summary>如何尽量保证准时？</summary>
+          <div class="hint">本页使用 <b>精准 setTimeout</b> + <b>每秒校验</b> 双重机制，并在系统时间改变时自动重算。</div>
+        </details>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <audio id="player" preload="auto" loop></audio>
+
+  <script>
+    const nowEl = document.getElementById('now');
+    const alarmsEl = document.getElementById('alarms');
+    const toastEl = document.getElementById('toast');
+    const player = document.getElementById('player');
+    const statusEl = document.getElementById('status');
+
+    let audioReady = false;
+    let wakeLock = null;
+    let notiGranted = (Notification && Notification.permission === 'granted');
+
+    const alarms = new Map(); // id -> { time: Date, label, timerId, checkingId, fired, src }
+    let titleBase = document.title;
+    let blinkTimer = null;
+
+    function fmt(t) { return String(t).padStart(2, '0'); }
+    function timeStr(d) { return `${fmt(d.getHours())}:${fmt(d.getMinutes())}:${fmt(d.getSeconds())}`; }
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.style.display = 'block';
+      clearTimeout(showToast.t);
+      showToast.t = setTimeout(()=> toastEl.style.display='none', 2200);
+    }
+    function notify(title, body) {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body });
+      }
+    }
+    function startBlink(title) {
+      clearInterval(blinkTimer);
+      blinkTimer = setInterval(() => {
+        document.title = document.title === titleBase ? ('🔔 ' + title) : titleBase;
+      }, 800);
+    }
+    function stopBlink() {
+      clearInterval(blinkTimer);
+      document.title = titleBase;
+    }
+
+    // Live clock
+    setInterval(() => {
+      nowEl.textContent = new Date().toLocaleTimeString();
+    }, 250);
+
+    // Permissions
+    document.getElementById('enable-audio').addEventListener('click', async () => {
+      try {
+        // Prime audio by loading a tiny silent buffer, or playing then pausing
+        player.src = player.src || 'data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'; // tiny header
+        await player.play().catch(()=>{});
+        player.pause();
+        audioReady = true;
+        statusEl.textContent = '音频已解锁';
+        statusEl.classList.add('good');
+        showToast('音频权限已解锁');
+        // Wake Lock (if supported)
+        if ('wakeLock' in navigator && !wakeLock) {
+          try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
+          } catch(e){ console.log('Wake Lock failed', e); }
+        }
+      } catch (e) {
+        showToast('音频解锁失败：' + e.message);
+      }
+    });
+
+    document.getElementById('enable-noti').addEventListener('click', async () => {
+      try {
+        if (!('Notification' in window)) { showToast('浏览器不支持通知'); return; }
+        let p = await Notification.requestPermission();
+        if (p === 'granted') { notiGranted = true; showToast('已允许通知'); }
+        else showToast('通知未授权');
+      } catch (e) { showToast('通知失败：' + e.message); }
+    });
+
+    function parseTimeToToday(timeStrVal) {
+      // "HH:MM[:SS]" -> Date today
+      const now = new Date();
+      const [hh, mm, ss = '0'] = timeStrVal.split(':');
+      const d = new Date(now);
+      d.setHours(+hh, +mm, +ss, 0);
+      // If time already passed today, schedule for tomorrow
+      if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
+      return d;
+    }
+
+    function scheduleAlarm({ when, label, src, vol }) {
+      const id = crypto.randomUUID();
+      const data = { id, time: when, label: label || '闹钟', fired: false, src, vol, timerId: null, checkingId: null };
+      alarms.set(id, data);
+
+      const diff = Math.max(0, when.getTime() - Date.now());
+      data.timerId = setTimeout(() => triggerAlarm(id), diff);
+      // drift guard: check every second
+      data.checkingId = setInterval(() => {
+        if (!data.fired && Date.now() >= when.getTime()) triggerAlarm(id);
+        else updateAlarmRow(id);
+      }, 1000);
+
+      renderAlarms();
+      showToast('闹钟已设置：' + when.toLocaleString());
+    }
+
+    function triggerAlarm(id) {
+      const a = alarms.get(id);
+      if (!a || a.fired) return;
+      a.fired = true;
+
+      // Load audio source
+      if (a.src) player.src = a.src;
+      player.volume = Math.max(0, Math.min(1, (a.vol ?? 100) / 100));
+      if (audioReady) player.play().catch(e => console.log('play error', e));
+
+      notify('⏰ ' + (a.label || '闹钟'), '时间到！');
+      startBlink('时间到！');
+
+      renderAlarms();
+    }
+
+    function stopAlarm(id) {
+      const a = alarms.get(id);
+      if (!a) return;
+      clearTimeout(a.timerId);
+      clearInterval(a.checkingId);
+      alarms.delete(id);
+      if ([...alarms.values()].every(x => !x.fired)) {
+        player.pause();
+        stopBlink();
+      }
+      renderAlarms();
+    }
+
+    function stopAll() {
+      for (const id of alarms.keys()) stopAlarm(id);
+      player.pause();
+      stopBlink();
+      showToast('已停止全部闹钟');
+    }
+
+    function humanCountdown(ms) {
+      if (ms < 0) return '已过期';
+      const s = Math.floor(ms / 1000);
+      const hh = Math.floor(s / 3600);
+      const mm = Math.floor((s % 3600) / 60);
+      const ss = s % 60;
+      return `${fmt(hh)}:${fmt(mm)}:${fmt(ss)}`;
+    }
+
+    function updateAlarmRow(id) {
+      const row = document.querySelector(`[data-id="${id}"]`);
+      const a = alarms.get(id);
+      if (!row || !a) return;
+      row.querySelector('.countdown').textContent = a.fired ? '响铃中…' : humanCountdown(a.time - Date.now());
+    }
+
+    function renderAlarms() {
+      alarmsEl.innerHTML = '';
+      if (alarms.size === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = '暂无闹钟';
+        alarmsEl.appendChild(empty);
+        return;
+      }
+      for (const [id, a] of alarms) {
+        const row = document.createElement('div');
+        row.className = 'alarm';
+        row.dataset.id = id;
+        const left = document.createElement('div');
+        left.innerHTML = `<div><strong>${a.label || '闹钟'}</strong></div>
+          <div class="muted">目标时间：${timeStr(a.time)}（${a.time.toLocaleDateString()}）</div>
+          <div class="muted">音量：${Math.round((a.vol ?? 100))}</div>`;
+        const mid = document.createElement('div');
+        mid.innerHTML = `<span class="chip">状态：${a.fired ? '⏰ 已响' : '⏳ 待机'}</span>
+                         <span class="chip countdown">${a.fired ? '响铃中…' : humanCountdown(a.time - Date.now())}</span>`;
+        const right = document.createElement('div');
+        right.className = 'btns';
+        const stopBtn = document.createElement('button');
+        stopBtn.textContent = '停止';
+        stopBtn.className = 'danger';
+        stopBtn.addEventListener('click', () => stopAlarm(id));
+        right.appendChild(stopBtn);
+
+        row.appendChild(left);
+        row.appendChild(mid);
+        row.appendChild(right);
+        alarmsEl.appendChild(row);
+      }
+    }
+
+    // Events
+    document.getElementById('add').addEventListener('click', () => {
+      const timeVal = document.getElementById('time').value;
+      if (!timeVal) { showToast('请先选择时间'); return; }
+      const label = document.getElementById('label').value.trim();
+      const vol = Number(document.getElementById('volume').value || 100);
+
+      const fileInput = document.getElementById('audio-file');
+      const urlInput = document.getElementById('audio-url').value.trim();
+      let src = '';
+
+      if (fileInput.files && fileInput.files[0]) {
+        src = URL.createObjectURL(fileInput.files[0]);
+      } else if (urlInput) {
+        try {
+          const u = new URL(urlInput);
+          src = u.href;
+        } catch {
+          showToast('音频 URL 无效');
+          return;
+        }
+      } else {
+        // fallback: simple beep (data URI)
+        src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YYQAAAAA';
+      }
+
+      const when = parseTimeToToday(timeVal);
+      scheduleAlarm({ when, label, src, vol });
+    });
+
+    document.getElementById('stop-all').addEventListener('click', stopAll);
+
+    // Recompute timers if system clock changes significantly (visibility or user changes time)
+    let lastNow = Date.now();
+    setInterval(() => {
+      const n = Date.now();
+      if (Math.abs(n - lastNow) > 5000) {
+        // reschedule all pending
+        for (const [id, a] of alarms) {
+          if (!a.fired) {
+            clearTimeout(a.timerId);
+            const diff = Math.max(0, a.time.getTime() - Date.now());
+            a.timerId = setTimeout(() => triggerAlarm(id), diff);
+          }
+        }
+      }
+      lastNow = n;
+    }, 2000);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') stopBlink();
+    });
+
+    // Install as PWA hint (optional)
+    // You can register a service worker here if you want offline usage.
+  </script>
+</body>
+</html>
