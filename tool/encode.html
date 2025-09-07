@@ -1,0 +1,757 @@
+<!--
+  Responsive Encryption Tool Webpage
+
+  This HTML file implements a client‑side text encryption/decryption tool.  The
+  layout is designed to adapt gracefully to a variety of screen sizes – from
+  small mobile phones to larger tablets and desktops.  It uses fluid widths,
+  flexible boxes, and a sliding container to provide a smooth user experience.
+
+  Key features:
+
+  * Mobile‑friendly: a viewport meta tag ensures content scales properly on
+    different devices, as recommended by MDN’s responsive design guide【34546948411360†L189-L198】.
+  * Fluid layout: panels are arranged in a horizontally scrolling container
+    that animates between “Encrypt” and “Decrypt” views.  On small screens
+    the controls stack vertically, while larger screens show more space.
+  * Emoji encryption only: the tool maps Base64 characters to emojis and
+    applies a simple rotation based on the user’s password.  There is no
+    AES or other algorithm choice; the focus is on converting text to an
+    emoji string and back again.  UTF‑8 input (including emoji) is first
+    converted to Base64, then mapped to a predefined emoji alphabet.
+  * Copy to clipboard: users can copy the result with a single click.  A
+    transient toast message confirms the copy action.
+  * Smooth animations: CSS transitions give feedback when panels slide,
+    when the output appears/disappears, and when buttons are pressed.
+
+  Note: This tool performs cryptographic operations in the browser.  The
+  underlying encryption algorithms are implemented by CryptoJS and do
+  not substitute for a professionally audited security solution.  For
+  serious applications you should review the Web Crypto API and related
+  security best practices【981357220973458†L174-L197】.
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <!--
+    The viewport meta tag tells the browser to adjust the page’s dimensions and
+    scaling to suit the device’s width.  Without this, mobile browsers
+    render pages at a desktop width then scale them down, making text and
+    inputs tiny.  MDN’s responsive design overview notes that the
+    `<meta viewport>` tag is necessary to get documents to display
+    appropriately on mobile devices【34546948411360†L189-L198】.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>加密工具</title>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-Y0M3qcNSvlP2ZAXVAxqgWB9zNz5voUZcX+tO0C7IkBXwaOqCG/MJL9/OfW6pPKhlGTy9Msn30ZTog0z4NPWD4g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root {
+      /* iOS‑inspired colour palette */
+      --color-primary: #007aff;          /* iOS system blue */
+      --color-primary-dark: #005bbb;     /* darker blue used on press */
+      --color-accent: #34c759;           /* iOS system green for secondary actions */
+      --color-accent-dark: #28a745;
+      --color-bg: #f2f2f7;               /* grouped table background */
+      --color-card: #ffffff;             /* white card background */
+      --color-text: #1c1c1e;             /* dark text */
+      --color-muted: #c7c7cc;            /* muted separators */
+      --color-error: #ff3b30;            /* system red for errors */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px 12px;
+      /* Enable relative positioning so that our decorative background emojis
+         can sit behind the main content. */
+      position: relative;
+    }
+
+    /* Decorative emoji pattern overlaying the entire page.  A few large
+       emojis are placed with very low opacity and a slight blur to
+       subtly hint at the tool’s playful theme without distracting
+       from the content. */
+    body::after {
+      content: '😀🔐🔑😄';
+      position: fixed;
+      top: 20%;
+      left: 5%;
+      font-size: 10rem;
+      opacity: 0.05;
+      filter: blur(2px);
+      pointer-events: none;
+      transform: rotate(-15deg);
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 1.2rem;
+      text-align: center;
+      color: var(--color-primary);
+    }
+
+    /* Segmented control styling for mode toggle */
+    .toggle-buttons {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+      padding: 0;
+      height: 44px;
+      background-color: var(--color-bg);
+      border: 1px solid var(--color-muted);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    /* Sliding indicator behind selected button */
+    .toggle-buttons .toggle-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50%;
+      height: 100%;
+      background-color: var(--color-primary);
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .toggle-buttons button {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      font-size: 0.95rem;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--color-primary);
+      font-weight: 600;
+      transition: color 0.3s ease, transform 0.1s ease;
+    }
+    .toggle-buttons button:active {
+      transform: scale(0.96);
+    }
+    .toggle-buttons button.active {
+      color: #ffffff;
+    }
+
+    /* Title emoji icon styling */
+    .title-icon {
+      font-size: 1.8rem;
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+
+    /* Card container for encrypt/decrypt panels */
+    .tab-container {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      border: 1px solid var(--color-muted);
+      border-radius: 16px;
+      background-color: var(--color-card);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    .slide {
+      display: flex;
+      width: 200%;
+      transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+    }
+    .panel {
+      width: 50%;
+      padding: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      /* On very small screens allow more space for inputs */
+      h1 { font-size: 1.5rem; }
+      .panel { padding: 1rem; }
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      margin-top: 0.6rem;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--color-text);
+    }
+
+    /* Panel headings styling */
+    .panel h2 {
+      font-size: 1.6rem;
+      margin: 0 0 1rem;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      margin-top: 0.35rem;
+      font-size: 1rem;
+      line-height: 1.4;
+      color: var(--color-text);
+      background: var(--color-bg);
+      border: 1px solid var(--color-muted);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus,
+    textarea:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.3);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .primary-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin-top: 1rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: var(--color-primary);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: background-color 0.25s ease, transform 0.1s ease;
+    }
+    .primary-button:hover {
+      background-color: var(--color-primary-dark);
+    }
+    .primary-button:active {
+      transform: scale(0.97);
+    }
+    /* Spinner for loading state */
+    .primary-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      margin-top: -16px;
+      margin-left: -16px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      border-top-color: rgba(255, 255, 255, 0.9);
+      opacity: 0;
+      transform: scale(0.5);
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      /* Place spinner behind button content */
+      z-index: 0;
+    }
+    .primary-button.loading::after {
+      opacity: 1;
+      transform: scale(1);
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* Ensure icons and text inside buttons appear above the spinner */
+    .primary-button > * {
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .output-container {
+      margin-top: 1rem;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(8px);
+      transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease;
+    }
+    .output-container.show {
+      max-height: 400px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Copy button styled like a capsule button */
+    .copy-button {
+      margin-top: 0.6rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      background-color: var(--color-accent);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background-color 0.25s ease, transform 0.1s ease;
+    }
+    .copy-button:hover {
+      background-color: var(--color-accent-dark);
+    }
+    .copy-button:active {
+      transform: scale(0.96);
+    }
+    .copy-button i {
+      margin-right: 0.25rem;
+    }
+    .output-container textarea {
+      background-color: #f6f8fa;
+      border-color: var(--color-muted);
+    }
+
+    /* Display the emoji count below the encryption output */
+    .emoji-count {
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--color-muted);
+    }
+
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 2.5rem;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #ffffff;
+      padding: 0.7rem 1rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #toast.show {
+      opacity: 1;
+    }
+
+    /* Error text styling */
+    .error-msg {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--color-error);
+      display: none;
+    }
+    .error-msg.show {
+      display: block;
+    }
+
+    /* Hidden class for optional fields */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="title-icon">🔐</span>加密工具</h1>
+    <!-- Toggle navigation between encrypt and decrypt views -->
+    <div class="toggle-buttons">
+      <!-- Sliding indicator will move under the selected button -->
+      <div class="toggle-indicator" id="toggleIndicator"></div>
+      <button id="btnEncrypt" class="active">加密</button>
+      <button id="btnDecrypt">解密</button>
+    </div>
+    <!-- Panels container -->
+    <div class="tab-container">
+      <div id="slide" class="slide">
+        <!-- Encrypt panel -->
+        <div class="panel" id="panelEncrypt">
+          <h2>加密</h2>
+          <label for="encryptInput">待加密内容：</label>
+          <textarea id="encryptInput" placeholder="请输入要加密的文本..."></textarea>
+          <label id="encryptKeyLabel" for="encryptKey">密钥：</label>
+          <input type="password" id="encryptKey" placeholder="请输入密钥" />
+          <!-- 单一的加密算法：Emoji 模式（固定值）。不再提供下拉选择。 -->
+          <input type="hidden" id="encryptAlgo" value="Emoji" />
+          <button id="encryptBtn" class="primary-button"><span class="btn-icon">🔒</span><span>开始加密</span></button>
+          <div id="encryptError" class="error-msg"></div>
+          <div id="encryptOutputContainer" class="output-container">
+            <label for="encryptOutput">加密结果：</label>
+            <textarea id="encryptOutput" readonly></textarea>
+            <button id="copyEncrypt" class="copy-button"><i class="fa-solid fa-copy"></i>复制</button>
+            <div id="encryptCount" class="emoji-count" style="display:none;"></div>
+          </div>
+        </div>
+        <!-- Decrypt panel -->
+        <div class="panel" id="panelDecrypt">
+          <h2>解密</h2>
+          <label for="decryptInput">待解密内容：</label>
+          <textarea id="decryptInput" placeholder="请输入要解密的文本..."></textarea>
+          <label id="decryptKeyLabel" for="decryptKey">密钥：</label>
+          <input type="password" id="decryptKey" placeholder="请输入密钥" />
+          <!-- 单一的解密算法：Emoji 模式（固定值）。不再提供下拉选择。 -->
+          <input type="hidden" id="decryptAlgo" value="Emoji" />
+          <button id="decryptBtn" class="primary-button"><span class="btn-icon">🔓</span><span>开始解密</span></button>
+          <div id="decryptError" class="error-msg"></div>
+          <div id="decryptOutputContainer" class="output-container">
+            <label for="decryptOutput">解密结果：</label>
+            <textarea id="decryptOutput" readonly></textarea>
+            <button id="copyDecrypt" class="copy-button"><i class="fa-solid fa-copy"></i>复制</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <script>
+    // Wait for the DOM to be fully parsed before attaching handlers
+    document.addEventListener('DOMContentLoaded', function () {
+      // Elements
+      const btnEncrypt = document.getElementById('btnEncrypt');
+      const btnDecrypt = document.getElementById('btnDecrypt');
+      const slide = document.getElementById('slide');
+      const encryptInput = document.getElementById('encryptInput');
+      const encryptKey = document.getElementById('encryptKey');
+      const encryptAlgo = document.getElementById('encryptAlgo');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const encryptError = document.getElementById('encryptError');
+      const encryptOutputContainer = document.getElementById('encryptOutputContainer');
+      const encryptOutput = document.getElementById('encryptOutput');
+      const copyEncrypt = document.getElementById('copyEncrypt');
+      const encryptCount = document.getElementById('encryptCount');
+      const decryptInput = document.getElementById('decryptInput');
+      const decryptKey = document.getElementById('decryptKey');
+      const decryptAlgo = document.getElementById('decryptAlgo');
+      const decryptBtn = document.getElementById('decryptBtn');
+      const decryptError = document.getElementById('decryptError');
+      const decryptOutputContainer = document.getElementById('decryptOutputContainer');
+      const decryptOutput = document.getElementById('decryptOutput');
+      const copyDecrypt = document.getElementById('copyDecrypt');
+      const toast = document.getElementById('toast');
+
+      // Labels for key fields (used to toggle visibility)
+      const encryptKeyLabel = document.getElementById('encryptKeyLabel');
+      const decryptKeyLabel = document.getElementById('decryptKeyLabel');
+
+      // Helper: show toast message
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2000);
+      }
+
+      // Helper: set active toggle button
+      function setActive(tab) {
+        const indicator = document.getElementById('toggleIndicator');
+        if (tab === 'encrypt') {
+          btnEncrypt.classList.add('active');
+          btnDecrypt.classList.remove('active');
+          slide.style.transform = 'translateX(0)';
+          // Move indicator to the first half
+          if (indicator) {
+            indicator.style.transform = 'translateX(0%)';
+          }
+        } else {
+          btnDecrypt.classList.add('active');
+          btnEncrypt.classList.remove('active');
+          slide.style.transform = 'translateX(-50%)';
+          // Move indicator to the second half
+          if (indicator) {
+            indicator.style.transform = 'translateX(100%)';
+          }
+        }
+      }
+
+      // Attach toggle handlers
+      btnEncrypt.addEventListener('click', () => setActive('encrypt'));
+      btnDecrypt.addEventListener('click', () => setActive('decrypt'));
+
+      // Copy to clipboard handler
+      function attachCopyHandler(button, target) {
+        button.addEventListener('click', () => {
+          const text = target.value;
+          if (!text) return;
+          // Use clipboard API where available
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+              showToast('已复制到剪贴板');
+            }).catch(() => {
+              showToast('复制失败');
+            });
+          } else {
+            // Fallback for older browsers
+            target.select();
+            try {
+              document.execCommand('copy');
+              showToast('已复制到剪贴板');
+            } catch (err) {
+              showToast('复制失败');
+            }
+          }
+        });
+      }
+      attachCopyHandler(copyEncrypt, encryptOutput);
+      attachCopyHandler(copyDecrypt, decryptOutput);
+
+      /**
+       * Convert an ArrayBuffer or TypedArray into a Base64 string.  We
+       * construct a binary string from the buffer then encode it using
+       * btoa().  This helper is used for AES results and IVs.
+       * @param {ArrayBuffer|TypedArray} buffer
+       * @returns {string} Base64 encoded representation
+       */
+      function toBase64(buffer) {
+        const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : new Uint8Array(buffer.buffer || buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      }
+
+      /**
+       * Convert a Base64 encoded string back into an ArrayBuffer.
+       * @param {string} str Base64 encoded data
+       * @returns {ArrayBuffer}
+       */
+      function fromBase64(str) {
+        const binary = atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes.buffer;
+      }
+
+      // The following AES helper functions have been removed because the tool
+      // now exclusively supports the emoji cipher.  Previous versions used
+      // crypto.subtle to derive keys and encrypt/decrypt with AES‑GCM, but
+      // those features are no longer exposed in the UI.
+
+      // function encryptAES() removed
+
+      // function decryptAES() removed
+
+      /**
+       * Encode a UTF‑8 string into Base64.  Handles non‑ASCII characters.
+       * @param {string} text
+       * @returns {string}
+       */
+      function encodeBase64(text) {
+        const buffer = new TextEncoder().encode(text);
+        return toBase64(buffer);
+      }
+
+      /**
+       * Decode a Base64 encoded string back into UTF‑8.
+       * @param {string} base64
+       * @returns {string}
+       */
+      function decodeBase64(base64) {
+        const buffer = fromBase64(base64);
+        return new TextDecoder().decode(buffer);
+      }
+
+      /**
+       * Emoji alphabet used for mapping Base64 characters.  The first 64
+       * emojis correspond to the standard Base64 alphabet
+       * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".  The
+       * final emoji represents the padding character '='.  All emoji in
+       * this array are single codepoints (no variation selectors) so that
+       * iterating with `for…of` yields one symbol per emoji.  The order
+       * matters – encrypt/decrypt functions rely on consistent indices.
+       */
+      const EMOJI_ALPHABET = [
+        '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','🥰','😗',
+        '😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐',
+        '😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲',
+        '😡','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱',
+        '🥵','🥶'
+      ];
+      const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+      /**
+       * Compute a numeric shift value from a password.  The shift is the
+       * sum of the UTF‑16 code units of the password modulo 64.  A zero
+       * length password yields a shift of 0.  The shift adds an extra
+       * layer of obfuscation when mapping Base64 characters to emojis.
+       * @param {string} password
+       * @returns {number}
+       */
+      function computeShift(password) {
+        let sum = 0;
+        for (const ch of password) sum += ch.charCodeAt(0);
+        return sum % 64;
+      }
+
+      /**
+       * Encrypt a string into a sequence of emojis.  The plaintext is
+       * converted into its Base64 representation, then each Base64
+       * character is mapped to an emoji from EMOJI_ALPHABET.  If a
+       * non‑empty password is provided, the mapping is rotated by a
+       * shift derived from the password (see computeShift).  The padding
+       * character '=' is always mapped to the final emoji regardless of
+       * shift.  An empty password results in no shift.
+       * @param {string} text
+       * @param {string} password
+       * @returns {string}
+       */
+      function encodeEmoji(text, password = '') {
+        const b64 = encodeBase64(text);
+        const shift = computeShift(password);
+        let result = '';
+        for (const ch of b64) {
+          const index = BASE64_ALPHABET.indexOf(ch);
+          if (index < 0) {
+            // Should never happen because encodeBase64 only uses chars from the alphabet
+            continue;
+          }
+          // The last character in BASE64_ALPHABET is '=' and maps to the last emoji
+          if (index === 64) {
+            result += EMOJI_ALPHABET[64];
+          } else {
+            const mappedIndex = (index + shift) % 64;
+            result += EMOJI_ALPHABET[mappedIndex];
+          }
+        }
+        return result;
+      }
+
+      /**
+       * Decrypt an emoji string back into plaintext.  Each emoji is mapped
+       * back to its Base64 character by reversing the rotation applied in
+       * encodeEmoji().  After reconstructing the Base64 string, it is
+       * decoded into a UTF‑8 string.  Unknown symbols will cause an
+       * exception.  A mismatched password yields gibberish.  The padding
+       * emoji (last in EMOJI_ALPHABET) always maps to '='.
+       * @param {string} emojiStr
+       * @param {string} password
+       * @returns {string}
+       */
+      function decodeEmoji(emojiStr, password = '') {
+        const shift = computeShift(password);
+        let b64 = '';
+        for (const symbol of emojiStr) {
+          const idx = EMOJI_ALPHABET.indexOf(symbol);
+          if (idx < 0) {
+            throw new Error('包含未知的表情符号，无法解密');
+          }
+          if (idx === 64) {
+            b64 += '=';
+          } else {
+            // reverse rotation: (idx - shift) mod 64
+            const originalIndex = (idx - shift + 64) % 64;
+            b64 += BASE64_ALPHABET[originalIndex];
+          }
+        }
+        // Base64 length must be a multiple of 4.  Append padding if missing.
+        while (b64.length % 4 !== 0) {
+          b64 += '=';
+        }
+        return decodeBase64(b64);
+      }
+
+      // Encryption handler (only Emoji mode)
+      encryptBtn.addEventListener('click', async function () {
+        encryptError.textContent = '';
+        encryptError.classList.remove('show');
+        encryptOutputContainer.classList.remove('show');
+        // Reset emoji count display
+        if (encryptCount) {
+          encryptCount.style.display = 'none';
+          encryptCount.textContent = '';
+        }
+        const text = encryptInput.value.trim();
+        const key = encryptKey.value;
+        if (!text) {
+          encryptError.textContent = '请输入要加密的内容';
+          encryptError.classList.add('show');
+          return;
+        }
+        // Show loading spinner on the button
+        encryptBtn.classList.add('loading');
+        try {
+          // Simulate a brief delay to allow spinner animation to be visible
+          await new Promise(r => setTimeout(r, 150));
+          const result = encodeEmoji(text, key);
+          encryptOutput.value = result;
+          // Display the count of generated emojis
+           if (encryptCount) {
+             const count = Array.from(result).length;
+             encryptCount.textContent = '共生成 ' + count + ' 个表情符号';
+             encryptCount.style.display = 'block';
+           }
+          encryptOutputContainer.classList.add('show');
+        } catch (err) {
+          encryptError.textContent = '加密过程中发生错误：' + err.message;
+          encryptError.classList.add('show');
+        } finally {
+          encryptBtn.classList.remove('loading');
+        }
+      });
+
+      // Decryption handler (only Emoji mode)
+      decryptBtn.addEventListener('click', async function () {
+        decryptError.textContent = '';
+        decryptError.classList.remove('show');
+        decryptOutputContainer.classList.remove('show');
+        const text = decryptInput.value.trim();
+        const key = decryptKey.value;
+        if (!text) {
+          decryptError.textContent = '请输入要解密的内容';
+          decryptError.classList.add('show');
+          return;
+        }
+        // Show loading spinner on the button
+        decryptBtn.classList.add('loading');
+        try {
+          // Simulate brief delay for spinner visibility
+          await new Promise(r => setTimeout(r, 150));
+          const result = decodeEmoji(text, key);
+          decryptOutput.value = result;
+          decryptOutputContainer.classList.add('show');
+        } catch (err) {
+          decryptError.textContent = err.message || '解密过程中发生错误';
+          decryptError.classList.add('show');
+        } finally {
+          decryptBtn.classList.remove('loading');
+        }
+      });
+
+      // Initialize with encrypt tab visible
+      setActive('encrypt');
+
+      // Emoji 模式下始终显示密钥字段；无需隐藏/显示逻辑
+    });
+  </script>
+</body>
+</html>
