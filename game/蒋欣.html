@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html ="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>值机安全翻翻乐</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Nunito:wght@700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Comic Neue', 'Nunito', 'Segoe UI', 'Microsoft YaHei', cursive;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a5276, #3498db);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 10px;
+            color: #f5f5f5;
+            overflow-x: hidden;
+            perspective: 1000px;
+            transition: all 0.5s ease;
+        }
+        body.light-mode {
+            background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
+            color: #2c3e50;
+        }
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #ecf0f1;
+        }
+        /* 机场背景元素 */
+        .airport-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .runway {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 30%;
+            background: #2c3e50;
+        }
+        body.light-mode .runway {
+            background: #95afc0;
+        }
+        .runway-lines {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            height: 4px;
+            background: repeating-linear-gradient(90deg, #f1c40f, #f1c40f 20px, transparent 20px, transparent 40px);
+            animation: runway-move 1s linear infinite;
+        }
+        .terminal {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 20%;
+            background: #34495e;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+        }
+
+        body.light-mode .terminal {
+            background: #b2bec3;
+        }
+
+        .terminal-windows {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 60%;
+            background: #2c3e50;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        body.light-mode .terminal-windows {
+            background: #a4b0be;
+        }
+
+        .window {
+            width: 40px;
+            height: 60px;
+            background: #3498db;
+            border-radius: 5px;
+        }
+
+        body.light-mode .window {
+            background: #70a1ff;
+        }
+
+        .plane {
+            position: absolute;
+            font-size: 3rem;
+            bottom: 35%;
+            left: -100px;
+            animation: takeoff 15s linear infinite;
+            z-index: 1;
+        }
+
+        .security-icon {
+            position: absolute;
+            font-size: 1.5rem;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        .game-header {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+            transform: translateZ(30px);
+            z-index: 10;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            color: #f1c40f;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            font-weight: 800;
+            padding: 15px 20px;
+            background: rgba(26, 82, 118, 0.7);
+            border-radius: 20px;
+            border: 3px solid rgba(241, 196, 15, 0.5);
+            box-shadow: 0 8px 20px rgba(241, 196, 15, 0.4);
+        }
+
+        body.light-mode .game-title {
+            background: rgba(142, 197, 252, 0.7);
+            color: #e67e22;
+            border: 3px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 8px 20px rgba(230, 126, 34, 0.4);
+        }
+
+        .game-subtitle {
+            font-size: 1.3rem;
+            color: #f1c40f;
+            margin-top: 6px;
+            font-weight: bold;
+            background: rgba(26, 82, 118, 0.7);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+            border: 2px solid rgba(241, 196, 15, 0.5);
+        }
+
+        body.light-mode .game-subtitle {
+            background: rgba(142, 197, 252, 0.7);
+            color: #e67e22;
+            border: 2px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+        }
+        
+        .module-indicator {
+            font-size: 1.1rem;
+            margin-top: 12px;
+            background: rgba(26, 82, 118, 0.7);
+            padding: 8px 15px;
+            border-radius: 50px;
+            display: inline-block;
+            box-shadow: 0 3px 12px rgba(241, 196, 15, 0.3);
+            border: 2px solid rgba(241, 196, 15, 0.5);
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        body.light-mode .module-indicator {
+            background: rgba(142, 197, 252, 0.7);
+            color: #e67e22;
+            border: 2px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 3px 12px rgba(230, 126, 34, 0.3);
+        }
+        
+        .level-indicator {
+            font-size: 1.1rem;
+            margin-top: 8px;
+            background: rgba(26, 82, 118, 0.7);
+            padding: 8px 15px;
+            border-radius: 50px;
+            display: inline-block;
+            box-shadow: 0 3px 12px rgba(241, 196, 15, 0.3);
+            border: 2px solid rgba(241, 196, 15, 0.5);
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        body.light-mode .level-indicator {
+            background: rgba(142, 197, 252, 0.7);
+            color: #e67e22;
+            border: 2px solid rgba(230, 126, 34, 0.5);
+            box-shadow: 0 3px 12px rgba(230, 126, 34, 0.3);
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 600px;
+            height: 25px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f1c40f, #e67e22);
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: progress-shine 2s infinite;
+        }
+
+        .progress-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: rgba(26, 82, 118, 0.7);
+            border-radius: 15px;
+            padding: 12px 20px;
+            box-shadow: 0 8px 25px rgba(241, 196, 15, 0.25);
+            border: 2px solid rgba(241, 196, 15, 0.4);
+            flex-wrap: wrap;
+        }
+
+        body.light-mode .status-bar {
+            background: rgba(142, 197, 252, 0.7);
+            border: 2px solid rgba(230, 126, 34, 0.4);
+            box-shadow: 0 8px 25px rgba(230, 126, 34, 0.25);
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.35), rgba(230, 126, 34, 0.35));
+            border-radius: 15px;
+            min-width: 100px;
+            margin: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        body.light-mode .stat-box {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.35), rgba(241, 196, 15, 0.35));
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(241, 196, 15, 0.4);
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: #f1c40f;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        body.light-mode .stat-label {
+            color: #e67e22;
+        }
+
+        .stat-value {
+            font-size: 1.7rem;
+            font-weight: bold;
+            color: #f1c40f;
+            text-shadow: 0 0 8px rgba(241, 196, 15, 0.5);
+        }
+
+        body.light-mode .stat-value {
+            color: #e67e22;
+        }
+
+        .game-board {
+            width: 100%;
+            display: grid;
+            gap: 12px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .card {
+            aspect-ratio: 3/4;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(241, 196, 15, 0.4);
+        }
+
+        body.light-mode .card {
+            box-shadow: 0 10px 25px rgba(230, 126, 34, 0.4);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.85), rgba(230, 126, 34, 0.85));
+            border: 3px solid rgba(255, 255, 255, 0.8);
+        }
+
+        body.light-mode .card-back {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.85), rgba(241, 196, 15, 0.85));
+        }
+
+        .card-back::before {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+️️";
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .card-front {
+            background: rgba(255, 255, 255, 0.97);
+            transform: rotateY(180deg);
+            border: 3px solid #f1c40f;
+            font-size: 2.5rem;
+            color: #2c3e50;
+            box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+        }
+
+        body.light-mode .card-front {
+            border: 3px solid #e67e22;
+        }
+
+        .card.matched .card-front {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.95), rgba(39, 174, 96, 0.95));
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
+            color: white;
+        }
+
+        /* 安全提示样式 */
+        .safety-tip {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            z-index: 20;
+            display: none;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: tip-appear 0.5s ease;
+        }
+
+        /* 设置按钮 */
+        .settings-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(26, 82, 118, 0.8);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(241, 196, 15, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        body.light-mode .settings-control {
+            background: rgba(142, 197, 252, 0.8);
+            border: 2px solid rgba(230, 126, 34, 0.5);
+        }
+        
+        .settings-control:hover {
+            transform: scale(1.1) rotate(30deg);
+            background: rgba(52, 152, 219, 0.8);
+        }
+        
+        .settings-control i {
+            font-size: 1.5rem;
+            color: #f1c40f;
+        }
+        
+        body.light-mode .settings-control i {
+            color: #e67e22;
+        }
+
+        /* 设置菜单 */
+        .settings-menu {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            background: rgba(26, 82, 118, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            width: 200px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border: 2px solid rgba(241, 196, 15, 0.5);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        body.light-mode .settings-menu {
+            background: rgba(142, 197, 252, 0.95);
+            border: 2px solid rgba(230, 126, 34, 0.5);
+        }
+        
+        .settings-menu h3 {
+            color: #f1c40f;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        body.light-mode .settings-menu h3 {
+            color: #e67e22;
+        }
+        
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .setting-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .setting-item span {
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .setting-item i {
+            color: #f1c40f;
+            font-size: 1.3rem;
+        }
+        
+        body.light-mode .setting-item i {
+            color: #e67e22;
+        }
+
+        /* 安全提示弹窗 */
+        .safety-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(26, 82, 118, 0.95), rgba(52, 152, 219, 0.95));
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(241, 196, 15, 0.7);
+            display: none;
+            z-index: 1001;
+            color: white;
+        }
+        
+        body.light-mode .safety-message {
+            background: linear-gradient(135deg, rgba(142, 197, 252, 0.95), rgba(224, 195, 252, 0.95));
+            border: 3px solid rgba(230, 126, 34, 0.7);
+            color: #2c3e50;
+        }
+
+        .safety-message h3 {
+            color: #f1c40f;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        body.light-mode .safety-message h3 {
+            color: #e67e22;
+        }
+
+        .safety-message p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .safety-message .emoji {
+            font-size: 2.5rem;
+            margin: 0 8px;
+            vertical-align: middle;
+        }
+
+        .close-safety {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #e74c3c;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 2;
+            font-size: 1.2rem;
+        }
+
+        /* 安全达人认证 */
+        .certificate {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a5276, #2c3e50);
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 1002;
+            border: 5px solid #f1c40f;
+            color: white;
+        }
+        
+        body.light-mode .certificate {
+            background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
+            border: 5px solid #e67e22;
+            color: #2c3e50;
+        }
+
+        .certificate h2 {
+            color: #f1c40f;
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+        
+        body.light-mode .certificate h2 {
+            color: #e67e22;
+        }
+
+        .certificate-content {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 20px;
+            margin: 25px 0;
+            font-size: 1.2rem;
+        }
+        
+        body.light-mode .certificate-content {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .certificate-icon {
+            font-size: 5rem;
+            color: #f1c40f;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+        
+        body.light-mode .certificate-icon {
+            color: #e67e22;
+        }
+        
+        /* 年龄验证提示 */
+        .age-warning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 550px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.7);
+            display: none;
+            z-index: 1003;
+            color: white;
+        }
+        
+        .age-warning h3 {
+            color: #f1c40f;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .age-warning p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        
+        .age-warning .emoji {
+            font-size: 3rem;
+            margin: 15px 0;
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* 知识点总结弹窗 */
+        .knowledge-summary {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1a5276, #2c3e50);
+            border-radius: 25px;
+            padding: 40px;
+            max-width: 750px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1004;
+            border: 5px solid #f1c40f;
+            color: white;
+        }
+        
+        body.light-mode .knowledge-summary {
+            background: linear-gradient(135deg, #8ec5fc, #e0c3fc);
+            border: 5px solid #e67e22;
+            color: #2c3e50;
+        }
+
+        .knowledge-summary h2 {
+            color: #f1c40f;
+            font-size: 2.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            font-weight: bold;
+        }
+        
+        body.light-mode .knowledge-summary h2 {
+            color: #e67e22;
+        }
+        
+        .knowledge-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .knowledge-header i {
+            font-size: 3.5rem;
+            margin: 0 15px;
+            color: #f1c40f;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .knowledge-summary p {
+            font-size: 1.3rem;
+            line-height: 1.7;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .module-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .module-section.active {
+            display: block;
+        }
+        
+        body.light-mode .module-section {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .module-title {
+            color: #f1c40f;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        body.light-mode .module-title {
+            color: #e67e22;
+        }
+
+        .knowledge-list {
+            padding-left: 25px;
+            font-size: 1.2rem;
+        }
+
+        .knowledge-list li {
+            margin: 15px 0;
+            line-height: 1.6;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .knowledge-list li:before {
+            content: "🛫";
+            position: absolute;
+            left: -25px;
+            top: 3px;
+        }
+
+        .close-summary {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.3rem;
+            z-index: 2;
+        }
+        
+        .step-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .step-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .step-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .step-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .step-btn:disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #7f8c8d;
+            cursor: pointer;
+        }
+        
+        .step-dot.active {
+            background: #f1c40f;
+            transform: scale(1.2);
+        }
+
+        .celebration {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 4rem;
+            z-index: 10;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn i {
+            font-size: 1.2rem;
+        }
+
+        /* 动画定义 */
+        @keyframes takeoff {
+            0% { transform: translateX(-100px) translateY(0); }
+            20% { transform: translateX(20vw) translateY(-20px); }
+            40% { transform: translateX(40vw) translateY(-50px); }
+            60% { transform: translateX(60vw) translateY(-100px); }
+            80% { transform: translateX(80vw) translateY(-200px); }
+            100% { transform: translateX(100vw) translateY(-400px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes runway-move {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-40px); }
+        }
+
+        @keyframes progress-shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes tip-appear {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .game-title { font-size: 2rem; }
+            .game-subtitle { font-size: 1.1rem; }
+            .stat-box { min-width: 85px; }
+            .stat-value { font-size: 1.4rem; }
+            .btn { padding: 12px 20px; font-size: 1rem; }
+            .card-front { font-size: 2rem; }
+            .card-back::before { font-size: 2.2rem; }
+            
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+            
+            .settings-control {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+            }
+            
+            .settings-menu {
+                top: 60px;
+                right: 10px;
+                width: 180px;
+                padding: 15px;
+            }
+            
+            .knowledge-summary {
+                padding: 25px 15px;
+            }
+            
+            .knowledge-summary h2 {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .game-board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 机场背景元素 -->
+    <div class="airport-bg">
+        <div class="runway">
+            <div class="runway-lines"></div>
+        </div>
+        <div class="terminal">
+            <div class="terminal-windows">
+                <div class="window"></div>
+                <div class="window"></div>
+                <div class="window"></div>
+                <div class="window"></div>
+            </div>
+        </div>
+        <div class="plane">🛫✈️🛫✈️🛫✈️🛫</div>
+        <div class="security-icon" style="top: 20%; left: 10%;">🛂</div>
+        <div class="security-icon" style="top: 40%; left: 80%; animation-delay: -2s;">🛄</div>
+        <div class="security-icon" style="top: 70%; left: 30%; animation-delay: -4s;">🚨</div>
+    </div>
+    
+    <!-- 设置按钮 -->
+    <div class="settings-control" id="settingsControl">
+        <i class="fas fa-cog"></i>
+    </div>
+    
+    <!-- 设置菜单 -->
+    <div class="settings-menu" id="settingsMenu">
+        <h3>游戏设置</h3>
+        <div class="setting-item" id="soundToggle">
+            <span>声音开关</span>
+            <i class="fas fa-volume-up"></i>
+        </div>
+        <div class="setting-item" id="themeToggle">
+            <span>早班</span>
+            <i class="fas fa-sun"></i>
+        </div>
+    </div>
+    
+    <div class="game-header">
+        <h1 class="game-title">机场安全知识翻翻乐</h1>
+        <div class="game-subtitle">CHECK~CHECK~CHECK IN~</div>
+        <div class="module-indicator" id="moduleIndicator">当前模块: 人证核验</div>
+        <div class="level-indicator" id="levelIndicator">关卡: 基础</div>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-label" id="progressLabel">值机安全进度: 0%</div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div class="status-bar">
+            <div class="stat-box">
+                <span class="stat-label">时间</span>
+                <span class="stat-value" id="timer">00:00</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">步数</span>
+                <span class="stat-value" id="moves">0</span>
+            </div>
+            <button class="btn" id="pauseBtn"><i class="fas fa-pause"></i> <span>暂停</span></button>
+            <button class="btn" id="hintBtn"><i class="fas fa-lightbulb"></i> <span>提示</span></button>
+        </div>
+        
+        <div class="game-board" id="gameBoard">
+            <!-- 卡片将通过JS动态生成 -->
+        </div>
+        
+        <div class="safety-tip" id="safetyTip"></div>
+        
+        <div class="control-panel">
+            <button class="btn" id="restartBtn"><i class="fas fa-redo"></i> <span>重新开始</span></button>
+        </div>
+    </div>
+    
+    <!-- 安全提示弹窗 -->
+    <div class="safety-message" id="safetyMessage">
+        <div class="close-safety" id="closeSafety">✕</div>
+        <h3><span class="emoji">✅</span> 安全知识 <span class="emoji">✅</span></h3>
+        <p id="safetyContent"></p>
+        <button class="btn" id="nextLevelBtn" style="margin-top: 15px; background: linear-gradient(to right, #2ecc71, #27ae60);">下一关</button>
+    </div>
+    
+    <!-- 年龄验证提示 -->
+    <div class="age-warning" id="ageWarning">
+        <h3>紧急出口座位要求</h3>
+        <div class="emoji">⚠️</div>
+        <p id="warningText"></p>
+        <button class="btn" id="closeWarning" style="margin-top: 15px; background: linear-gradient(to right, #e74c3c, #c0392b);">我知道啦</button>
+    </div>
+    
+    <!-- 值机安全达人认证 -->
+    <div class="certificate" id="certificate">
+        <h2>值机安全达人认证</h2>
+        <div class="certificate-icon">🏆</div>
+        <div class="certificate-content">
+            <p>恭喜您完成 <span id="certModule" style="color: #f1c40f; font-weight: bold;">人证核验</span> 模块</p>
+            <p>获得 <span id="certTitle" style="color: #f1c40f; font-weight: bold;">人证核验小能手</span> 称号</p>
+        </div>
+        <div id="certTips"></div>
+        <button class="btn" id="nextModuleBtn" style="margin-top: 15px; background: linear-gradient(to right, #3498db, #2980b9);">进入下一模块</button>
+    </div>
+    
+    <!-- 知识点总结弹窗 -->
+    <div class="knowledge-summary" id="knowledgeSummary">
+        <div class="celebration">🎉</div>
+        <div class="close-summary" id="closeSummary">✕</div>
+        <div class="knowledge-header">
+            <i class="fas fa-trophy"></i>
+            <h2>恭喜您通关！值机安全知识全掌握</h2>
+            <i class="fas fa-medal"></i>
+        </div>
+        <p>📣 哇哦！您已经成功通关所有值机安全训练！</p>
+        <p>㊗️现在您已经是值机安全能手啦，让我们一起回顾下重要知识点吧❗️</p>
+        
+        <div id="knowledgeContent">
+            <!-- 模块内容将动态添加 -->
+        </div>
+        
+        <div class="step-nav">
+            <button class="step-btn" id="prevStepBtn" disabled>
+                <i class="fas fa-arrow-left"></i> 上一步
+            </button>
+            <button class="step-btn" id="nextStepBtn">
+                下一步 <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+        
+        <div class="step-indicator">
+            <div class="step-dot active" data-step="0"></div>
+            <div class="step-dot" data-step="1"></div>
+            <div class="step-dot" data-step="2"></div>
+        </div>
+        
+        <button class="btn" id="playAgainBtn" style="margin-top: 20px; background: linear-gradient(to right, #f1c40f, #e67e22); font-size: 1.3rem; padding: 15px 30px; display: none;">
+            <i class="fas fa-redo"></i> 再来一次
+        </button>
+    </div>
+
+    <script>
+        // 游戏配置
+        const gameConfig = {
+            modules: [
+                {
+                    id: 'checkin',
+                    name: '人证核验',
+                    levels: [
+                        {
+                            name: '基础',
+                            pairs: 6,
+                            columns: 3,
+                            previewTime: 5,
+                            safetyTips: [
+                                "人证不符无法办理🙅",
+                                "人证合一，男女不分就直接办理简直BIG胆😡",
+                                "旅行证件必须在有效期内，过期就去补办哈😉",
+                                "婴儿也要证件哒👶🏻"
+                            ]
+                        },
+                        {
+                            name: '进阶',
+                            pairs: 8,
+                            columns: 4,
+                            previewTime: 7,
+                            safetyTips: [
+                                "核对航班号和目的地是否正确😆",
+                                "今儿飞❓明儿飞❓注意起飞时间再办呐😜",
+                                "国际航班别忘了查签证🧐",
+                                "办理儿童注意是否申请过UM，别直接kuku办🥲"
+                            ]
+                        },
+                        {
+                            name: '挑战',
+                            pairs: 12,
+                            columns: 4,
+                            previewTime: 8,
+                            safetyTips: [
+                                "👀名字错误一定要及时发现啊👀",
+                                "柜台办理多人本人必须到现场，不接受反驳😀",
+                                "小动物等特殊旅客别忘了检查额外的文件😌",
+                                "警惕冒用他人证件行为🤨"
+                            ]
+                        }
+                    ],
+                    certificate: {
+                        title: "人证核验小能手",
+                        tips: [
+                            "✅ 确保证件信息一致🤩",
+                            "✅ 核对航班号和目的地和日期🤩",
+                            "✅ 人证合一🤩"
+                        ]
+                    }
+                },
+                {
+                    id: 'exit',
+                    name: '紧急出口',
+                    levels: [
+                        {
+                            name: '基础',
+                            pairs: 6,
+                            columns: 3,
+                            previewTime: 5,
+                            safetyTips: [
+                                "乘坐紧急出口的旅客必须身体健康💪",
+                                "❗️年龄必须在15-65周岁之间❗️",
+                                "⚠️注意核实网上值机选择紧急出口的旅客",
+                                "🍺醉酒旅客达咩🤚"
+                            ]
+                        },
+                        {
+                            name: '进阶',
+                            pairs: 8,
+                            columns: 4,
+                            previewTime: 7,
+                            safetyTips: [
+                                "🙅紧急出口座位不能坐特殊旅客🙅",
+                                "❗关注紧急出口座位时也要注意C909机型婴儿旅客只能放左侧",
+                                "🤓必须当面确认乘坐紧急出口的旅客🤓",
+                                "😆提示旅客紧急出口座位职责😁"
+                            ]
+                        },
+                        {
+                            name: '挑战',
+                            pairs: 12,
+                            columns: 4,
+                            previewTime: 8,
+                            safetyTips: [
+                                "👀提示旅客配合机组人员指示🤭",
+                                "🤗主动询问身体健康，没有手术，没有怀孕🤗",
+                                "😇座椅不能往后的座位要及时告知旅客😇",
+                                "🙂紧急设备不要随意触碰🙂"
+                            ]
+                        }
+                    ],
+                    certificate: {
+                        title: "紧急出口专家",
+                        tips: [
+                            "✅ 年龄15 - 65周岁❗️",
+                            "✅ 身体健康，未做手术，没有怀孕❗️",
+                            "✅ 必须近距离确认旅客状态❗️"
+                        ]
+                    }
+                },
+                {
+                    id: 'danger',
+                    name: '危险品识别',
+                    levels: [
+                        {
+                            name: '基础',
+                            pairs: 6,
+                            columns: 3,
+                            previewTime: 5,
+                            safetyTips: [
+                                "锂电池禁止托运🈲",
+                                "打火机属于火种，禁止托运或携带🈲",
+                                "符合要求的充电宝需随身携带😌",
+                                "酒精浓度超70%禁止托运或携带🈲"
+                            ]
+                        },
+                        {
+                            name: '进阶',
+                            pairs: 8,
+                            columns: 4,
+                            previewTime: 7,
+                            safetyTips: [
+                                "符合要求的酒精类物品限量携带🉑",
+                                "喷雾类有易燃标识不可托运或携带🤚",
+                                "符合规定的尖锐物品需托运🤗",
+                                "易燃物品严禁托运或携带🈲"
+                            ]
+                        },
+                        {
+                            name: '挑战',
+                            pairs: 12,
+                            columns: 4,
+                            previewTime: 8,
+                            safetyTips: [
+                                "识别伪装危险品👀",
+                                "了解危险品应急处置方法👀",
+                                "报告可疑物品👀",
+                                "遵守国际运输规定👀"
+                            ]
+                        }
+                    ],
+                    certificate: {
+                        title: "危险品识别高手",
+                        tips: [
+                            "✅ 识别常见危险品🔪",
+                            "✅ 充电宝，锂电池禁止托运🈲",
+                            "✅ 掌握应急处置方法👍"
+                        ]
+                    }
+                }
+            ],
+            icons: {
+                checkin: ['😺', '👩', '👨🏻', '👵', '🐶', '👧', '👮', '👷', '💃️', '🧕🏻️', '🕵️', '💂'],
+                exit: ['1996', '2009', '1952', '1960', '1973', '1985', '1990', '2000', '2010', '2023', '🤕', '🤰', '🩼', '👶🏻️'],
+                danger: ['🔋', '🔥', '🧨', '💣', '🧪', '☣️', '☢️', '⚠️', '🚫', '💊', '🧫', '🔪']
+            }
+        };
+
+        // 游戏状态
+        const state = {
+            currentModule: 0,
+            currentLevel: 0,
+            cards: [],
+            flippedCards: [],
+            matchedPairs: 0,
+            moves: 0,
+            seconds: 0,
+            timer: null,
+            gameStarted: false,
+            gamePaused: false,
+            canFlip: true,
+            previewInterval: null,
+            soundEnabled: true,
+            lightMode: false,
+            audioContext: null,
+            currentStep: 0 // 当前知识点步骤
+        };
+
+        // DOM元素
+        const dom = {
+            moduleIndicator: document.getElementById('moduleIndicator'),
+            levelIndicator: document.getElementById('levelIndicator'),
+            progressBar: document.getElementById('progressBar'),
+            progressLabel: document.getElementById('progressLabel'),
+            gameBoard: document.getElementById('gameBoard'),
+            timer: document.getElementById('timer'),
+            moves: document.getElementById('moves'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            hintBtn: document.getElementById('hintBtn'),
+            restartBtn: document.getElementById('restartBtn'),
+            safetyTip: document.getElementById('safetyTip'),
+            safetyMessage: document.getElementById('safetyMessage'),
+            safetyContent: document.getElementById('safetyContent'),
+            closeSafety: document.getElementById('closeSafety'),
+            nextLevelBtn: document.getElementById('nextLevelBtn'),
+            certificate: document.getElementById('certificate'),
+            certModule: document.getElementById('certModule'),
+            certTitle: document.getElementById('certTitle'),
+            certTips: document.getElementById('certTips'),
+            nextModuleBtn: document.getElementById('nextModuleBtn'),
+            settingsControl: document.getElementById('settingsControl'),
+            settingsMenu: document.getElementById('settingsMenu'),
+            soundToggle: document.getElementById('soundToggle'),
+            themeToggle: document.getElementById('themeToggle'),
+            ageWarning: document.getElementById('ageWarning'),
+            warningText: document.getElementById('warningText'),
+            closeWarning: document.getElementById('closeWarning'),
+            knowledgeSummary: document.getElementById('knowledgeSummary'),
+            knowledgeContent: document.getElementById('knowledgeContent'),
+            closeSummary: document.getElementById('closeSummary'),
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            prevStepBtn: document.getElementById('prevStepBtn'),
+            nextStepBtn: document.getElementById('nextStepBtn')
+        };
+
+        // 初始化游戏
+        function initGame() {
+            // 重置状态
+            state.cards = [];
+            state.flippedCards = [];
+            state.matchedPairs = 0;
+            state.moves = 0;
+            state.seconds = 0;
+            state.gameStarted = false;
+            state.gamePaused = false;
+            state.canFlip = true;
+            
+            // 清除计时器
+            clearInterval(state.timer);
+            clearInterval(state.previewInterval);
+            
+            // 更新UI
+            updateProgress();
+            updateModuleInfo();
+            
+            // 获取当前关卡配置
+            const config = getCurrentConfig();
+            state.totalPairs = config.pairs;
+            
+            // 设置游戏板网格
+            dom.gameBoard.style.gridTemplateColumns = `repeat(${config.columns}, 1fr)`;
+            
+            // 生成卡片
+            generateCards();
+            
+            // 初始显示卡片正面
+            showCardsInitially(config.previewTime);
+            
+            // 重置按钮状态
+            dom.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>暂停</span>';
+        }
+
+        // 更新模块和关卡信息
+        function updateModuleInfo() {
+            const module = gameConfig.modules[state.currentModule];
+            dom.moduleIndicator.textContent = `当前模块: ${module.name}`;
+            dom.levelIndicator.textContent = `关卡: ${module.levels[state.currentLevel].name}`;
+        }
+
+        // 更新进度条
+        function updateProgress() {
+            const totalLevels = gameConfig.modules.reduce((sum, module) => sum + module.levels.length, 0);
+            const completedLevels = gameConfig.modules.slice(0, state.currentModule)
+                .reduce((sum, module) => sum + module.levels.length, 0) + state.currentLevel;
+            
+            const progress = Math.floor((completedLevels / totalLevels) * 100);
+            dom.progressBar.style.width = `${progress}%`;
+            dom.progressLabel.textContent = `安全任务进度: ${progress}%`;
+        }
+
+        // 获取当前配置
+        function getCurrentConfig() {
+            return gameConfig.modules[state.currentModule].levels[state.currentLevel];
+        }
+
+        // 生成卡片
+        function generateCards() {
+            dom.gameBoard.innerHTML = '';
+            
+            const moduleId = gameConfig.modules[state.currentModule].id;
+            const icons = [...gameConfig.icons[moduleId]];
+            const config = getCurrentConfig();
+            
+            // 确保图标数量足够
+            while (icons.length < config.pairs) {
+                icons.push(...icons);
+            }
+            
+            const selectedIcons = icons.slice(0, config.pairs);
+            const cardIcons = [...selectedIcons, ...selectedIcons];
+            
+            // 随机排序
+            shuffleArray(cardIcons);
+            
+            // 创建卡片元素
+            cardIcons.forEach((icon, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.icon = icon;
+                
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-back';
+                
+                const cardFront = document.createElement('div');
+                cardFront.className = 'card-front';
+                cardFront.textContent = icon;
+                
+                card.appendChild(cardBack);
+                card.appendChild(cardFront);
+                
+                // 添加点击事件
+                card.addEventListener('click', () => flipCard(card));
+                
+                dom.gameBoard.appendChild(card);
+                state.cards.push(card);
+            });
+        }
+
+        // 初始显示卡片
+        function showCardsInitially(previewTime) {
+            // 显示所有卡片正面
+            state.cards.forEach(card => {
+                card.classList.add('flipped');
+            });
+            
+            // 创建预览容器
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-container';
+            previewContainer.style.position = 'absolute';
+            previewContainer.style.top = '0';
+            previewContainer.style.left = '0';
+            previewContainer.style.width = '100%';
+            previewContainer.style.height = '100%';
+            previewContainer.style.background = 'rgba(26, 82, 118, 0.9)';
+            previewContainer.style.display = 'flex';
+            previewContainer.style.flexDirection = 'column';
+            previewContainer.style.justifyContent = 'center';
+            previewContainer.style.alignItems = 'center';
+            previewContainer.style.borderRadius = '15px';
+            previewContainer.style.zIndex = '5';
+            
+            const previewTitle = document.createElement('div');
+            previewTitle.className = 'preview-title';
+            previewTitle.textContent = '记忆时间';
+            previewTitle.style.fontSize = '2rem';
+            previewTitle.style.color = '#f1c40f';
+            previewTitle.style.marginBottom = '20px';
+            previewTitle.style.fontWeight = 'bold';
+            
+            const previewTimer = document.createElement('div');
+            previewTimer.className = 'preview-timer';
+            previewTimer.textContent = previewTime;
+            previewTimer.style.fontSize = '4rem';
+            previewTimer.style.fontWeight = 'bold';
+            previewTimer.style.color = '#f1c40f';
+            previewTimer.style.textShadow = '0 0 15px rgba(241, 196, 15, 0.8)';
+            previewTimer.style.animation = 'pulse 1.5s infinite';
+            
+            previewContainer.appendChild(previewTitle);
+            previewContainer.appendChild(previewTimer);
+            dom.gameBoard.appendChild(previewContainer);
+            
+            let timeLeft = previewTime;
+            
+            // 更新预览倒计时
+            state.previewInterval = setInterval(() => {
+                timeLeft--;
+                previewTimer.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(state.previewInterval);
+                    previewContainer.remove();
+                    
+                    // 翻转卡片
+                    state.cards.forEach(card => {
+                        card.classList.remove('flipped');
+                    });
+                    
+                    state.canFlip = true;
+                    state.gameStarted = true;
+                    startGameTimer();
+                }
+            }, 1000);
+        }
+
+        // 开始游戏计时器
+        function startGameTimer() {
+            state.timer = setInterval(() => {
+                if (!state.gamePaused) {
+                    state.seconds++;
+                    const minutes = Math.floor(state.seconds / 60);
+                    const seconds = state.seconds % 60;
+                    dom.timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        // 翻转卡片
+        function flipCard(card) {
+            // 检查是否可以翻转
+            if (!state.gameStarted || state.gamePaused || !state.canFlip || 
+                card.classList.contains('matched') || 
+                card.classList.contains('flipped') || 
+                state.flippedCards.length >= 2) {
+                return;
+            }
+            
+            // 添加翻转效果
+            card.classList.add('flipped');
+            state.flippedCards.push(card);
+            
+            // 播放音效
+            playSound('flip');
+            
+            // 检查是否翻了两张卡
+            if (state.flippedCards.length === 2) {
+                state.canFlip = false;
+                setTimeout(checkForMatch, 300);
+            }
+        }
+
+        // 检查匹配
+        function checkForMatch() {
+            state.moves++;
+            dom.moves.textContent = state.moves;
+            
+            const card1 = state.flippedCards[0];
+            const card2 = state.flippedCards[1];
+            
+            const isMatch = card1.dataset.icon === card2.dataset.icon;
+            
+            if (isMatch) {
+                // 匹配成功
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                state.matchedPairs++;
+                
+                // 播放匹配成功音效
+                playSound('match');
+                
+                // 检查紧急出口模式下的年龄验证
+                if (gameConfig.modules[state.currentModule].id === 'exit') {
+                    checkAgeRequirement(card1.dataset.icon);
+                }
+                
+                // 显示安全提示
+                showSafetyTip();
+                
+                state.flippedCards = [];
+                state.canFlip = true;
+                
+                // 检查游戏是否结束
+                if (state.matchedPairs === state.totalPairs) {
+                    setTimeout(() => endGame(), 500);
+                }
+            } else {
+                // 不匹配
+                // 播放不匹配音效
+                playSound('mismatch');
+                
+                // 等待后翻转回去
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    
+                    state.flippedCards = [];
+                    state.canFlip = true;
+                }, 800);
+            }
+        }
+        
+        // 检查紧急出口年龄要求
+        function checkAgeRequirement(icon) {
+            // 特殊符号检查
+            const specialSymbols = ['🤕', '🤰', '🩼', '👶🏻️'];
+            if (specialSymbols.includes(icon)) {
+                dom.warningText.innerHTML = `该乘客有特殊状况（${icon}），不符合紧急出口座位要求！`;
+                dom.ageWarning.style.display = 'block';
+                return;
+            }
+            
+            // 年份检查
+            if (/^\d{4}$/.test(icon)) {
+                const birthYear = parseInt(icon);
+                const age = 2025 - birthYear;
+                
+                if (age < 15 || age > 65) {
+                    dom.warningText.innerHTML = `该乘客出生于${icon}年，年龄为${age}岁，<br>不符合紧急出口座位要求！`;
+                    dom.ageWarning.style.display = 'block';
+                }
+            }
+        }
+
+        // 显示安全提示
+        function showSafetyTip() {
+            const config = getCurrentConfig();
+            const tips = config.safetyTips;
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            
+            dom.safetyTip.textContent = randomTip;
+            dom.safetyTip.style.display = 'block';
+            
+            // 3秒后隐藏提示
+            setTimeout(() => {
+                dom.safetyTip.style.display = 'none';
+            }, 3000);
+        }
+
+        // 结束游戏
+        function endGame() {
+            clearInterval(state.timer);
+            
+            // 添加彩带特效
+            createConfetti();
+            
+            // 显示安全知识弹窗
+            const config = getCurrentConfig();
+            const randomTip = config.safetyTips[Math.floor(Math.random() * config.safetyTips.length)];
+            dom.safetyContent.textContent = randomTip;
+            dom.safetyMessage.style.display = 'block';
+        }
+
+        // 创建彩带特效
+        function createConfetti() {
+            const colors = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6'];
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.position = 'fixed';
+                confetti.style.width = `${Math.random() * 10 + 5}px`;
+                confetti.style.height = `${Math.random() * 15 + 5}px`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `-30px`;
+                confetti.style.zIndex = '1000';
+                confetti.style.animation = `confetti-fall ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(confetti);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // 提示功能
+        function showHint() {
+            if (state.matchedPairs === state.totalPairs || !state.gameStarted) return;
+            
+            // 找到所有未匹配的卡片
+            const unmatchedCards = state.cards.filter(card => 
+                !card.classList.contains('matched') && 
+                !card.classList.contains('flipped')
+            );
+            
+            if (unmatchedCards.length < 2) return;
+            
+            // 分组所有可用符号
+            const symbolsMap = {};
+            unmatchedCards.forEach(card => {
+                const symbol = card.dataset.icon;
+                if (!symbolsMap[symbol]) symbolsMap[symbol] = [];
+                symbolsMap[symbol].push(card);
+            });
+            
+            // 找到可匹配的对
+            const matchableSymbols = Object.keys(symbolsMap)
+                .filter(symbol => symbolsMap[symbol].length >= 2);
+            
+            if (matchableSymbols.length === 0) return;
+            
+            // 随机选择一对
+            const randomSymbol = matchableSymbols[Math.floor(Math.random() * matchableSymbols.length)];
+            const [card1, card2] = symbolsMap[randomSymbol].slice(0, 2);
+            
+            // 短暂显示提示
+            card1.classList.add('flipped');
+            card2.classList.add('flipped');
+            
+            // 播放提示音效
+            playSound('hint');
+            
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+            }, 1000);
+        }
+
+        // 播放音效
+        function playSound(type) {
+            if (!state.soundEnabled || !state.audioContext) return;
+            
+            try {
+                const oscillator = state.audioContext.createOscillator();
+                const gainNode = state.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(state.audioContext.destination);
+                
+                switch(type) {
+                    case 'flip':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 523.25; // C5
+                        gainNode.gain.value = 0.2;
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 200);
+                        break;
+                    case 'match':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 783.99; // G5
+                        gainNode.gain.value = 0.2;
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 300);
+                        break;
+                    case 'mismatch':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 392.00; // G4
+                        gainNode.gain.value = 0.2;
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 300);
+                        break;
+                    case 'hint':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 659.25; // E5
+                        gainNode.gain.value = 0.2;
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 200);
+                        break;
+                    case 'success':
+                        // "哇哦"音效
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(523.25, state.audioContext.currentTime); // C5
+                        oscillator.frequency.setValueAtTime(659.25, state.audioContext.currentTime + 0.1); // E5
+                        oscillator.frequency.setValueAtTime(783.99, state.audioContext.currentTime + 0.2); // G5
+                        gainNode.gain.value = 0.3;
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 500);
+                        break;
+                    case 'ding':
+                        // "叮咚"音效
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(784, state.audioContext.currentTime); // G5
+                        oscillator.frequency.setValueAtTime(1046.5, state.audioContext.currentTime + 0.2); // C6
+                        gainNode.gain.setValueAtTime(0.3, state.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, state.audioContext.currentTime + 0.5);
+                        oscillator.start();
+                        setTimeout(() => oscillator.stop(), 600);
+                        break;
+                }
+            } catch (e) {
+                console.log("音频播放失败:", e);
+            }
+        }
+        
+        // 显示安全达人认证
+        function showCertificate() {
+            const module = gameConfig.modules[state.currentModule];
+            dom.certModule.textContent = module.name;
+            dom.certTitle.textContent = module.certificate.title;
+            
+            // 添加安全提示
+            dom.certTips.innerHTML = '';
+            module.certificate.tips.forEach(tip => {
+                const tipEl = document.createElement('p');
+                tipEl.textContent = tip;
+                tipEl.style.margin = '10px 0';
+                tipEl.style.fontSize = '1.2rem';
+                dom.certTips.appendChild(tipEl);
+            });
+            
+            dom.certificate.style.display = 'block';
+            playSound('ding');
+        }
+
+        // 进入下一关
+        function nextLevel() {
+            const module = gameConfig.modules[state.currentModule];
+            
+            if (state.currentLevel < module.levels.length - 1) {
+                // 进入同一模块的下一关
+                state.currentLevel++;
+                initGame();
+            } else {
+                // 当前模块已完成
+                dom.safetyMessage.style.display = 'none';
+                
+                // 检查是否是最后一个模块
+                if (state.currentModule === gameConfig.modules.length - 1) {
+                    // 最后一个模块 - 显示知识大总结
+                    showKnowledgeSummary();
+                } else {
+                    // 显示当前模块的认证
+                    showCertificate();
+                }
+            }
+        }
+
+        // 进入下一模块
+        function nextModule() {
+            dom.certificate.style.display = 'none';
+            state.currentModule++;
+            state.currentLevel = 0;
+            initGame();
+        }
+        
+        // 显示知识点总结
+        function showKnowledgeSummary() {
+            // 重置步骤状态
+            state.currentStep = 0;
+            updateStepNavigation();
+            
+            // 清空内容容器
+            dom.knowledgeContent.innerHTML = '';
+            
+            // 添加三个模块的内容
+            gameConfig.modules.forEach((module, index) => {
+                const section = document.createElement('div');
+                section.className = 'module-section';
+                section.id = `module-section-${index}`;
+                
+                const title = document.createElement('div');
+                title.className = 'module-title';
+                title.textContent = `${module.name}知识要点`;
+                
+                const list = document.createElement('ul');
+                list.className = 'knowledge-list';
+                
+                // 收集所有值机安全提示（去重）
+                const uniqueTips = [];
+                module.levels.forEach(level => {
+                    level.safetyTips.forEach(tip => {
+                        if (!uniqueTips.includes(tip)) {
+                            uniqueTips.push(tip);
+                        }
+                    });
+                });
+                
+                // 生成列表
+                uniqueTips.forEach(tip => {
+                    const item = document.createElement('li');
+                    item.textContent = tip;
+                    list.appendChild(item);
+                });
+                
+                section.appendChild(title);
+                section.appendChild(list);
+                dom.knowledgeContent.appendChild(section);
+            });
+            
+            // 显示第一个模块的内容
+            document.querySelector('.module-section').classList.add('active');
+            
+            dom.knowledgeSummary.style.display = 'block';
+            createConfetti();
+            playSound('success');
+        }
+        
+        // 更新步骤导航
+        function updateStepNavigation() {
+            // 更新按钮状态
+            dom.prevStepBtn.disabled = state.currentStep === 0;
+            dom.nextStepBtn.textContent = state.currentStep === 2 ? 
+                '完成' : '下一步 <i class="fas fa-arrow-right"></i>';
+            
+            // 更新指示点
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === state.currentStep);
+            });
+            
+            // 显示/隐藏再来一次按钮
+            dom.playAgainBtn.style.display = state.currentStep === 2 ? 'block' : 'none';
+            
+            // 显示当前步骤对应的内容
+            document.querySelectorAll('.module-section').forEach((section, index) => {
+                section.classList.toggle('active', index === state.currentStep);
+            });
+        }
+        
+        // 下一步知识点
+        function nextStep() {
+            if (state.currentStep < 2) {
+                state.currentStep++;
+                updateStepNavigation();
+            } else {
+                // 关闭知识总结
+                dom.knowledgeSummary.style.display = 'none';
+            }
+        }
+        
+        // 上一步知识点
+        function prevStep() {
+            if (state.currentStep > 0) {
+                state.currentStep--;
+                updateStepNavigation();
+            }
+        }
+        
+        // 切换主题模式
+        function toggleTheme() {
+            state.lightMode = !state.lightMode;
+            
+            if (state.lightMode) {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                dom.themeToggle.querySelector('span').textContent = '早班';
+                dom.themeToggle.querySelector('i').className = 'fas fa-moon';
+            } else {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+                dom.themeToggle.querySelector('span').textContent = '夜班';
+                dom.themeToggle.querySelector('i').className = 'fas fa-sun';
+            }
+            
+            // 保存用户偏好
+            localStorage.setItem('lightMode', state.lightMode);
+        }
+
+        // 工具函数：数组洗牌
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 切换声音状态
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            const icon = dom.soundToggle.querySelector('i');
+            
+            if (state.soundEnabled) {
+                icon.className = 'fas fa-volume-up';
+            } else {
+                icon.className = 'fas fa-volume-mute';
+            }
+            
+            // 保存用户偏好
+            localStorage.setItem('soundEnabled', state.soundEnabled);
+        }
+
+        // 事件监听器
+        function setupEventListeners() {
+            dom.restartBtn.addEventListener('click', () => {
+                initGame();
+            });
+            
+            dom.hintBtn.addEventListener('click', () => {
+                showHint();
+            });
+            
+            dom.pauseBtn.addEventListener('click', () => {
+                if (!state.gameStarted) return;
+                
+                state.gamePaused = !state.gamePaused;
+                
+                if (state.gamePaused) {
+                    clearInterval(state.timer);
+                    dom.pauseBtn.innerHTML = '<i class="fas fa-play"></i> <span>继续</span>';
+                } else {
+                    startGameTimer();
+                    dom.pauseBtn.innerHTML = '<i class="fas fa-pause"></i> <span>暂停</span>';
+                }
+            });
+
+            dom.closeSafety.addEventListener('click', () => {
+                dom.safetyMessage.style.display = 'none';
+            });
+            
+            dom.nextLevelBtn.addEventListener('click', () => {
+                dom.safetyMessage.style.display = 'none';
+                nextLevel();
+            });
+            
+            dom.nextModuleBtn.addEventListener('click', nextModule);
+            
+            dom.settingsControl.addEventListener('click', () => {
+                dom.settingsMenu.style.display = 'flex';
+            });
+            
+            dom.soundToggle.addEventListener('click', toggleSound);
+            dom.themeToggle.addEventListener('click', toggleTheme);
+            
+            dom.closeWarning.addEventListener('click', () => {
+                dom.ageWarning.style.display = 'none';
+            });
+            
+            dom.closeSummary.addEventListener('click', () => {
+                dom.knowledgeSummary.style.display = 'none';
+            });
+            
+            dom.playAgainBtn.addEventListener('click', () => {
+                dom.knowledgeSummary.style.display = 'none';
+                state.currentModule = 0;
+                state.currentLevel = 0;
+                initGame();
+            });
+            
+            // 知识点步骤导航
+            dom.prevStepBtn.addEventListener('click', prevStep);
+            dom.nextStepBtn.addEventListener('click', nextStep);
+            
+            // 步骤指示点点击事件
+            document.querySelectorAll('.step-dot').forEach(dot => {
+                dot.addEventListener('click', () => {
+                    state.currentStep = parseInt(dot.dataset.step);
+                    updateStepNavigation();
+                });
+            });
+            
+            // 点击设置菜单外部关闭菜单
+            document.addEventListener('click', (e) => {
+                if (!dom.settingsMenu.contains(e.target) && 
+                    !dom.settingsControl.contains(e.target) && 
+                    dom.settingsMenu.style.display === 'flex') {
+                    dom.settingsMenu.style.display = 'none';
+                }
+            });
+        }
+
+        // 初始化游戏
+        function init() {
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.08); }
+                    100% { transform: scale(1); }
+                }
+                
+                @keyframes confetti-fall {
+                    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 初始化音频上下文
+            try {
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log("音频上下文初始化失败:", e);
+            }
+            
+            // 加载用户设置
+            if (localStorage.getItem('soundEnabled') !== null) {
+                state.soundEnabled = localStorage.getItem('soundEnabled') === 'true';
+                if (!state.soundEnabled) {
+                    dom.soundToggle.querySelector('i').className = 'fas fa-volume-mute';
+                }
+            }
+            
+            if (localStorage.getItem('lightMode') === 'true') {
+                state.lightMode = true;
+                document.body.classList.add('light-mode');
+                dom.themeToggle.querySelector('span').textContent = '夜班';
+                dom.themeToggle.querySelector('i').className = 'fas fa-moon';
+            }
+            
+            // 设置事件监听器
+            setupEventListeners();
+            
+            // 初始化游戏
+            initGame();
+        }
+
+        // 启动游戏
+        init();
+    </script>
+</body>
+</html>

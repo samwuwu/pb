@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025安全生产月民航安全知识闯关</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0ea5e9;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --neutral: #64748b;
+            --safety-blue: #1e88e5;
+            --safety-red: #e53935;
+            --safety-yellow: #ffd600;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(30, 136, 229, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(229, 57, 53, 0.05) 0%, transparent 20%);
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            height: 95vh;
+            max-height: 700px;
+            background-color: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background: linear-gradient(135deg, var(--safety-blue), #1565c0);
+            color: white;
+            padding: 12px 15px;
+            position: relative;
+        }
+        .sound-control {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+        .sound-control:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .game-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            text-align: center;
+            flex: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .game-title i {
+            margin-right: 8px;
+            color: var(--safety-yellow);
+        }
+        .level-indicator {
+            display: flex;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), #0d94d7);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        .progress-text {
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        main {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .level-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+        }
+        .level-container::-webkit-scrollbar {
+            display: none;
+        }
+        .level-card {
+            min-width: 110px;
+            text-align: center;
+            padding: 12px 8px;
+            border-radius: 12px;
+            background: #f0f9ff;
+            margin: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+        }
+        .level-card.active {
+            background: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+            transform: scale(1.05);
+            z-index: 2;
+            box-shadow: 0 5px 15px rgba(14, 165, 233, 0.3);
+        }
+        .level-card.completed {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+        .level-card.locked {
+            background: #e2e8f0;
+            color: var(--neutral);
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+        }
+        .level-card.locked::after {
+            content: "\f023";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.4rem;
+            opacity: 0.3;
+        }
+        .level-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 1;
+        }
+        .level-progress {
+            font-size: 0.85rem;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+        .level-card.active .level-progress {
+            background: rgba(255,255,255,0.15);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .question-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+            position: relative;
+            background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .question-type {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+            background: rgba(14, 165, 233, 0.08);
+        }
+        .question-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--neutral);
+        }
+        .question-content {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            color: var(--primary);
+        }
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .option-item {
+            padding: 14px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            background: white;
+        }
+        .option-item::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+        .option-item:hover {
+            border-color: var(--secondary);
+            background-color: #f8fcff;
+            transform: translateY(-2px);
+        }
+        .option-item.selected {
+            border-color: var(--secondary);
+            background-color: #f0f9ff;
+        }
+        .option-item.selected::before {
+            background: var(--secondary);
+        }
+        .option-item.correct {
+            border-color: var(--success);
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+        .option-item.correct::before {
+            background: var(--success);
+        }
+        .option-item.incorrect {
+            border-color: var(--danger);
+            background-color: rgba(239, 68, 68, 0.08);
+        }
+        .option-item.incorrect::before {
+            background: var(--danger);
+        }
+        .option-label {
+            font-weight: 700;
+            color: var(--primary);
+            background: #f1f5f9;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .option-item.selected .option-label {
+            background: var(--secondary);
+            color: white;
+        }
+        .option-item.multiple .option-label {
+            border-radius: 4px;
+        }
+        .answer-hint {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            animation: fadeIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid transparent;
+            display: none;
+        }
+        .hint-correct {
+            background-color: rgba(34, 197, 94, 0.12);
+            color: #15803d;
+            border-left-color: var(--success);
+        }
+        .hint-incorrect {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: #b91c1c;
+            border-left-color: var(--danger);
+        }
+        .comprehensive-answer {
+            margin-top: 15px;
+            padding: 16px;
+            border-radius: 10px;
+            background-color: #f0f9ff;
+            border-left: 4px solid var(--secondary);
+            animation: fadeIn 0.6s ease-out;
+            display: none;
+        }
+        .answer-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .answer-text {
+            line-height: 1.7;
+            color: var(--text);
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        .action-btn {
+            padding: 14px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            flex: 1;
+            max-width: 180px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, var(--secondary), #0d94d7);
+            color: white;
+        }
+        .submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0d94d7, #0b7ebd);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(14, 165, 233, 0.25);
+        }
+        .next-btn {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+            color: white;
+            display: none;
+        }
+        .next-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #16a34a, #13803d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(34, 197, 94, 0.25);
+        }
+        .flag-btn {
+            background: linear-gradient(135deg, var(--warning), #e49306);
+            color: white;
+        }
+        .flag-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #e49306, #ca8505);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.25);
+        }
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: var(--neutral);
+            font-size: 0.9rem;
+            border-top: 1px solid #f1f5f9;
+        }
+        .pyramid-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: var(--safety-yellow);
+            font-size: 1.8rem;
+            opacity: 0.2;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .notification.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .notification.success {
+            background: linear-gradient(135deg, var(--success), #16a34a);
+        }
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+        }
+        .notification.warning {
+            background: linear-gradient(135deg, var(--warning), #e49306);
+        }
+        .fly-animation {
+            position: fixed;
+            top: 50%;
+            left: -100px;
+            font-size: 2rem;
+            color: var(--primary);
+            z-index: 100;
+            animation: flyAcross 2s linear forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes flyAcross {
+            0% { transform: translate(0, -50%); }
+            100% { transform: translate(calc(100vw + 100px), -50%); }
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container {
+                height: 100vh;
+                max-height: none;
+                border-radius: 0;
+            }
+            .game-title {
+                font-size: 1.2rem;
+            }
+            .level-card {
+                min-width: 90px;
+                padding: 10px 6px;
+            }
+            .level-title {
+                font-size: 0.9rem;
+            }
+            .question-content {
+                font-size: 1rem;
+            }
+            .action-btn {
+                padding: 12px 15px;
+                font-size: 1rem;
+                max-width: 160px;
+            }
+            .option-item {
+                padding: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-top {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .level-indicator {
+                margin: 0 auto;
+            }
+            .status-bar {
+                flex-direction: column;
+                gap: 6px;
+            }
+            .action-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .action-btn {
+                max-width: 100%;
+                width: 100%;
+            }
+            .question-card {
+                padding: 15px;
+            }
+            .question-content {
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="sound-control" id="soundToggle">
+                <i class="fas fa-volume-up"></i>
+            </div>
+            
+            <div class="header-top">
+                <div class="game-title">
+                    <i class="fas fa-plane"></i> 2025安全生产月民航安全知识闯关
+                </div>
+                <div class="level-indicator">
+                    <i class="fas fa-trophy"></i> <span>关卡: <span id="currentLevel">1</span>/4</span>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <i class="fas fa-coins"></i>
+                    <span>安全积分: <span id="scoreValue">0</span></span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-heart"></i>
+                    <span>安全值: <span id="livesValue">3</span>/3</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>提示: <span id="hintsValue">2</span>/3</span>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" style="width: 0%;"></div>
+            </div>
+            <div class="progress-text">
+                <span>当前进度</span>
+                <span><span id="completed">0</span>/<span id="total">5</span> 完成</span>
+            </div>
+        </header>
+        
+        <main>
+            <div class="pyramid-icon">
+                <i class="fas fa-monument"></i>
+            </div>
+            
+            <div class="level-container">
+                <div class="level-card active">
+                    <div class="level-title">行李安全</div>
+                    <div class="level-progress">0/5</div>
+                </div>
+                <div class="level-card">
+                    <div class="level-title">值机安全</div>
+                    <div class="level-progress">0/5</div>
+                </div>
+                <div class="level-card">
+                    <div class="level-title">客舱安全</div>
+                    <div class="level-progress">0/5</div>
+                </div>
+                <div class="level-card">
+                    <div class="level-title">应急安全</div>
+                    <div class="level-progress">0/5</div>
+                </div>
+            </div>
+            
+            <div class="question-card">
+                <div class="question-header">
+                    <div class="question-type">单选题</div>
+                    <div class="question-number">题目 1/5</div>
+                </div>
+                
+                <div class="question-content">
+                    根据2025年民航新规，以下哪种情况属于"三超行李"？
+                </div>
+                
+                <div class="option-list">
+                    <div class="option-item">
+                        <div class="option-label">A</div>
+                        <div class="option-text">重量超过10公斤，尺寸超过20×40×55厘米</div>
+                    </div>
+                    <div class="option-item">
+                        <div class="option-label">B</div>
+                        <div class="option-text">重量超过8公斤，尺寸超过20×40×55厘米</div>
+                    </div>
+                    <div class="option-item">
+                        <div class="option-label">C</div>
+                        <div class="option-text">重量超过7公斤，尺寸超过20×40×55厘米</div>
+                    </div>
+                    <div class="option-item">
+                        <div class="option-label">D</div>
+                        <div class="option-text">重量超过5公斤，尺寸超过20×40×55厘米</div>
+                    </div>
+                </div>
+                
+                <div class="answer-hint hint-correct">
+                    <i class="fas fa-check-circle"></i> 回答正确！2025年新规：重量超过7公斤或尺寸超过20×40×55厘米属于三超行李。
+                </div>
+                
+                <div class="comprehensive-answer">
+                    <div class="answer-title">
+                        <i class="fas fa-info-circle"></i> 知识拓展
+                    </div>
+                    <div class="answer-text">
+                        2025年民航新规对"三超行李"（超重、超大、超件）有明确规定：经济舱旅客随身行李不得超过1件，重量不超过7公斤，尺寸不超过20×40×55厘米。三超行李需办理托运，否则可能影响航班安全。
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <div class="action-buttons">
+            <button class="action-btn flag-btn" id="flagBtn">
+                <i class="fas fa-flag"></i> 标记问题
+            </button>
+            <button class="action-btn next-btn" id="nextBtn">
+                <i class="fas fa-arrow-right"></i> 下一题
+            </button>
+            <button class="action-btn submit-btn" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> 提交答案
+            </button>
+        </div>
+        
+        <footer>
+            2025安全生产月民航安全知识培训系统 | 版本 1.0
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 题目数据（2025年民航安全知识）
+            const questions = [
+                // 行李安全关卡
+                {
+                    id: 1,
+                    type: "单选题",
+                    content: "根据2025年民航新规，以下哪种情况属于'三超行李'？",
+                    options: [
+                        { id: "A", text: "重量超过10公斤，尺寸超过20×40×55厘米" },
+                        { id: "B", text: "重量超过8公斤，尺寸超过20×40×55厘米" },
+                        { id: "C", text: "重量超过7公斤，尺寸超过20×40×55厘米", correct: true },
+                        { id: "D", text: "重量超过5公斤，尺寸超过20×40×55厘米" }
+                    ],
+                    explanation: "2025年民航新规对'三超行李'（超重、超大、超件）有明确规定：经济舱旅客随身行李不得超过1件，重量不超过7公斤，尺寸不超过20×40×55厘米。三超行李需办理托运，否则可能影响航班安全。",
+                    level: 1
+                },
+                {
+                    id: 2,
+                    type: "多选题",
+                    content: "2025年民航规定中，以下哪些物品禁止托运？",
+                    options: [
+                        { id: "A", text: "充电宝", correct: true },
+                        { id: "B", text: "锂电池", correct: true },
+                        { id: "C", text: "打火机", correct: true },
+                        { id: "D", text: "液体化妆品" }
+                    ],
+                    explanation: "2025年民航安全规定：充电宝、锂电池、打火机等含锂电池或易燃物品禁止托运，必须随身携带。液体化妆品单件不超过100ml，总量不超过1L可托运。",
+                    level: 1
+                },
+                {
+                    id: 3,
+                    type: "单选题",
+                    content: "2025年民航新规要求，充电宝必须满足什么条件才能携带？",
+                    options: [
+                        { id: "A", text: "额定能量不超过100Wh，有3C认证标识", correct: true },
+                        { id: "B", text: "额定能量不超过160Wh，无标识要求" },
+                        { id: "C", text: "额定能量不超过200Wh，有厂家标识" },
+                        { id: "D", text: "任何充电宝均可携带" }
+                    ],
+                    explanation: "2025年民航新规：充电宝额定能量不得超过100Wh（约27000mAh），必须带有清晰可见的3C认证标识，且每人限带2个。无标识或标识模糊的充电宝禁止携带。",
+                    level: 1
+                },
+                {
+                    id: 4,
+                    type: "判断题",
+                    content: "2025年起，旅客可托运含锂电池的电子设备（如笔记本电脑）。",
+                    options: [
+                        { id: "A", text: "正确" },
+                        { id: "B", text: "错误", correct: true }
+                    ],
+                    explanation: "错误！2025年民航新规：所有含锂电池的电子设备（包括笔记本电脑、相机等）必须随身携带，禁止托运。托运的锂电池设备可能引发火灾风险。",
+                    level: 1
+                },
+                {
+                    id: 5,
+                    type: "单选题",
+                    content: "2025年民航规定，国际航班经济舱免费托运行李限额是多少？",
+                    options: [
+                        { id: "A", text: "1件/20公斤" },
+                        { id: "B", text: "1件/23公斤", correct: true },
+                        { id: "C", text: "2件/23公斤" },
+                        { id: "D", text: "2件/32公斤" }
+                    ],
+                    explanation: "2025年民航规定：国际航班经济舱免费托运行李为1件，重量不超过23公斤。商务舱/头等舱为2件，每件不超过32公斤。超重行李需支付额外费用。",
+                    level: 1
+                },
+                
+                // 值机安全关卡
+                {
+                    id: 6,
+                    type: "单选题",
+                    content: "2025年民航新规要求，国际航班旅客应在起飞前多久到达机场？",
+                    options: [
+                        { id: "A", text: "1小时" },
+                        { id: "B", text: "2小时" },
+                        { id: "C", text: "3小时", correct: true },
+                        { id: "D", text: "4小时" }
+                    ],
+                    explanation: "2025年民航新规：国际航班旅客应在起飞前3小时到达机场办理值机手续。这确保了有足够时间完成安检、海关和登机流程，特别是新增的生物识别安检环节。",
+                    level: 2
+                },
+                {
+                    id: 7,
+                    type: "多选题",
+                    content: "2025年值机时，哪些证件可以作为有效乘机证件？",
+                    options: [
+                        { id: "A", text: "身份证", correct: true },
+                        { id: "B", text: "护照", correct: true },
+                        { id: "C", text: "驾照" },
+                        { id: "D", text: "电子身份证", correct: true }
+                    ],
+                    explanation: "2025年民航规定：有效乘机证件包括身份证、护照、军官证、警官证、士兵证、港澳通行证、台胞证等。电子身份证（经公安部门认证）也可作为有效乘机证件。",
+                    level: 2
+                },
+                {
+                    id: 8,
+                    type: "单选题",
+                    content: "2025年值机柜台关闭时间是？",
+                    options: [
+                        { id: "A", text: "国内航班起飞前30分钟，国际航班起飞前45分钟" },
+                        { id: "B", text: "国内航班起飞前45分钟，国际航班起飞前60分钟", correct: true },
+                        { id: "C", text: "国内航班起飞前60分钟，国际航班起飞前90分钟" },
+                        { id: "D", text: "国内航班起飞前90分钟，国际航班起飞前120分钟" }
+                    ],
+                    explanation: "2025年民航规定：国内航班值机柜台在起飞前45分钟关闭，国际航班在起飞前60分钟关闭。这确保了有足够时间完成行李托运、安检和登机流程。",
+                    level: 2
+                },
+                {
+                    id: 9,
+                    type: "判断题",
+                    content: "2025年起，16岁以下未成年人可凭户口簿单独乘机。",
+                    options: [
+                        { id: "A", text: "正确" },
+                        { id: "B", text: "错误", correct: true }
+                    ],
+                    explanation: "错误！2025年民航新规：12岁以下未成年人必须由成人陪同乘机，12-16岁未成年人单独乘机需办理'无人陪伴儿童'服务，并持有效身份证件（身份证或户口簿）。",
+                    level: 2
+                },
+                {
+                    id: 10,
+                    type: "单选题",
+                    content: "2025年民航新规中，特殊旅客（如孕妇、病患）乘机需提供什么证明？",
+                    options: [
+                        { id: "A", text: "健康证明", correct: true },
+                        { id: "B", text: "收入证明" },
+                        { id: "C", text: "保险证明" },
+                        { id: "D", text: "无特殊要求" }
+                    ],
+                    explanation: "2025年民航规定：孕妇（孕32周以上）、病患等特殊旅客需提供医院出具的适宜乘机证明，并在值机时签署免责声明。航空公司有权拒绝不适宜乘机的旅客登机。",
+                    level: 2
+                },
+                
+                // 客舱安全关卡
+                {
+                    id: 11,
+                    type: "单选题",
+                    content: "2025年民航新规要求，飞机起飞降落阶段可使用什么电子设备？",
+                    options: [
+                        { id: "A", text: "手机（飞行模式）", correct: true },
+                        { id: "B", text: "笔记本电脑" },
+                        { id: "C", text: "平板电脑" },
+                        { id: "D", text: "所有电子设备" }
+                    ],
+                    explanation: "2025年民航新规：飞机起飞降落阶段可使用手机（飞行模式）和小型电子设备（如电子书）。笔记本电脑、平板电脑等较大设备仍需收起。",
+                    level: 3
+                },
+                {
+                    id: 12,
+                    type: "多选题",
+                    content: "2025年民航规定，飞行中禁止的行为包括？",
+                    options: [
+                        { id: "A", text: "使用充电宝充电", correct: true },
+                        { id: "B", text: "在卫生间吸烟", correct: true },
+                        { id: "C", text: "擅自调换座位", correct: true },
+                        { id: "D", text: "阅读电子书" }
+                    ],
+                    explanation: "2025年民航安全规定：飞行中禁止使用充电宝充电（可能引发火灾）、禁止吸烟（包括电子烟）、禁止擅自调换座位（影响配载平衡）。",
+                    level: 3
+                },
+                {
+                    id: 13,
+                    type: "单选题",
+                    content: "2025年民航新规中，遇到颠簸时应如何做？",
+                    options: [
+                        { id: "A", text: "立即解开安全带前往卫生间" },
+                        { id: "B", text: "继续在客舱中行走" },
+                        { id: "C", text: "系好安全带，保持坐姿", correct: true },
+                        { id: "D", text: "站立抓住行李架" }
+                    ],
+                    explanation: "2025年民航安全指引：遇到颠簸时应立即系好安全带，保持坐姿，将随身物品固定好。禁止在客舱中行走或站立，以免受伤。",
+                    level: 3
+                },
+                {
+                    id: 14,
+                    type: "判断题",
+                    content: "2025年起，经济舱旅客可全程使用蓝牙耳机。",
+                    options: [
+                        { id: "A", text: "正确", correct: true },
+                        { id: "B", text: "错误" }
+                    ],
+                    explanation: "正确！2025年民航新规：旅客可在飞行全程使用蓝牙耳机，但起飞降落阶段需确保能听到机组安全指示。",
+                    level: 3
+                },
+                {
+                    id: 15,
+                    type: "单选题",
+                    content: "2025年民航规定，氧气面罩脱落后第一步应做什么？",
+                    options: [
+                        { id: "A", text: "先帮他人戴好" },
+                        { id: "B", text: "立即戴在自己口鼻处", correct: true },
+                        { id: "C", text: "寻找乘务员" },
+                        { id: "D", text: "拍照记录" }
+                    ],
+                    explanation: "2025年民航安全指引：氧气面罩脱落后，旅客应首先戴好自己的面罩，然后再帮助他人。未戴好自己面罩可能导致意识丧失，无法帮助他人。",
+                    level: 3
+                },
+                
+                // 应急安全关卡
+                {
+                    id: 16,
+                    type: "单选题",
+                    content: "2025年民航新规要求的应急撤离姿势是？",
+                    options: [
+                        { id: "A", text: "双手抱头，身体前倾", correct: true },
+                        { id: "B", text: "双手交叉放在前方座椅靠背" },
+                        { id: "C", text: "身体直立，双手扶膝" },
+                        { id: "D", text: "双手抱胸，身体后靠" }
+                    ],
+                    explanation: "2025年民航应急规定：应急撤离时应采取'防冲击姿势'：双手抱头，身体前倾，额头贴在前方座椅靠背上。这能最大限度减少冲击伤害。",
+                    level: 4
+                },
+                {
+                    id: 17,
+                    type: "多选题",
+                    content: "2025年民航应急逃生时应注意？",
+                    options: [
+                        { id: "A", text: "不带行李", correct: true },
+                        { id: "B", text: "观察紧急出口位置", correct: true },
+                        { id: "C", text: "穿好救生衣（水上）", correct: true },
+                        { id: "D", text: "返回取个人物品" }
+                    ],
+                    explanation: "2025年民航应急指引：逃生时禁止携带行李，以免堵塞通道；提前观察最近的紧急出口位置；水上迫降时穿好救生衣（不在客舱内充气）；听从机组指挥，有序撤离。",
+                    level: 4
+                },
+                {
+                    id: 18,
+                    type: "单选题",
+                    content: "2025年民航新规中，救生衣应在何时充气？",
+                    options: [
+                        { id: "A", text: "拿到后立即充气" },
+                        { id: "B", text: "离开飞机后充气", correct: true },
+                        { id: "C", text: "听到指令后充气" },
+                        { id: "D", text: "入水后自动充气" }
+                    ],
+                    explanation: "2025年民航安全规定：救生衣应在离开飞机后再充气，避免在客舱内充气阻碍撤离。救生衣设计为入水自动充气或手动充气两种方式。",
+                    level: 4
+                },
+                {
+                    id: 19,
+                    type: "判断题",
+                    content: "2025年起，紧急撤离时可使用手机照明。",
+                    options: [
+                        { id: "A", text: "正确" },
+                        { id: "B", text: "错误", correct: true }
+                    ],
+                    explanation: "错误！2025年民航应急指引：紧急撤离时禁止使用手机等电子设备，以免产生火花引发爆炸。应使用客舱内的应急照明系统。",
+                    level: 4
+                },
+                {
+                    id: 20,
+                    type: "单选题",
+                    content: "2025年民航新规要求的应急滑梯使用姿势是？",
+                    options: [
+                        { id: "A", text: "坐姿滑下" },
+                        { id: "B", text: "站姿跳下" },
+                        { id: "C", text: "平躺滑下" },
+                        { id: "D", text: "跨步跳入，坐姿滑下", correct: true }
+                    ],
+                    explanation: "2025年民航应急规定：使用应急滑梯时应跨步跳入滑梯，保持坐姿，双手交叉抱胸，双脚并拢向前滑下。禁止站立或试图走下滑梯。",
+                    level: 4
+                }
+            ];
+            
+            // 游戏状态
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let lives = 3;
+            let hints = 2;
+            let completed = 0;
+            let totalQuestions = 5; // 每关5题
+            
+            // DOM元素
+            const questionContent = document.querySelector('.question-content');
+            const questionType = document.querySelector('.question-type');
+            const questionNumber = document.querySelector('.question-number');
+            const optionList = document.querySelector('.option-list');
+            const answerHint = document.querySelector('.answer-hint');
+            const comprehensiveAnswer = document.querySelector('.comprehensive-answer');
+            const submitBtn = document.getElementById('submitBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const flagBtn = document.getElementById('flagBtn');
+            const scoreValue = document.getElementById('scoreValue');
+            const livesValue = document.getElementById('livesValue');
+            const hintsValue = document.getElementById('hintsValue');
+            const completedElement = document.getElementById('completed');
+            const currentLevelElement = document.getElementById('currentLevel');
+            const progressBar = document.querySelector('.progress-bar');
+            const totalElement = document.getElementById('total');
+            const levelCards = document.querySelectorAll('.level-card');
+            const soundToggle = document.getElementById('soundToggle');
+            
+            // 初始化游戏
+            function initGame() {
+                loadQuestion(currentQuestionIndex);
+                updateStats();
+            }
+            
+            // 加载题目
+            function loadQuestion(index) {
+                const question = questions[index];
+                
+                // 更新题目信息
+                questionContent.textContent = question.content;
+                questionType.textContent = question.type;
+                questionNumber.textContent = `题目 ${index + 1}/${totalQuestions}`;
+                currentLevelElement.textContent = question.level;
+                
+                // 更新关卡状态
+                levelCards.forEach(card => card.classList.remove('active'));
+                levelCards[question.level - 1].classList.add('active');
+                
+                // 清空选项
+                optionList.innerHTML = '';
+                
+                // 添加选项
+                question.options.forEach(option => {
+                    const optionItem = document.createElement('div');
+                    optionItem.className = 'option-item';
+                    
+                    // 多选题使用方形标签
+                    if (question.type === "多选题") {
+                        optionItem.innerHTML = `
+                            <div class="option-label" style="border-radius: 4px;">${option.id}</div>
+                            <div class="option-text">${option.text}</div>
+                        `;
+                    } else {
+                        optionItem.innerHTML = `
+                            <div class="option-label">${option.id}</div>
+                            <div class="option-text">${option.text}</div>
+                        `;
+                    }
+                    
+                    // 添加点击事件
+                    optionItem.addEventListener('click', function() {
+                        if (this.classList.contains('disabled')) return;
+                        
+                        // 单选题：只能选择一个选项
+                        if (question.type === "单选题" || question.type === "判断题") {
+                            document.querySelectorAll('.option-item').forEach(item => {
+                                item.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
+                        } 
+                        // 多选题：可以多选
+                        else if (question.type === "多选题") {
+                            this.classList.toggle('selected');
+                        }
+                    });
+                    
+                    optionList.appendChild(optionItem);
+                });
+                
+                // 重置UI状态
+                answerHint.style.display = 'none';
+                comprehensiveAnswer.style.display = 'none';
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'flex';
+                
+                // 更新知识拓展
+                document.querySelector('.answer-text').textContent = question.explanation;
+                
+                // 更新进度
+                completedElement.textContent = completed;
+                const progress = (completed / totalQuestions) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            // 更新统计数据
+            function updateStats() {
+                scoreValue.textContent = score;
+                livesValue.textContent = lives;
+                hintsValue.textContent = hints;
+            }
+            
+            // 提交答案
+            submitBtn.addEventListener('click', function() {
+                const question = questions[currentQuestionIndex];
+                let isCorrect = false;
+                
+                // 禁用所有选项
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.add('disabled');
+                });
+                
+                // 显示加载动画
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+                this.classList.add('submitting');
+                
+                // 模拟提交延迟
+                setTimeout(() => {
+                    // 恢复按钮状态
+                    this.innerHTML = '<i class="fas fa-paper-plane"></i> 提交答案';
+                    this.classList.remove('submitting');
+                    
+                    if (question.type === "单选题" || question.type === "判断题") {
+                        const selectedOption = document.querySelector('.option-item.selected');
+                        
+                        if (!selectedOption) {
+                            showNotification('error', '请选择一个答案');
+                            return;
+                        }
+                        
+                        const selectedOptionId = selectedOption.querySelector('.option-label').textContent;
+                        const correctOption = question.options.find(opt => opt.correct);
+                        
+                        if (selectedOptionId === correctOption.id) {
+                            // 回答正确
+                            selectedOption.classList.add('correct');
+                            answerHint.classList.add('hint-correct');
+                            answerHint.innerHTML = `<i class="fas fa-check-circle"></i> 回答正确！${question.explanation.split('。')[0]}`;
+                            score += 50;
+                        } else {
+                            // 回答错误
+                            selectedOption.classList.add('incorrect');
+                            answerHint.classList.add('hint-incorrect');
+                            answerHint.innerHTML = `<i class="fas fa-times-circle"></i> 回答错误！正确答案是：${correctOption.id}. ${correctOption.text}`;
+                            lives--;
+                        }
+                        
+                        // 标记正确答案
+                        document.querySelectorAll('.option-item').forEach(item => {
+                            const optionId = item.querySelector('.option-label').textContent;
+                            if (optionId === correctOption.id) {
+                                item.classList.add('correct');
+                            }
+                        });
+                    } 
+                    else if (question.type === "多选题") {
+                        const selectedOptions = document.querySelectorAll('.option-item.selected');
+                        
+                        if (selectedOptions.length === 0) {
+                            showNotification('error', '请选择至少一个答案');
+                            return;
+                        }
+                        
+                        // 获取用户选择的选项ID
+                        const selectedIds = Array.from(selectedOptions).map(option => 
+                            option.querySelector('.option-label').textContent
+                        );
+                        
+                        // 获取正确答案
+                        const correctIds = question.options
+                            .filter(opt => opt.correct)
+                            .map(opt => opt.id);
+                        
+                        // 检查用户是否选择了所有正确答案且没有选择错误答案
+                        const allCorrectSelected = correctIds.every(id => selectedIds.includes(id));
+                        const noIncorrectSelected = selectedIds.every(id => correctIds.includes(id));
+                        isCorrect = allCorrectSelected && noIncorrectSelected;
+                        
+                        if (isCorrect) {
+                            // 回答正确
+                            selectedOptions.forEach(option => {
+                                option.classList.add('correct');
+                            });
+                            answerHint.classList.add('hint-correct');
+                            answerHint.innerHTML = `<i class="fas fa-check-circle"></i> 回答正确！${question.explanation.split('。')[0]}`;
+                            score += 50;
+                        } else {
+                            // 回答错误
+                            selectedOptions.forEach(option => {
+                                const optionId = option.querySelector('.option-label').textContent;
+                                if (!correctIds.includes(optionId)) {
+                                    option.classList.add('incorrect');
+                                }
+                            });
+                            answerHint.classList.add('hint-incorrect');
+                            answerHint.innerHTML = `<i class="fas fa-times-circle"></i> 回答错误！正确答案是：${correctIds.join(', ')}`;
+                            lives--;
+                            
+                            // 标记所有正确答案
+                            document.querySelectorAll('.option-item').forEach(item => {
+                                const optionId = item.querySelector('.option-label').textContent;
+                                if (correctIds.includes(optionId)) {
+                                    item.classList.add('correct');
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 显示答案提示
+                    answerHint.style.display = 'block';
+                    comprehensiveAnswer.style.display = 'block';
+                    nextBtn.style.display = 'flex';
+                    submitBtn.style.display = 'none';
+                    
+                    // 更新统计数据
+                    completed++;
+                    updateStats();
+                }, 800);
+            });
+            
+            // 下一题
+            nextBtn.addEventListener('click', function() {
+                // 飞行器动画
+                const plane = document.createElement('div');
+                plane.className = 'fly-animation';
+                plane.innerHTML = '<i class="fas fa-plane"></i>';
+                document.body.appendChild(plane);
+                
+                setTimeout(() => {
+                    plane.remove();
+                    
+                    // 移动到下一题
+                    currentQuestionIndex++;
+                    
+                    if (currentQuestionIndex < questions.length) {
+                        // 加载下一题
+                        loadQuestion(currentQuestionIndex);
+                    } else {
+                        // 游戏结束
+                        showNotification('success', '恭喜完成所有题目！');
+                        questionContent.textContent = "恭喜你完成了所有题目！";
+                        optionList.innerHTML = '';
+                        nextBtn.style.display = 'none';
+                        submitBtn.style.display = 'none';
+                        flagBtn.style.display = 'none';
+                    }
+                }, 1500);
+            });
+            
+            // 标记问题
+            flagBtn.addEventListener('click', function() {
+                this.classList.toggle('flagged');
+                const icon = this.querySelector('i');
+                
+                if (this.classList.contains('flagged')) {
+                    icon.style.color = '#ff5722';
+                    showNotification('warning', '问题已标记');
+                } else {
+                    icon.style.color = '';
+                    showNotification('info', '标记已移除');
+                }
+            });
+            
+            // 显示通知
+            function showNotification(type, message) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                let icon = 'fa-info-circle';
+                if (type === 'success') icon = 'fa-check-circle';
+                if (type === 'error') icon = 'fa-exclamation-circle';
+                if (type === 'warning') icon = 'fa-exclamation-triangle';
+                
+                notification.innerHTML = `
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 10);
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+            
+            // 初始化游戏
+            initGame();
+        });
+    </script>
+</body>
+</html>
