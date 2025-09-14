@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)">
@@ -73,6 +73,12 @@
 
     /* iOS standalone fix: avoid transform on ancestors of inputs to allow keyboard */
     .ios-standalone .slide { transform: none !important; transition: margin-left 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    /* iOS standalone hard fallback: show one panel and disable overflow clipping */
+    .ios-standalone .tab-container { overflow: visible; }
+    .ios-standalone .panel { width: 100% !important; }
+    .ios-standalone #panelEncrypt,
+    .ios-standalone #panelDecrypt { display: none; }
+    .ios-standalone .panel.active { display: block; }
 
     label { display: block; margin-top: 0.6rem; font-size: 0.95rem; font-weight: 500; color: var(--color-text); }
     .panel h2 { font-size: 1.6rem; margin: 0 0 1rem; font-weight: 700; color: var(--color-text); }
@@ -247,6 +253,8 @@
       const btnEncrypt = document.getElementById('btnEncrypt');
       const btnDecrypt = document.getElementById('btnDecrypt');
       const slide = document.getElementById('slide');
+      const panelEncrypt = document.getElementById('panelEncrypt');
+      const panelDecrypt = document.getElementById('panelDecrypt');
       const encryptInput = document.getElementById('encryptInput');
       const encryptKey = document.getElementById('encryptKey');
       const encryptBtn = document.getElementById('encryptBtn');
@@ -297,6 +305,11 @@
           btnEncrypt.classList.add('active');
           btnDecrypt.classList.remove('active');
           if (document.body.classList.contains('ios-standalone')) {
+            // Hard fallback: display only the active panel
+            panelEncrypt.classList.add('active');
+            panelDecrypt.classList.remove('active');
+            panelEncrypt.style.display = 'block';
+            panelDecrypt.style.display = 'none';
             slide.style.marginLeft = '0';
           } else {
             slide.style.transform = 'translateX(0)';
@@ -307,7 +320,11 @@
           btnDecrypt.classList.add('active');
           btnEncrypt.classList.remove('active');
           if (document.body.classList.contains('ios-standalone')) {
-            slide.style.marginLeft = '-50%';
+            panelEncrypt.classList.remove('active');
+            panelDecrypt.classList.add('active');
+            panelEncrypt.style.display = 'none';
+            panelDecrypt.style.display = 'block';
+            slide.style.marginLeft = '0';
           } else {
             slide.style.transform = 'translateX(-50%)';
           }
@@ -326,6 +343,19 @@
       encryptKey.addEventListener('keydown', handleShortcut);
       decryptInput.addEventListener('keydown', handleShortcut);
       decryptKey.addEventListener('keydown', handleShortcut);
+
+      // iOS standalone: on focus, ensure input is scrolled into view
+      if (document.body.classList.contains('ios-standalone')) {
+        const focusables = [encryptInput, encryptKey, decryptInput, decryptKey];
+        focusables.forEach(el => {
+          if (!el) return;
+          el.addEventListener('focus', () => {
+            setTimeout(() => {
+              try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
+            }, 50);
+          });
+        });
+      }
 
       function attachCopyHandler(button, target) {
         const originalHTML = button.innerHTML;
