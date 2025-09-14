@@ -71,6 +71,9 @@
     .panel { width: 50%; padding: 1.5rem; }
     @media (max-width: 600px) { h1 { font-size: 1.5rem; } .panel { padding: 1rem; } }
 
+    /* iOS standalone fix: avoid transform on ancestors of inputs to allow keyboard */
+    .ios-standalone .slide { transform: none !important; transition: margin-left 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
+
     label { display: block; margin-top: 0.6rem; font-size: 0.95rem; font-weight: 500; color: var(--color-text); }
     .panel h2 { font-size: 1.6rem; margin: 0 0 1rem; font-weight: 700; color: var(--color-text); }
     input[type="text"], input[type="password"], textarea {
@@ -281,18 +284,33 @@
         container.classList.remove('show');
       }
 
+      // Detect iOS standalone (PWA after Add to Home Screen)
+      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isIOS && isStandalone) {
+        document.body.classList.add('ios-standalone');
+      }
+
       function setActive(tab) {
         const indicator = document.getElementById('toggleIndicator');
         if (tab === 'encrypt') {
           btnEncrypt.classList.add('active');
           btnDecrypt.classList.remove('active');
-          slide.style.transform = 'translateX(0)';
+          if (document.body.classList.contains('ios-standalone')) {
+            slide.style.marginLeft = '0';
+          } else {
+            slide.style.transform = 'translateX(0)';
+          }
           if (indicator) indicator.style.transform = 'translateX(0%)';
           localStorage.setItem('mode', 'encrypt');
         } else {
           btnDecrypt.classList.add('active');
           btnEncrypt.classList.remove('active');
-          slide.style.transform = 'translateX(-50%)';
+          if (document.body.classList.contains('ios-standalone')) {
+            slide.style.marginLeft = '-50%';
+          } else {
+            slide.style.transform = 'translateX(-50%)';
+          }
           if (indicator) indicator.style.transform = 'translateX(100%)';
           localStorage.setItem('mode', 'decrypt');
         }
