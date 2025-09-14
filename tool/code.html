@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)">
+  <title>表情加密（单文件版）</title>
+  <style>
+    :root {
+      --color-primary: #007aff;
+      --color-primary-dark: #005bbb;
+      --color-accent: #34c759;
+      --color-accent-dark: #28a745;
+      --color-bg: #f2f2f7;
+      --color-card: #ffffff;
+      --color-text: #1c1c1e;
+      --color-muted: #c7c7cc;
+      --color-error: #ff3b30;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #0c0c0d;
+        --color-card: #1c1c1e;
+        --color-text: #e5e5ea;
+        --color-muted: #3a3a3c;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px 12px;
+      position: relative;
+    }
+    .container { width: 100%; max-width: 720px; position: relative; z-index: 1; }
+    h1 { font-size: 2rem; font-weight: 700; margin: 0 0 1.2rem; text-align: center; color: var(--color-primary); }
+
+    .toggle-buttons {
+      position: relative; display: flex; align-items: stretch; justify-content: space-between;
+      margin-bottom: 0.9rem; padding: 0; height: 44px; background-color: var(--color-bg);
+      border: 1px solid var(--color-muted); border-radius: 12px; overflow: hidden;
+    }
+    .toggle-buttons .toggle-indicator {
+      position: absolute; top: 0; left: 0; width: 50%; height: 100%; background-color: var(--color-primary);
+      border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .toggle-buttons button {
+      position: relative; z-index: 1; flex: 1; font-size: 0.95rem; background: transparent; border: none; cursor: pointer;
+      color: var(--color-primary); font-weight: 600; transition: color 0.3s ease, transform 0.1s ease;
+    }
+    .toggle-buttons button:active { transform: scale(0.96); }
+    .toggle-buttons button.active { color: #ffffff; }
+
+    .title-icon { font-size: 1.8rem; margin-right: 0.35rem; vertical-align: middle; }
+    .tab-container { position: relative; overflow: hidden; width: 100%; border: 1px solid var(--color-muted); border-radius: 16px; background-color: var(--color-card); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    .slide { display: flex; width: 200%; transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    .panel { width: 50%; padding: 1.5rem; }
+    @media (max-width: 600px) { h1 { font-size: 1.5rem; } .panel { padding: 1rem; } }
+
+    label { display: block; margin-top: 0.6rem; font-size: 0.95rem; font-weight: 500; color: var(--color-text); }
+    .panel h2 { font-size: 1.6rem; margin: 0 0 1rem; font-weight: 700; color: var(--color-text); }
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 0.75rem 0.9rem; margin-top: 0.35rem; font-size: 1rem; line-height: 1.4; color: var(--color-text);
+      background: var(--color-bg); border: 1px solid var(--color-muted); border-radius: 10px; outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus, textarea:focus { border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(0,122,255,0.3); }
+    textarea { min-height: 120px; resize: vertical; }
+
+    .primary-button { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+      margin-top: 1rem; padding: 0.8rem 1.5rem; font-size: 1rem; font-weight: 600; color: #ffffff;
+      background-color: var(--color-primary); background-image: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      border: none; border-radius: 12px; cursor: pointer; overflow: hidden;
+      transition: background-color 0.25s ease, transform 0.1s ease, box-shadow 0.25s ease, filter 0.2s ease;
+      box-shadow: 0 6px 14px rgba(0,122,255,0.18);
+    }
+    .primary-button:hover { background-color: var(--color-primary-dark); filter: brightness(0.98); }
+    .primary-button:active { transform: scale(0.97); }
+    .primary-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,122,255,0.25), 0 6px 14px rgba(0,122,255,0.18); }
+    .primary-button::after { content: ''; position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin-top: -16px; margin-left: -16px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.4); border-top-color: rgba(255,255,255,0.9); opacity: 0; transform: scale(0.5); pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 0; }
+    .primary-button.loading::after { opacity: 1; transform: scale(1); animation: spin 0.8s linear infinite; }
+    .primary-button > * { position: relative; z-index: 1; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .output-container { margin-top: 1rem; max-height: 0; opacity: 0; overflow: hidden; transform: translateY(8px); transition: max-height 0.4s ease, opacity 0.4s ease, transform 0.4s ease; }
+    .output-container.show { max-height: 1000px; opacity: 1; transform: translateY(0); }
+
+    .copy-button { margin-top: 0.6rem; padding: 0.55rem 1rem; font-size: 0.9rem; font-weight: 500; background-color: var(--color-accent);
+      background-image: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark)); color: #ffffff; border: none; border-radius: 10px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: background-color 0.25s ease, transform 0.1s ease, box-shadow 0.25s ease, filter 0.2s ease; box-shadow: 0 4px 10px rgba(52,199,89,0.18); }
+    .copy-button:hover { background-color: var(--color-accent-dark); filter: brightness(0.98); }
+    .copy-button:active { transform: scale(0.96); }
+    .copy-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(52,199,89,0.25), 0 4px 10px rgba(52,199,89,0.18); }
+    .copy-button svg { width: 16px; height: 16px; }
+    .output-container textarea { background-color: #f6f8fa; border-color: var(--color-muted); }
+    @media (prefers-color-scheme: dark) { .output-container textarea { background-color: #111827; border-color: #374151; } }
+
+    .util-buttons { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    .secondary-button {
+      padding: 0.45rem 0.8rem; font-size: 0.85rem; color: var(--color-text);
+      background: linear-gradient(180deg, #f9fbfd, #eef2f7); border: 1px solid #d5dbe3; border-radius: 999px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 0.4rem; transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, filter 0.2s ease; box-shadow: 0 1px 2px rgba(16,24,40,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    .secondary-button:hover { filter: brightness(0.99); }
+    .secondary-button:active { transform: scale(0.98); }
+    .secondary-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+    .secondary-button svg { width: 15px; height: 15px; }
+    @media (prefers-color-scheme: dark) {
+      .copy-button { background-image: linear-gradient(135deg, #1f8b3e, #166534); color: #ffffff; box-shadow: 0 4px 12px rgba(16,185,129,0.28); }
+      .copy-button:hover { filter: brightness(1.05); }
+      .copy-button:focus-visible { box-shadow: 0 0 0 3px rgba(16,185,129,0.35), 0 4px 12px rgba(16,185,129,0.28); }
+      .secondary-button { background: linear-gradient(180deg, #2a2f3a, #1f2430); border-color: #3a3f4a; color: #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06); }
+      .secondary-button:hover { filter: brightness(1.06); }
+      .secondary-button:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,0.08); }
+    }
+
+    .emoji-count { margin-top: 0.4rem; font-size: 0.85rem; color: var(--color-muted); }
+    #toast { position: fixed; left: 50%; bottom: 2.5rem; transform: translateX(-50%); background-color: rgba(0,0,0,0.8); color: #ffffff; padding: 0.7rem 1rem; border-radius: 4px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    @media (prefers-color-scheme: dark) { #toast { background-color: rgba(255,255,255,0.9); color: #111; } }
+    .error-msg { margin-top: 0.5rem; font-size: 0.9rem; color: var(--color-error); display: none; }
+    .error-msg.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><span class="title-icon">🔐</span>加密工具</h1>
+    <div class="toggle-buttons">
+      <div class="toggle-indicator" id="toggleIndicator"></div>
+      <button id="btnEncrypt" class="active" type="button">加密</button>
+      <button id="btnDecrypt" type="button">解密</button>
+    </div>
+    <div style="text-align:center;color:#6b7280;font-size:0.9rem;margin:-0.25rem 0 0.75rem;">
+      提示：本工具为趣味/轻量用途，请勿用于敏感信息。
+    </div>
+    <div class="tab-container">
+      <div id="slide" class="slide">
+        <div class="panel" id="panelEncrypt">
+          <h2>加密</h2>
+          <label for="encryptInput">待加密内容：</label>
+          <textarea id="encryptInput" placeholder="请输入要加密的文本..."></textarea>
+          <div class="util-buttons">
+            <button id="btnPasteEnc" class="secondary-button" type="button" title="从剪贴板粘贴">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 0a1 1 0 0 1 1 1h-2a1 1 0 0 1 1-1zm7 18H5V5h2.09c.06.58.51 1 1.09 1h7.64c.58 0 1.03-.42 1.09-1H19v16z"/></svg>
+              粘贴
+            </button>
+            <button id="btnClearEnc" class="secondary-button" type="button" title="清空内容">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg>
+              清空
+            </button>
+          </div>
+          <label id="encryptKeyLabel" for="encryptKey">密钥：</label>
+          <input type="password" id="encryptKey" placeholder="请输入密钥" />
+          <input type="hidden" id="encryptAlgo" value="Emoji" />
+          <button id="encryptBtn" class="primary-button" type="button"><span class="btn-icon">🔒</span><span>开始加密</span></button>
+          <div id="encryptError" class="error-msg"></div>
+          <div id="encryptOutputContainer" class="output-container">
+            <label for="encryptOutput">加密结果：</label>
+            <textarea id="encryptOutput" readonly></textarea>
+            <button id="copyEncrypt" class="copy-button" type="button" title="复制结果到剪贴板">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+              复制
+            </button>
+            <div id="encryptCount" class="emoji-count" style="display:none;"></div>
+          </div>
+        </div>
+        <div class="panel" id="panelDecrypt">
+          <h2>解密</h2>
+          <label for="decryptInput">待解密内容：</label>
+          <textarea id="decryptInput" placeholder="请输入要解密的文本..."></textarea>
+          <div class="util-buttons">
+            <button id="btnPasteDec" class="secondary-button" type="button" title="从剪贴板粘贴">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 0a1 1 0 0 1 1 1h-2a1 1 0 0 1 1-1zm7 18H5V5h2.09c.06.58.51 1 1.09 1h7.64c.58 0 1.03-.42 1.09-1H19v16z"/></svg>
+              粘贴
+            </button>
+            <button id="btnClearDec" class="secondary-button" type="button" title="清空内容">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/></svg>
+              清空
+            </button>
+          </div>
+          <label id="decryptKeyLabel" for="decryptKey">密钥：</label>
+          <input type="password" id="decryptKey" placeholder="请输入密钥" />
+          <label for="ignoreWhitespace" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.6rem;">
+            <input id="ignoreWhitespace" type="checkbox" checked /> 解密时忽略空白字符
+          </label>
+          <input type="hidden" id="decryptAlgo" value="Emoji" />
+          <button id="decryptBtn" class="primary-button" type="button"><span class="btn-icon">🔓</span><span>开始解密</span></button>
+          <div id="decryptError" class="error-msg"></div>
+          <div id="decryptOutputContainer" class="output-container">
+            <label for="decryptOutput">解密结果：</label>
+            <textarea id="decryptOutput" readonly></textarea>
+            <button id="copyDecrypt" class="copy-button" type="button" title="复制结果到剪贴板">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+              复制
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnEncrypt = document.getElementById('btnEncrypt');
+      const btnDecrypt = document.getElementById('btnDecrypt');
+      const slide = document.getElementById('slide');
+      const encryptInput = document.getElementById('encryptInput');
+      const encryptKey = document.getElementById('encryptKey');
+      const encryptBtn = document.getElementById('encryptBtn');
+      const encryptError = document.getElementById('encryptError');
+      const encryptOutputContainer = document.getElementById('encryptOutputContainer');
+      const encryptOutput = document.getElementById('encryptOutput');
+      const copyEncrypt = document.getElementById('copyEncrypt');
+      const encryptCount = document.getElementById('encryptCount');
+      const decryptInput = document.getElementById('decryptInput');
+      const decryptKey = document.getElementById('decryptKey');
+      const decryptBtn = document.getElementById('decryptBtn');
+      const decryptError = document.getElementById('decryptError');
+      const decryptOutputContainer = document.getElementById('decryptOutputContainer');
+      const decryptOutput = document.getElementById('decryptOutput');
+      const copyDecrypt = document.getElementById('copyDecrypt');
+      const toast = document.getElementById('toast');
+      const ignoreWhitespace = document.getElementById('ignoreWhitespace');
+      const btnPasteEnc = document.getElementById('btnPasteEnc');
+      const btnClearEnc = document.getElementById('btnClearEnc');
+      const btnPasteDec = document.getElementById('btnPasteDec');
+      const btnClearDec = document.getElementById('btnClearDec');
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
+      }
+      function expandOutput(container) {
+        container.classList.add('show');
+        requestAnimationFrame(() => { container.style.maxHeight = container.scrollHeight + 'px'; });
+      }
+      function collapseOutput(container) {
+        container.style.maxHeight = '0px';
+        container.classList.remove('show');
+      }
+
+      function setActive(tab) {
+        const indicator = document.getElementById('toggleIndicator');
+        if (tab === 'encrypt') {
+          btnEncrypt.classList.add('active');
+          btnDecrypt.classList.remove('active');
+          slide.style.transform = 'translateX(0)';
+          if (indicator) indicator.style.transform = 'translateX(0%)';
+          localStorage.setItem('mode', 'encrypt');
+        } else {
+          btnDecrypt.classList.add('active');
+          btnEncrypt.classList.remove('active');
+          slide.style.transform = 'translateX(-50%)';
+          if (indicator) indicator.style.transform = 'translateX(100%)';
+          localStorage.setItem('mode', 'decrypt');
+        }
+      }
+      btnEncrypt.addEventListener('click', () => setActive('encrypt'));
+      btnDecrypt.addEventListener('click', () => setActive('decrypt'));
+
+      function handleShortcut(e) {
+        if (!(e.metaKey || e.ctrlKey) || e.key !== 'Enter') return;
+        if (btnEncrypt.classList.contains('active')) encryptBtn.click(); else decryptBtn.click();
+      }
+      encryptInput.addEventListener('keydown', handleShortcut);
+      encryptKey.addEventListener('keydown', handleShortcut);
+      decryptInput.addEventListener('keydown', handleShortcut);
+      decryptKey.addEventListener('keydown', handleShortcut);
+
+      function attachCopyHandler(button, target) {
+        button.addEventListener('click', () => {
+          const text = target.value;
+          if (!text) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => showToast('已复制到剪贴板')).catch(() => showToast('复制失败'));
+          } else {
+            target.select();
+            try { document.execCommand('copy'); showToast('已复制到剪贴板'); }
+            catch { showToast('复制失败'); }
+          }
+        });
+      }
+      attachCopyHandler(copyEncrypt, encryptOutput);
+      attachCopyHandler(copyDecrypt, decryptOutput);
+
+      function attachPaste(btn, target) {
+        btn.addEventListener('click', async () => {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            try { const text = await navigator.clipboard.readText(); target.value = text; target.dispatchEvent(new Event('input')); showToast('已粘贴'); }
+            catch { showToast('无法读取剪贴板'); }
+          } else { showToast('不支持剪贴板 API'); }
+        });
+      }
+      function attachClear(btn, target) { btn.addEventListener('click', () => { target.value = ''; target.dispatchEvent(new Event('input')); }); }
+      attachPaste(btnPasteEnc, encryptInput); attachClear(btnClearEnc, encryptInput);
+      attachPaste(btnPasteDec, decryptInput); attachClear(btnClearDec, decryptInput);
+
+      // --- Emoji cipher core ---
+      const EMOJI_ALPHABET = [
+        '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','🥰','😗',
+        '😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐',
+        '😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲',
+        '😡','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱',
+        '🥵','🥶'
+      ];
+      const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      const BASE64_INDEX = new Map([...BASE64_ALPHABET].map((c, i) => [c, i]));
+      const EMOJI_INDEX = new Map(EMOJI_ALPHABET.map((e, i) => [e, i]));
+
+      function toBase64(buffer) {
+        const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : new Uint8Array(buffer.buffer || buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      }
+      function fromBase64(str) {
+        const binary = atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes.buffer;
+      }
+      function encodeBase64(text) { return toBase64(new TextEncoder().encode(text)); }
+      function decodeBase64(base64) { return new TextDecoder().decode(fromBase64(base64)); }
+      function computeShift(password) { let sum = 0; for (const ch of password) sum += ch.charCodeAt(0); return sum % 64; }
+      function encodeEmoji(text, password = '') {
+        const b64 = encodeBase64(text); const shift = computeShift(password); const out = [];
+        for (const ch of b64) { const idx = BASE64_INDEX.get(ch); if (idx === undefined) continue; out.push(idx === 64 ? EMOJI_ALPHABET[64] : EMOJI_ALPHABET[(idx + shift) % 64]); }
+        return out.join('');
+      }
+      function decodeEmoji(emojiStr, password = '') {
+        const shift = computeShift(password); const chars = [];
+        for (const symbol of emojiStr) { if (/\s/.test(symbol)) continue; const idx = EMOJI_INDEX.get(symbol); if (idx === undefined) throw new Error('包含未知的表情符号，无法解密'); chars.push(idx === 64 ? '=' : BASE64_ALPHABET[(idx - shift + 64) % 64]); }
+        let b64 = chars.join(''); while (b64.length % 4 !== 0) b64 += '='; return decodeBase64(b64);
+      }
+
+      // --- Handlers ---
+      encryptBtn.addEventListener('click', async () => {
+        encryptError.textContent = ''; encryptError.classList.remove('show'); collapseOutput(encryptOutputContainer);
+        if (encryptCount) { encryptCount.style.display = 'none'; encryptCount.textContent = ''; }
+        const text = encryptInput.value.trim(); const key = encryptKey.value;
+        if (!text) { encryptError.textContent = '请输入要加密的内容'; encryptError.classList.add('show'); return; }
+        encryptBtn.classList.add('loading');
+        try {
+          await new Promise(r => setTimeout(r, 150));
+          const result = encodeEmoji(text, key);
+          encryptOutput.value = result;
+          if (encryptCount) { const count = Array.from(result).length; encryptCount.textContent = '共生成 ' + count + ' 个表情符号'; encryptCount.style.display = 'block'; }
+          expandOutput(encryptOutputContainer);
+        } catch (err) {
+          encryptError.textContent = '加密过程中发生错误：' + (err && err.message || String(err)); encryptError.classList.add('show');
+        } finally { encryptBtn.classList.remove('loading'); }
+      });
+
+      decryptBtn.addEventListener('click', async () => {
+        decryptError.textContent = ''; decryptError.classList.remove('show'); collapseOutput(decryptOutputContainer);
+        const raw = decryptInput.value.trim(); const text = (ignoreWhitespace && ignoreWhitespace.checked) ? raw.replace(/\s+/g, '') : raw; const key = decryptKey.value;
+        if (!text) { decryptError.textContent = '请输入要解密的内容'; decryptError.classList.add('show'); return; }
+        decryptBtn.classList.add('loading');
+        try {
+          await new Promise(r => setTimeout(r, 150));
+          const result = decodeEmoji(text, key); decryptOutput.value = result; expandOutput(decryptOutputContainer);
+        } catch (err) {
+          decryptError.textContent = (err && err.message) || '解密过程中发生错误'; decryptError.classList.add('show');
+        } finally { decryptBtn.classList.remove('loading'); }
+      });
+
+      const savedMode = localStorage.getItem('mode');
+      const savedEnc = localStorage.getItem('encInput');
+      const savedDec = localStorage.getItem('decInput');
+      if (typeof savedEnc === 'string') encryptInput.value = savedEnc;
+      if (typeof savedDec === 'string') decryptInput.value = savedDec;
+      if (savedMode === 'decrypt') setActive('decrypt'); else setActive('encrypt');
+      encryptInput.addEventListener('input', () => localStorage.setItem('encInput', encryptInput.value));
+      decryptInput.addEventListener('input', () => localStorage.setItem('decInput', decryptInput.value));
+    });
+  </script>
+</body>
+</html>
+
