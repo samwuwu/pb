@@ -2,13 +2,14 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="表情加密">
+  <!-- Remove standalone mode to avoid iOS input issues when added to Home Screen -->
+  <!-- <meta name="apple-mobile-web-app-capable" content="yes"> -->
+  <!-- <meta name="apple-mobile-web-app-status-bar-style" content="default"> -->
+  <!-- <meta name="apple-mobile-web-app-title" content="表情加密"> -->
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <title>🍊 表情加密</title>
@@ -71,14 +72,7 @@
     .panel { width: 50%; padding: 1.5rem; }
     @media (max-width: 600px) { h1 { font-size: 1.5rem; } .panel { padding: 1rem; } }
 
-    /* iOS standalone fix: avoid transform on ancestors of inputs to allow keyboard */
-    .ios-standalone .slide { transform: none !important; transition: margin-left 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
-    /* iOS standalone hard fallback: show one panel and disable overflow clipping */
-    .ios-standalone .tab-container { overflow: visible; }
-    .ios-standalone .panel { width: 100% !important; }
-    .ios-standalone #panelEncrypt,
-    .ios-standalone #panelDecrypt { display: none; }
-    .ios-standalone .panel.active { display: block; }
+    /* Removed iOS standalone overrides */
 
     label { display: block; margin-top: 0.6rem; font-size: 0.95rem; font-weight: 500; color: var(--color-text); }
     .panel h2 { font-size: 1.6rem; margin: 0 0 1rem; font-weight: 700; color: var(--color-text); }
@@ -292,42 +286,18 @@
         container.classList.remove('show');
       }
 
-      // Detect iOS standalone (PWA after Add to Home Screen)
-      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      if (isIOS && isStandalone) {
-        document.body.classList.add('ios-standalone');
-      }
-
       function setActive(tab) {
         const indicator = document.getElementById('toggleIndicator');
         if (tab === 'encrypt') {
           btnEncrypt.classList.add('active');
           btnDecrypt.classList.remove('active');
-          if (document.body.classList.contains('ios-standalone')) {
-            // Hard fallback: display only the active panel
-            panelEncrypt.classList.add('active');
-            panelDecrypt.classList.remove('active');
-            panelEncrypt.style.display = 'block';
-            panelDecrypt.style.display = 'none';
-            slide.style.marginLeft = '0';
-          } else {
-            slide.style.transform = 'translateX(0)';
-          }
+          slide.style.transform = 'translateX(0)';
           if (indicator) indicator.style.transform = 'translateX(0%)';
           localStorage.setItem('mode', 'encrypt');
         } else {
           btnDecrypt.classList.add('active');
           btnEncrypt.classList.remove('active');
-          if (document.body.classList.contains('ios-standalone')) {
-            panelEncrypt.classList.remove('active');
-            panelDecrypt.classList.add('active');
-            panelEncrypt.style.display = 'none';
-            panelDecrypt.style.display = 'block';
-            slide.style.marginLeft = '0';
-          } else {
-            slide.style.transform = 'translateX(-50%)';
-          }
+          slide.style.transform = 'translateX(-50%)';
           if (indicator) indicator.style.transform = 'translateX(100%)';
           localStorage.setItem('mode', 'decrypt');
         }
@@ -344,18 +314,7 @@
       decryptInput.addEventListener('keydown', handleShortcut);
       decryptKey.addEventListener('keydown', handleShortcut);
 
-      // iOS standalone: on focus, ensure input is scrolled into view
-      if (document.body.classList.contains('ios-standalone')) {
-        const focusables = [encryptInput, encryptKey, decryptInput, decryptKey];
-        focusables.forEach(el => {
-          if (!el) return;
-          el.addEventListener('focus', () => {
-            setTimeout(() => {
-              try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
-            }, 50);
-          });
-        });
-      }
+      // Removed iOS standalone focus workaround
 
       function attachCopyHandler(button, target) {
         const originalHTML = button.innerHTML;
