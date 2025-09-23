@@ -394,8 +394,7 @@
         二维码已复制到剪贴板！
     </div>
 
-    <!-- 本地生成二维码库（通过 CDN 引入）；如需完全去外网依赖，可将该文件下载到本地并改为相对路径 -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+    <!-- 优先使用同源本地库 lib/qrcode.min.js；若不存在，代码会在运行时尝试备用 CDN 加载 -->
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -424,6 +423,39 @@
                 qrCard.style.display = 'none';
             });
 
+            // 动态加载脚本工具与确保库可用
+            function loadScript(src) {
+                return new Promise((resolve, reject) => {
+                    const s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    s.onload = () => resolve(true);
+                    s.onerror = () => reject(new Error('Failed to load ' + src));
+                    document.head.appendChild(s);
+                });
+            }
+
+            async function ensureQRCodeLib() {
+                if (window.QRCode) return;
+                const cdns = [
+                    // 同源本地文件（推荐将库放到仓库的 lib/qrcode.min.js）
+                    './lib/qrcode.min.js',
+                    '/lib/qrcode.min.js',
+                    // 备用 CDN（若 CSP/网络允许）
+                    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+                    'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
+                ];
+                for (const url of cdns) {
+                    try {
+                        await loadScript(url);
+                        if (window.QRCode) return;
+                    } catch (e) {
+                        console.warn('加载二维码库失败，尝试下一个源：', url, e);
+                    }
+                }
+                throw new Error('二维码库未加载（可能被 CSP 或网络拦截）');
+            }
+
             // 生成二维码（前端本地生成，不再请求外部服务）
             generateBtn.addEventListener('click', async function() {
                 const url = urlInput.value.trim();
@@ -435,12 +467,25 @@
                 generateBtn.disabled = true;
 
                 try {
-                    // 使用 qrcode 库生成 data URL
-                    const dataUrl = await QRCode.toDataURL(url, {
-                        width: 256,
-                        margin: 1,
-                        errorCorrectionLevel: 'M'
-                    });
+                    await ensureQRCodeLib();
+                    // 使用 qrcodejs 生成到临时容器，再提取 DataURL
+                    const temp = document.createElement('div');
+                    temp.style.position = 'absolute';
+                    temp.style.left = '-9999px';
+                    document.body.appendChild(temp);
+                    const qropts = { width: 256, height: 256, correctLevel: window.QRCode.CorrectLevel.M };
+                    const qrobj = new window.QRCode(temp, qropts);
+                    qrobj.makeCode(url);
+                    let dataUrl = '';
+                    const node = temp.querySelector('canvas, img');
+                    if (node && node.tagName.toLowerCase() === 'canvas') {
+                        dataUrl = node.toDataURL('image/png');
+                    } else if (node && node.tagName.toLowerCase() === 'img') {
+                        dataUrl = node.src;
+                    } else {
+                        throw new Error('生成器未返回图像/画布');
+                    }
+                    document.body.removeChild(temp);
 
                     // 设置二维码图片（本地 data URL）
                     qrCode.onload = null;
@@ -449,7 +494,7 @@
                     qrCode.style.opacity = '1';
                 } catch (error) {
                     console.error('生成二维码失败:', error);
-                    alert('生成二维码失败，请重试');
+                    alert('生成二维码失败：' + (error && error.message ? error.message : '请重试'));
                 } finally {
                     // 恢复按钮状态
                     btnText.textContent = '生成二维码';
