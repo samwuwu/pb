@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码生成器 - QR Code Generator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            padding: 40px;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: #f9fafb;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #9ca3af;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clear-btn:hover {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .qr-wrapper {
+            display: inline-block;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #qr-code {
+            width: 256px;
+            height: 256px;
+            display: block;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .copy-btn {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .copy-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .instructions {
+            padding: 20px 0;
+        }
+
+        .instructions h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .steps {
+            display: grid;
+            gap: 20px;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+
+        .success-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .success-message.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 640px) {
+            .card {
+                padding: 24px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8 14h8v-8h-8v8zm2-6h4v4h-4v-4zm-8 0h4v4h-4v-4zm-2-6h4v4H5V5zm8 14h4v4h-4v-4zm-8 0h4v4H5v-4z"/>
+                </svg>
+            </div>
+            <h1>二维码生成器</h1>
+            <p class="subtitle">将网页地址快速转换为二维码，方便分享和访问</p>
+        </header>
+
+        <main>
+            <div class="card">
+                <div class="input-group">
+                    <label for="url-input">输入网页地址</label>
+                    <div class="input-wrapper">
+                        <input type="url" id="url-input" placeholder="https://example.com" autocomplete="off">
+                        <button class="clear-btn" id="clear-btn" style="display: none;">×</button>
+                    </div>
+                </div>
+                <button class="generate-btn" id="generate-btn" disabled>
+                    <span class="btn-text">生成二维码</span>
+                    <div class="spinner" style="display: none;"></div>
+                </button>
+            </div>
+
+            <div class="card" id="qr-card" style="display: none;">
+                <div class="qr-container">
+                    <div class="qr-wrapper">
+                        <img id="qr-code" alt="Generated QR Code">
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-btn copy-btn" id="copy-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            复制图片
+                        </button>
+                        <button class="action-btn download-btn" id="download-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            下载二维码
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card instructions">
+                <h2>使用说明</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">在上方输入框中输入完整的网页地址（包括 http:// 或 https://）</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">点击"生成二维码"按钮创建二维码</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">生成后可以复制或下载二维码图片</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="success-message" id="success-message">
+        二维码已复制到剪贴板！
+    </div>
+
+    <!-- 本地生成二维码库（通过 CDN 引入）；如需完全去外网依赖，可将该文件下载到本地并改为相对路径 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlInput = document.getElementById('url-input');
+            const clearBtn = document.getElementById('clear-btn');
+            const generateBtn = document.getElementById('generate-btn');
+            const qrCard = document.getElementById('qr-card');
+            const qrCode = document.getElementById('qr-code');
+            const copyBtn = document.getElementById('copy-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const successMessage = document.getElementById('success-message');
+            const spinner = generateBtn.querySelector('.spinner');
+            const btnText = generateBtn.querySelector('.btn-text');
+
+            // 输入框事件监听
+            urlInput.addEventListener('input', function() {
+                clearBtn.style.display = this.value ? 'flex' : 'none';
+                generateBtn.disabled = !isValidUrl(this.value);
+            });
+
+            // 清除按钮事件
+            clearBtn.addEventListener('click', function() {
+                urlInput.value = '';
+                clearBtn.style.display = 'none';
+                generateBtn.disabled = true;
+                qrCard.style.display = 'none';
+            });
+
+            // 生成二维码（前端本地生成，不再请求外部服务）
+            generateBtn.addEventListener('click', async function() {
+                const url = urlInput.value.trim();
+                if (!url || !isValidUrl(url)) return;
+
+                // 显示加载状态
+                btnText.textContent = '生成中...';
+                spinner.style.display = 'block';
+                generateBtn.disabled = true;
+
+                try {
+                    // 使用 qrcode 库生成 data URL
+                    const dataUrl = await QRCode.toDataURL(url, {
+                        width: 256,
+                        margin: 1,
+                        errorCorrectionLevel: 'M'
+                    });
+
+                    // 设置二维码图片（本地 data URL）
+                    qrCode.onload = null;
+                    qrCode.src = dataUrl;
+                    qrCard.style.display = 'block';
+                    qrCode.style.opacity = '1';
+                } catch (error) {
+                    console.error('生成二维码失败:', error);
+                    alert('生成二维码失败，请重试');
+                } finally {
+                    // 恢复按钮状态
+                    btnText.textContent = '生成二维码';
+                    spinner.style.display = 'none';
+                    generateBtn.disabled = false;
+                }
+            });
+
+            // 复制二维码
+            copyBtn.addEventListener('click', async function() {
+                try {
+                    const response = await fetch(qrCode.src);
+                    const blob = await response.blob();
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    await navigator.clipboard.write([item]);
+                    
+                    // 显示成功消息
+                    successMessage.classList.add('show');
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 2000);
+                } catch (error) {
+                    console.error('复制失败:', error);
+                    alert('复制失败，请手动保存图片');
+                }
+            });
+
+            // 下载二维码
+            downloadBtn.addEventListener('click', function() {
+                const link = document.createElement('a');
+                link.href = qrCode.src;
+                link.download = 'qrcode.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // 验证URL格式
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            // 页面加载时聚焦输入框
+            urlInput.focus();
+        });
+    </script>
+</body>
+</html>
