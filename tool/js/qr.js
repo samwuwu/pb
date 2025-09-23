@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // 输入框事件监听
   urlInput.addEventListener('input', function () {
     clearBtn.style.display = this.value ? 'flex' : 'none';
-    generateBtn.disabled = !isValidUrl(this.value);
+    generateBtn.disabled = !normalizeUrl(this.value);
   });
 
   // 清除按钮事件
@@ -59,8 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 生成二维码（前端本地生成，不再请求外部服务）
   generateBtn.addEventListener('click', async function () {
-    const url = urlInput.value.trim();
-    if (!url || !isValidUrl(url)) return;
+    const normalized = normalizeUrl(urlInput.value);
+    if (!normalized) {
+      alert('请输入有效的网址，例如：https://example.com');
+      return;
+    }
 
     // 显示加载状态
     btnText.textContent = '生成中...';
@@ -76,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(temp);
       const qropts = { width: 256, height: 256, correctLevel: window.QRCode.CorrectLevel.M };
       const qrobj = new window.QRCode(temp, qropts);
-      qrobj.makeCode(url);
+      qrobj.makeCode(normalized);
       let dataUrl = '';
       const node = temp.querySelector('canvas, img');
       if (node && node.tagName.toLowerCase() === 'canvas') {
@@ -138,15 +141,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 验证URL格式
   function isValidUrl(string) {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
-    }
+    try { new URL(string); return true; } catch (_) { return false; }
+  }
+
+  function normalizeUrl(input) {
+    if (!input) return null;
+    const s = String(input).trim();
+    if (!s) return null;
+    if (isValidUrl(s)) return s;
+    // 尝试自动补全 https://
+    const candidate = 'https://' + s;
+    if (isValidUrl(candidate)) return candidate;
+    return null;
   }
 
   // 页面加载时聚焦输入框
   urlInput.focus();
 });
-
