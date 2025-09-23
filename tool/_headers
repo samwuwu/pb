@@ -1,2 +1,14 @@
 /*
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; base-uri 'none'
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'none'
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: clipboard-write=*
+
+/qr.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/lib/*
+  Cache-Control: public, max-age=31536000, immutable
