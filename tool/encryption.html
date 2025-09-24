@@ -68,8 +68,10 @@
 
     .title-icon { font-size: 1.8rem; margin-right: 0.35rem; vertical-align: middle; }
     .tab-container { position: relative; overflow: hidden; width: 100%; border: 1px solid var(--color-muted); border-radius: 16px; background-color: var(--color-card); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    .slide { display: flex; width: 200%; transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1); }
-    .panel { width: 50%; padding: 1.5rem; }
+    /* Avoid transform on the container that holds inputs to fix iOS input issues */
+    .slide { display: block; width: 100%; }
+    .panel { width: 100%; padding: 1.5rem; display: none; }
+    .panel.active { display: block; }
     @media (max-width: 600px) { h1 { font-size: 1.5rem; } .panel { padding: 1rem; } }
 
     /* Removed iOS standalone overrides */
@@ -291,13 +293,15 @@
         if (tab === 'encrypt') {
           btnEncrypt.classList.add('active');
           btnDecrypt.classList.remove('active');
-          slide.style.transform = 'translateX(0)';
+          panelEncrypt.classList.add('active');
+          panelDecrypt.classList.remove('active');
           if (indicator) indicator.style.transform = 'translateX(0%)';
           localStorage.setItem('mode', 'encrypt');
         } else {
           btnDecrypt.classList.add('active');
           btnEncrypt.classList.remove('active');
-          slide.style.transform = 'translateX(-50%)';
+          panelEncrypt.classList.remove('active');
+          panelDecrypt.classList.add('active');
           if (indicator) indicator.style.transform = 'translateX(100%)';
           localStorage.setItem('mode', 'decrypt');
         }
