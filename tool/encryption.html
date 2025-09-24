@@ -13,7 +13,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <title>🍊 表情加密</title>
-  <style>
+  <link rel="stylesheet" href="styles/encryption.css">
+  <!--
     :root {
       --color-primary: #007aff;
       --color-primary-dark: #005bbb;
@@ -141,7 +142,7 @@
     @media (prefers-color-scheme: dark) { #toast { background-color: rgba(255,255,255,0.9); color: #111; } }
     .error-msg { margin-top: 0.5rem; font-size: 0.9rem; color: var(--color-error); display: none; }
     .error-msg.show { display: block; }
-  </style>
+  -->
 </head>
 <body>
   <div class="container">
@@ -221,7 +222,8 @@
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <script>
+  <script type="module" src="scripts/encryption-app.js" defer></script>
+  <!--
     document.addEventListener('DOMContentLoaded', () => {
       // --- Fun tab: emoji title + favicon ---
       try {
@@ -441,6 +443,6 @@
       encryptInput.addEventListener('input', () => localStorage.setItem('encInput', encryptInput.value));
       decryptInput.addEventListener('input', () => localStorage.setItem('decInput', decryptInput.value));
     });
-  </script>
+  -->
 </body>
 </html>
