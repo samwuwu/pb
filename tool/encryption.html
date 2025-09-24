@@ -138,9 +138,16 @@
 
     .emoji-count { margin-top: 0.4rem; font-size: 0.85rem; color: var(--color-muted); }
     #toast { position: fixed; left: 50%; bottom: 2.5rem; transform: translateX(-50%); background-color: rgba(0,0,0,0.8); color: #ffffff; padding: 0.7rem 1rem; border-radius: 4px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    #toast.show { opacity: 1; }
     @media (prefers-color-scheme: dark) { #toast { background-color: rgba(255,255,255,0.9); color: #111; } }
     .error-msg { margin-top: 0.5rem; font-size: 0.9rem; color: var(--color-error); display: none; }
     .error-msg.show { display: block; }
+    /* Single-file CSP-friendly helpers */
+    .page-hint { text-align: center; color: #6b7280; font-size: 0.9rem; margin: -0.25rem 0 0.75rem; }
+    .checkbox-inline { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
+    .toggle-indicator--decrypt { transform: translateX(100%); }
+    .emoji-count { display: none; }
+    .emoji-count.show { display: block; }
   </style>
 </head>
 <body>
@@ -151,7 +158,7 @@
       <button id="btnEncrypt" class="active" type="button">加密</button>
       <button id="btnDecrypt" type="button">解密</button>
     </div>
-    <div style="text-align:center;color:#6b7280;font-size:0.9rem;margin:-0.25rem 0 0.75rem;">
+    <div class="page-hint">
       提示：本工具为趣味/轻量用途，请勿用于敏感信息。
     </div>
     <div class="tab-container">
@@ -182,7 +189,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
               复制
             </button>
-            <div id="encryptCount" class="emoji-count" style="display:none;"></div>
+            <div id="encryptCount" class="emoji-count"></div>
           </div>
         </div>
         <div class="panel" id="panelDecrypt">
@@ -201,7 +208,7 @@
           </div>
           <label id="decryptKeyLabel" for="decryptKey">密钥：</label>
           <input type="password" id="decryptKey" placeholder="请输入密钥" />
-          <label for="ignoreWhitespace" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.6rem;">
+          <label for="ignoreWhitespace" class="checkbox-inline">
             <input id="ignoreWhitespace" type="checkbox" checked /> 解密时忽略空白字符
           </label>
           <input type="hidden" id="decryptAlgo" value="Emoji" />
@@ -279,14 +286,8 @@
         clearTimeout(showToast._timer);
         showToast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
       }
-      function expandOutput(container) {
-        container.classList.add('show');
-        requestAnimationFrame(() => { container.style.maxHeight = container.scrollHeight + 'px'; });
-      }
-      function collapseOutput(container) {
-        container.style.maxHeight = '0px';
-        container.classList.remove('show');
-      }
+      function expandOutput(container) { container.classList.add('show'); }
+      function collapseOutput(container) { container.classList.remove('show'); }
 
       function setActive(tab) {
         const indicator = document.getElementById('toggleIndicator');
@@ -295,14 +296,14 @@
           btnDecrypt.classList.remove('active');
           panelEncrypt.classList.add('active');
           panelDecrypt.classList.remove('active');
-          if (indicator) indicator.style.transform = 'translateX(0%)';
+          if (indicator) indicator.classList.remove('toggle-indicator--decrypt');
           localStorage.setItem('mode', 'encrypt');
         } else {
           btnDecrypt.classList.add('active');
           btnEncrypt.classList.remove('active');
           panelEncrypt.classList.remove('active');
           panelDecrypt.classList.add('active');
-          if (indicator) indicator.style.transform = 'translateX(100%)';
+          if (indicator) indicator.classList.add('toggle-indicator--decrypt');
           localStorage.setItem('mode', 'decrypt');
         }
       }
@@ -404,7 +405,7 @@
       // --- Handlers ---
       encryptBtn.addEventListener('click', async () => {
         encryptError.textContent = ''; encryptError.classList.remove('show'); collapseOutput(encryptOutputContainer);
-        if (encryptCount) { encryptCount.style.display = 'none'; encryptCount.textContent = ''; }
+        if (encryptCount) { encryptCount.classList.remove('show'); encryptCount.textContent = ''; }
         const text = encryptInput.value.trim(); const key = encryptKey.value;
         if (!text) { encryptError.textContent = '请输入要加密的内容'; encryptError.classList.add('show'); return; }
         encryptBtn.classList.add('loading');
@@ -412,7 +413,7 @@
           await new Promise(r => setTimeout(r, 150));
           const result = encodeEmoji(text, key);
           encryptOutput.value = result;
-          if (encryptCount) { const count = Array.from(result).length; encryptCount.textContent = '共生成 ' + count + ' 个表情符号'; encryptCount.style.display = 'block'; }
+          if (encryptCount) { const count = Array.from(result).length; encryptCount.textContent = '共生成 ' + count + ' 个表情符号'; encryptCount.classList.add('show'); }
           expandOutput(encryptOutputContainer);
         } catch (err) {
           encryptError.textContent = '加密过程中发生错误：' + (err && err.message || String(err)); encryptError.classList.add('show');
