@@ -157,7 +157,7 @@
     </div>
     <div class="tab-container">
       <div id="slide" class="slide">
-        <div class="panel" id="panelEncrypt">
+        <div class="panel active" id="panelEncrypt">
           <h2>加密</h2>
           <label for="encryptInput">待加密内容：</label>
           <textarea id="encryptInput" placeholder="请输入要加密的文本..."></textarea>
@@ -222,7 +222,7 @@
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <script type="module" src="scripts/encryption-app.js" defer></script>
+  <script src="scripts/encryption-standalone.js" defer></script>
   <!--
     document.addEventListener('DOMContentLoaded', () => {
       // --- Fun tab: emoji title + favicon ---
