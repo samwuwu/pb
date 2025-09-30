@@ -36,10 +36,8 @@ dns:
     - https://dns.alidns.com/dns-query
   nameserver-policy:
     "geosite: cn":
-      - https://doh.pub/dns-query
       - https://dns.alidns.com/dns-query
     "geoip: cn":
-      - https://doh.pub/dns-query
       - https://dns.alidns.com/dns-query
   proxy-server-nameserver:
     - https://doh.pub/dns-query
