@@ -37,6 +37,49 @@
 /music/assets/*.mp3
   Cache-Control: public, max-age=3600, no-transform
 
+# Video: range support + proper types (MV目录)
+/music/mv/*.mp4
+  Cache-Control: public, max-age=3600, no-transform
+  Content-Type: video/mp4
+
+/music/mv/*.mov
+  Cache-Control: public, max-age=3600, no-transform
+  Content-Type: video/quicktime
+
+# HLS playlists & segments (MV目录)
+/music/mv/hls/*.m3u8
+  Cache-Control: public, max-age=3600
+  Content-Type: application/vnd.apple.mpegurl
+
+/music/mv/hls/*.m4s
+  Cache-Control: public, max-age=3600, no-transform
+  Content-Type: video/iso.segment
+
+/music/mv/hls/*.ts
+  Cache-Control: public, max-age=3600, no-transform
+  Content-Type: video/mp2t
+
+/music/mv/*.webm
+  Cache-Control: public, max-age=3600, no-transform
+  Content-Type: video/webm
+
+# Captions
+/music/mv/*.vtt
+  Cache-Control: public, max-age=31536000, immutable
+  Content-Type: text/vtt; charset=utf-8
+
+# MV poster images
+/music/mv/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/music/mv/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+# MV page itself no-cache
+/music/mv/index.html
+  Cache-Control: no-cache
+  Content-Type: text/html; charset=utf-8
+
 # Images: long cache, immutable
 /music/assets/*.png
   Cache-Control: public, max-age=31536000, immutable
@@ -51,4 +94,4 @@
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   # If you want CSP, ensure Tailwind CDN & media allowed. Adjust if you later self-host Tailwind.
-  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'self'
