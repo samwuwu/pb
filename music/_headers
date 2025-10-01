@@ -1,29 +1,29 @@
 # Cloudflare Pages custom headers
 
-# HTML: no cache for quick updates
-/song.html
+# HTML: no cache for quick updates (prefix with /music)
+/music/song.html
   Cache-Control: no-cache
   Content-Type: text/html; charset=utf-8
 
 # Manifest: correct MIME
-/manifest.json
+/music/manifest.json
   Content-Type: application/manifest+json; charset=utf-8
   Cache-Control: no-cache
 
 # Service worker (only if enabled with ?sw=1 at runtime)
-/sw.js
+/music/sw.js
   Cache-Control: no-cache
   X-Content-Type-Options: nosniff
 
 # Audio: allow range requests, moderate cache, no transform
-/assets/*.mp3
+/music/assets/*.mp3
   Cache-Control: public, max-age=3600, no-transform
 
 # Images: long cache, immutable
-/assets/*.png
+/music/assets/*.png
   Cache-Control: public, max-age=31536000, immutable
 
-/assets/*.jpg
+/music/assets/*.jpg
   Cache-Control: public, max-age=31536000, immutable
 
 # Security best-practice headers (relaxed CSP for Tailwind CDN)
@@ -33,5 +33,4 @@
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   # If you want CSP, ensure Tailwind CDN & media allowed. Adjust if you later self-host Tailwind.
-  Content-Security-Policy: default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com; connect-src 'self'; base-uri 'self'; form-action 'self'
-
+  Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; connect-src 'self'; base-uri 'self'; form-action 'self'
