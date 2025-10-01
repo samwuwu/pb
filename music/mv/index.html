@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>we build the light</title>
+  <link rel="icon" type="image/png" href="../assets/album-cover-192.png">
+  <meta name="theme-color" content="#2A2A2A">
+  <!-- Open Graph / Twitter (可按需改为你 MV 的绝对地址) -->
+  <meta property="og:title" content="we build the light">
+  <meta property="og:type" content="video.other">
+  <meta property="og:image" content="poster.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="poster.jpg">
+
+  <!-- Tailwind CDN（用于快速样式；若以后本地构建可移除） -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { bg: '#2A2A2A', fg: '#FFFFFF', muted: 'rgba(255,255,255,.7)' } } } }
+    }
+  </script>
+  <style>
+    body { background:#2A2A2A; color:#fff; -webkit-font-smoothing:antialiased; }
+  </style>
+  <!-- Hls.js (for non-Safari browsers) placed before inline init -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body class="min-h-screen flex flex-col items-center">
+  <header class="w-full max-w-screen-md px-4 py-4 flex items-center justify-center">
+    <h1 class="text-xl font-semibold">we build the light</h1>
+  </header>
+
+  <main class="w-full max-w-screen-md px-4 pb-12">
+    <!-- 当前使用你已放置的文件：wbtl.mov / poster.jpg；同时优先尝试 MP4（待你转码为 video.mp4） -->
+    <video id="mv" class="w-full rounded-xl shadow-xl bg-black"
+           controls playsinline webkit-playsinline preload="metadata" poster="poster.jpg"></video>
+    <noscript class="block mt-3 text-sm text-red-300">需要启用 JavaScript 才能播放视频。</noscript>
+    <p class="text-sm text-brand-muted mt-3">提示：若无法自动播放，请先点按播放按钮（移动端策略限制）。</p>
+  </main>
+
+  <script>
+    // 媒体会话：锁屏/耳机控制（iOS/Android 适配）
+    const video = document.getElementById('mv');
+    const POSTER = 'poster.jpg';
+    const HLS_SRC = 'hls/master.m3u8';
+    let initialized = false;
+    const throttle = (fn, wait) => { let last=0, t; return (...a)=>{ const n=Date.now(), r=wait-(n-last); if(r<=0){ last=n; fn(...a);} else { clearTimeout(t); t=setTimeout(()=>{ last=Date.now(); fn(...a); }, r); } } };
+    const updatePos = ()=>{ try { if('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession){ navigator.mediaSession.setPositionState({ duration: isFinite(video.duration)?video.duration:0, position: isFinite(video.currentTime)?video.currentTime:0, playbackRate: video.playbackRate||1 }); } } catch(_){} };
+    const updatePosThrottled = throttle(updatePos, 1000);
+
+    function setupMS(){
+      if(!('mediaSession' in navigator)) return;
+      if(!initialized){
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: document.title || 'MV',
+            artist: ' ',
+            album: ' ',
+            artwork: [
+              { src: POSTER, sizes: '192x192', type: 'image/jpeg' },
+              { src: POSTER, sizes: '512x512', type: 'image/jpeg' }
+            ]
+          });
+        } catch(_){}
+        navigator.mediaSession.setActionHandler('play', ()=> video.play());
+        navigator.mediaSession.setActionHandler('pause', ()=> video.pause());
+        const SKIP=10;
+        navigator.mediaSession.setActionHandler('seekbackward', e=>{ const d=(e&&e.seekOffset)||SKIP; video.currentTime=Math.max(0, video.currentTime-d); updatePos(); });
+        navigator.mediaSession.setActionHandler('seekforward', e=>{ const d=(e&&e.seekOffset)||SKIP; video.currentTime=Math.min(isFinite(video.duration)?video.duration:video.currentTime+d, video.currentTime+d); updatePos(); });
+        navigator.mediaSession.setActionHandler('seekto', d=>{ if(d&&Number.isFinite(d.seekTime)){ if(d.fastSeek&&'fastSeek' in video) video.fastSeek(d.seekTime); else video.currentTime=d.seekTime; updatePos(); } });
+        initialized = true;
+      }
+      navigator.mediaSession.playbackState = video.paused ? 'paused' : 'playing';
+      updatePos();
+    }
+
+    // 仅使用 HLS（不上传 MP4/MOV）；Safari 原生，其他浏览器使用 Hls.js
+    (function loadVideo(){
+      const canHlsNative = video.canPlayType('application/vnd.apple.mpegurl');
+      if (canHlsNative) {
+        video.src = HLS_SRC;
+      } else if (window.Hls && window.Hls.isSupported()) {
+        const hls = new Hls({ maxBufferLength: 10, enableWorker: true });
+        hls.loadSource(HLS_SRC); hls.attachMedia(video);
+        window.__hls = hls; // 调试用途
+      } else {
+        // 极少数老浏览器既不支持 HLS 也不支持 Hls.js
+        const tip = document.createElement('p');
+        tip.className = 'mt-3 text-sm text-red-300';
+        tip.textContent = '当前浏览器不支持 HLS，请使用 Safari、iOS 或最新版 Chrome/Edge/Firefox。';
+        video.insertAdjacentElement('afterend', tip);
+      }
+    })();
+
+    video.addEventListener('loadedmetadata', setupMS);
+    video.addEventListener('play', ()=>{ if('mediaSession' in navigator){ navigator.mediaSession.playbackState='playing'; } updatePos(); });
+    video.addEventListener('pause', ()=>{ if('mediaSession' in navigator){ navigator.mediaSession.playbackState='paused'; } updatePos(); });
+    video.addEventListener('timeupdate', ()=>{ if(!video.paused) updatePosThrottled(); });
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ setupMS(); updatePos(); } });
+  </script>
+</body>
+</html>
