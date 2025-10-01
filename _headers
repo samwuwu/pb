@@ -37,14 +37,7 @@
 /music/assets/*.mp3
   Cache-Control: public, max-age=3600, no-transform
 
-# Video: range support + proper types (MV目录)
-/music/mv/*.mp4
-  Cache-Control: public, max-age=3600, no-transform
-  Content-Type: video/mp4
 
-/music/mv/*.mov
-  Cache-Control: public, max-age=3600, no-transform
-  Content-Type: video/quicktime
 
 # HLS playlists & segments (MV目录)
 /music/mv/hls/*.m3u8
