@@ -6,8 +6,7 @@ const urlsToCache = [
   './',
   './song.html',
   './manifest.json',
-  './album-cover.jpg',
-  './随音而行.mp3',
+  './assets/album-cover.jpg',
   './sw.js'
 ];
 
@@ -44,20 +43,22 @@ self.addEventListener('activate', event => {
 
 // 处理fetch请求
 self.addEventListener('fetch', event => {
-  // 对于媒体文件，优先使用网络请求，失败时回退到缓存
-  if (event.request.url.includes('.mp3') || event.request.url.includes('.jpg')) {
+  // 对 Range 请求直接走网络，避免媒体分段缓存问题
+  if (event.request.headers && event.request.headers.has('Range')) {
+    return event.respondWith(fetch(event.request));
+  }
+  // 对于媒体文件：
+  // - mp3 始终网络优先且不写入缓存，避免占用大量空间
+  // - 图片网络优先，失败回退缓存
+  if (event.request.url.includes('.mp3') || event.request.url.match(/\.(jpe?g|png)$/)) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // 克隆响应，因为响应流只能使用一次
-          const responseToCache = response.clone();
-          
-          // 更新缓存
-          caches.open(CACHE_NAME)
-            .then(cache => {
-              cache.put(event.request, responseToCache);
-            });
-            
+          // mp3 不写缓存；图片可写缓存
+          if (!event.request.url.includes('.mp3')) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => { cache.put(event.request, responseToCache); });
+          }
           return response;
         })
         .catch(() => {
