@@ -104,6 +104,8 @@
             scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: var(--text-secondary) transparent;
+            /* Fallback: 当 Tailwind 未加载时，默认隐藏 */
+            display: none;
         }
 
         .lyrics-container::-webkit-scrollbar {
@@ -119,7 +121,8 @@
             border-radius: 3px;
         }
 
-        /* 使用 Tailwind 的 transition-opacity 控制显隐，无需自定义 keyframes */
+        /* 使用 Tailwind 的 transition-opacity 控制显隐；fallback：打开状态显式显示 */
+        .lyrics-container.opacity-100 { display: block; }
 
         /* 歌词顶部栏布局/背景交由 Tailwind 控制 */
 
