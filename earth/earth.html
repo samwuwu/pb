@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>手势控制科技地球</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
+        
+        /* 启动遮罩层 */
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 999;
+            color: white;
+            text-align: center;
+        }
+
+        button {
+            padding: 15px 40px; font-size: 20px; cursor: pointer;
+            background: #00d2ff; color: #000; border: none; border-radius: 30px;
+            font-weight: bold; margin-top: 20px;
+            box-shadow: 0 0 20px #00d2ff;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.05); background: #fff; }
+
+        /* 调试窗口 */
+        #debug-win {
+            position: absolute; top: 10px; left: 10px;
+            width: 160px; height: 120px;
+            border: 2px solid #333;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        #input-video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* 镜像 */
+        }
+
+        #status-bar {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            color: #00d2ff;
+            font-size: 16px;
+            text-shadow: 0 0 5px #00d2ff;
+            pointer-events: none;
+        }
+    </style>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+</head>
+<body>
+
+    <!-- 1. 启动界面 -->
+    <div id="overlay">
+        <h1>🖐️ 手势控制 3D 地球</h1>
+        <p>无需图片资源 | 纯代码渲染 | 交互启动</p>
+        <div id="error-msg" style="color: #ff4444; margin-top:10px; display:none;"></div>
+        <button id="start-btn">点击启动摄像头</button>
+    </div>
+
+    <!-- 2. 摄像头小窗口 -->
+    <div id="debug-win">
+        <video id="input-video" playsinline muted></video>
+    </div>
+
+    <!-- 3. 状态栏 -->
+    <div id="status-bar">系统就绪，等待启动...</div>
+
+<script>
+    // ------------------------------------------------------------------
+    // 第一步：构建 3D 场景 (无需贴图，用线条模拟科技感地球)
+    // ------------------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+    // 增加一点雾效，制造深邃感
+    scene.fog = new THREE.FogExp2(0x050505, 0.15);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 6;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 核心组
+    const earthGroup = new THREE.Group();
+    scene.add(earthGroup);
+
+    // 1. 基础蓝球
+    const sphereGeo = new THREE.SphereGeometry(1.5, 32, 32);
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x001133 });
+    const earthBase = new THREE.Mesh(sphereGeo, sphereMat);
+    earthGroup.add(earthBase);
+
+    // 2. 线框 (科技感经纬线)
+    const wireframeGeo = new THREE.WireframeGeometry(sphereGeo);
+    const wireframeMat = new THREE.LineBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.3 });
+    const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+    // 让线框稍微大一点点，避免重叠闪烁
+    wireframe.scale.set(1.01, 1.01, 1.01); 
+    earthGroup.add(wireframe);
+
+    // 3. 粒子光环 (代替星星)
+    const particlesGeo = new THREE.BufferGeometry();
+    const particleCount = 800;
+    const posArray = new Float32Array(particleCount * 3);
+    for(let i=0; i<particleCount*3; i++){
+        posArray[i] = (Math.random() - 0.5) * 15;
+    }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMat = new THREE.PointsMaterial({ size: 0.05, color: 0xffffff });
+    const starField = new THREE.Points(particlesGeo, particlesMat);
+    scene.add(starField);
+
+    // 渲染循环
+    let isControlling = false;
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        // 如果没人控制，地球自己缓慢空转
+        if (!isControlling) {
+            earthGroup.rotation.y += 0.002;
+            earthGroup.rotation.x += 0.0005;
+        }
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // 窗口自适应
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ------------------------------------------------------------------
+    // 第二步：MediaPipe 手势识别逻辑
+    // ------------------------------------------------------------------
+    const statusBar = document.getElementById('status-bar');
+    const videoElement = document.getElementById('input-video');
+    let hands;
+
+    function setupMediaPipe() {
+        hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults((results) => {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                isControlling = true;
+                statusBar.innerText = "🖐️ 手势已识别：捏合缩放 | 移动旋转";
+                statusBar.style.color = "#00ff00";
+
+                const landmarks = results.multiHandLandmarks[0];
+
+                // 1. 缩放控制 (大拇指 index:4 与 食指 index:8)
+                const p1 = landmarks[4];
+                const p2 = landmarks[8];
+                // 计算欧几里得距离
+                const dist = Math.sqrt(Math.pow(p1.x-p2.x, 2) + Math.pow(p1.y-p2.y, 2));
+                
+                // 距离映射：0.05(捏合) ~ 0.25(张开)
+                let scale = dist * 8; 
+                scale = Math.max(0.5, Math.min(scale, 3.5)); // 限制范围
+                
+                // 线性插值让缩放变平滑
+                earthGroup.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
+
+                // 2. 旋转控制 (取手掌中心)
+                const wrist = landmarks[0];
+                const mid = landmarks[9];
+                const cx = (wrist.x + mid.x) / 2;
+                const cy = (wrist.y + mid.y) / 2;
+
+                // 映射坐标 0~1 到旋转角度
+                const rotX = (cy - 0.5) * 5; 
+                const rotY = (cx - 0.5) * 5;
+
+                earthGroup.rotation.x += (rotX - earthGroup.rotation.x) * 0.1;
+                earthGroup.rotation.y += (rotY - earthGroup.rotation.y) * 0.1;
+
+            } else {
+                isControlling = false;
+                statusBar.innerText = "👀 正在寻找手部...";
+                statusBar.style.color = "#00d2ff";
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // 第三步：启动逻辑 (解决浏览器拦截问题)
+    // ------------------------------------------------------------------
+    const startBtn = document.getElementById('start-btn');
+    const overlay = document.getElementById('overlay');
+    const errorMsg = document.getElementById('error-msg');
+
+    startBtn.addEventListener('click', async () => {
+        startBtn.innerText = "正在启动...";
+        startBtn.disabled = true;
+
+        try {
+            // 1. 初始化 MediaPipe
+            setupMediaPipe();
+
+            // 2. 请求摄像头 (必须在点击事件中触发)
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 320, height: 240, facingMode: 'user' },
+                audio: false
+            });
+
+            videoElement.srcObject = stream;
+            
+            videoElement.onloadedmetadata = () => {
+                videoElement.play();
+                overlay.style.display = 'none'; // 隐藏启动层
+                detectLoop(); // 开始检测循环
+            };
+
+        } catch (err) {
+            console.error(err);
+            startBtn.innerText = "启动失败";
+            startBtn.disabled = false;
+            errorMsg.style.display = 'block';
+            
+            // 给出具体中文错误建议
+            if(window.location.protocol === 'file:') {
+                errorMsg.innerHTML = "❌ 错误：不能直接打开 html 文件。<br>请使用 VS Code Live Server 或本地服务器 (localhost) 运行。";
+            } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMsg.innerHTML = "❌ 错误：你拒绝了摄像头权限。<br>请在浏览器地址栏左侧点击图标允许访问。";
+            } else {
+                errorMsg.innerText = "❌ 错误: " + err.message;
+            }
+        }
+    });
+
+    async function detectLoop() {
+        // 只有视频在播放时才发送数据
+        if (videoElement.readyState >= 2) {
+            await hands.send({image: videoElement});
+        }
+        requestAnimationFrame(detectLoop);
+    }
+
+</script>
+</body>
+</html>
